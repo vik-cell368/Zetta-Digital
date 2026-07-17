@@ -4,8 +4,9 @@ import { Service } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
-import { Calendar as CalendarIcon, Clock, ArrowRight, ChevronRight, ChevronLeft, CheckCircle2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, ArrowRight, ChevronRight, ChevronLeft, CheckCircle2, Loader2 } from 'lucide-react';
 import { format, parse, isAfter, startOfDay, addDays, isSameDay } from 'date-fns';
+import { getDateLocale } from '@/lib/utils';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { cn, formatCurrency, getTranslatedText } from '@/lib/utils';
@@ -97,10 +98,19 @@ export default function Booking() {
     fetchServices();
   }, []);
 
+  const [isTimesLoading, setIsTimesLoading] = useState(false);
+  
   const handleDateSelect = async (date: Date | undefined) => {
     setSelectedDate(date);
     setSelectedTime(null);
-    if (date && selectedService) {
+    if (!date || !selectedService) return;
+    
+    // Immediate transition to time step to show loading/progress
+    setStep('time');
+    setAvailableTimes([]); // Reset times while loading
+    setIsTimesLoading(true);
+    
+    try {
       const { data: appointments } = await supabase
         .from('appointments')
         .select('start_time, end_time')
@@ -118,24 +128,27 @@ export default function Booking() {
           const slotStart = parse(`${format(date, 'yyyy-MM-dd')} ${timeString}`, 'yyyy-MM-dd HH:mm:ss', new Date());
           
           let isAvailable = true;
+          // Don't allow past times if today
           if (isSameDay(date, new Date()) && !isAfter(slotStart, new Date())) {
             isAvailable = false;
           }
 
-          if (isAvailable && appointments) {
+          if (isAvailable) {
             const serviceDuration = selectedService.duration_minutes;
             const slotEnd = new Date(slotStart.getTime() + serviceDuration * 60000);
 
-            for (const appt of appointments) {
-              const apptStart = new Date(appt.start_time);
-              const apptEnd = new Date(appt.end_time);
-              if (
-                (slotStart >= apptStart && slotStart < apptEnd) ||
-                (slotEnd > apptStart && slotEnd <= apptEnd) ||
-                (slotStart <= apptStart && slotEnd >= apptEnd)
-              ) {
-                isAvailable = false;
-                break;
+            if (appointments && appointments.length > 0) {
+              for (const appt of appointments) {
+                const apptStart = new Date(appt.start_time);
+                const apptEnd = new Date(appt.end_time);
+                if (
+                  (slotStart >= apptStart && slotStart < apptEnd) ||
+                  (slotEnd > apptStart && slotEnd <= apptEnd) ||
+                  (slotStart <= apptStart && slotEnd >= apptEnd)
+                ) {
+                  isAvailable = false;
+                  break;
+                }
               }
             }
           }
@@ -146,7 +159,17 @@ export default function Booking() {
         }
       }
       setAvailableTimes(times);
-      setStep('time');
+    } catch (e) {
+      console.warn("Error fetching available times", e);
+      // Fallback: Show all times if Supabase fails
+      const fallbackTimes = [];
+      for (let h = 9; h < 17; h++) {
+        fallbackTimes.push(`${h.toString().padStart(2, '0')}:00:00`);
+        fallbackTimes.push(`${h.toString().padStart(2, '0')}:30:00`);
+      }
+      setAvailableTimes(fallbackTimes);
+    } finally {
+      setIsTimesLoading(false);
     }
   };
 
@@ -161,7 +184,7 @@ export default function Booking() {
     );
     const endDateTime = new Date(startDateTime.getTime() + selectedService.duration_minutes * 60000);
 
-    const { error } = await supabase.from('appointments').insert({
+    const payload = {
       service_id: selectedService.id,
       client_name: data.full_name,
       client_email: data.email,
@@ -170,11 +193,21 @@ export default function Booking() {
       end_time: endDateTime.toISOString(),
       status: 'pending',
       notes: data.notes
-    });
+    };
 
-    setIsSubmitting(false);
-    if (!error) {
+    try {
+      const { error } = await supabase.from('appointments').insert(payload);
+      if (error) throw error;
       setStep('success');
+    } catch (err) {
+      console.warn("Supabase booking failed, saving to localStorage", err);
+      const localApps = localStorage.getItem('zetta_appointments');
+      const apps = localApps ? JSON.parse(localApps) : [];
+      apps.push({ ...payload, id: crypto.randomUUID(), created_at: new Date().toISOString() });
+      localStorage.setItem('zetta_appointments', JSON.stringify(apps));
+      setStep('success');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -309,15 +342,19 @@ export default function Booking() {
               
               <div className="bg-dark-900/50 backdrop-blur-xl rounded-2xl p-8 border border-white/5">
                 <h3 className="font-serif text-2xl text-white mb-8">
-                  {selectedDate && format(selectedDate, 'EEEE, MMMM do')}
+                  {selectedDate && format(selectedDate, 'EEEE, d. MMMM', { locale: getDateLocale(i18n.language) })}
                 </h3>
                 
-                {availableTimes.length === 0 ? (
+                {isTimesLoading ? (
+                  <div className="flex justify-center py-20">
+                    <Loader2 className="w-10 h-10 text-neon-500 animate-spin" />
+                  </div>
+                ) : availableTimes.length === 0 ? (
                   <p className="text-gray-400 font-light">{t('booking.no_slots')}</p>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {availableTimes.map(time => {
-                      const timeDisplay = format(parse(time, 'HH:mm:ss', new Date()), 'h:mm a');
+                      const timeDisplay = format(parse(time, 'HH:mm:ss', new Date()), 'HH:mm');
                       const isSelected = selectedTime === time;
                       return (
                         <button
@@ -426,8 +463,8 @@ export default function Booking() {
                       <div>
                         <div className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-2">{t('booking.step_date_time')}</div>
                         <div className="font-sans font-light text-white">
-                          {selectedDate && format(selectedDate, 'MMMM do, yyyy')}<br/>
-                          {selectedTime && format(parse(selectedTime, 'HH:mm:ss', new Date()), 'h:mm a')}
+                          {selectedDate && format(selectedDate, 'd. MMMM yyyy', { locale: getDateLocale(i18n.language) })}<br/>
+                          {selectedTime && format(parse(selectedTime, 'HH:mm:ss', new Date()), 'HH:mm')}
                         </div>
                       </div>
                       <div>

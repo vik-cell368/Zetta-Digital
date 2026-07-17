@@ -86,20 +86,23 @@ export default function ServicesView() {
     };
 
     try {
+      let updatedServices = [...services];
       if (isEditing) {
         const { error } = await supabase.from('services').update(payload).eq('id', isEditing);
         if (error) throw error;
+        updatedServices = updatedServices.map(s => s.id === isEditing ? { ...s, ...payload } : s);
         setIsEditing(null);
         setStatusMessage("Service updated successfully");
       } else {
-        const { error } = await supabase.from('services').insert(payload);
+        const { data, error } = await supabase.from('services').insert(payload).select().single();
         if (error) throw error;
+        updatedServices = [data, ...updatedServices];
         setIsAdding(false);
         setStatusMessage("Service added successfully");
       }
-      fetchServices();
+      saveToLocal(updatedServices);
     } catch (err) {
-      console.warn("Supabase save failed, saving to localStorage", err);
+      console.warn("Supabase save failed, saving to localStorage only", err);
       let updatedServices = [...services];
       if (isEditing) {
         updatedServices = updatedServices.map(s => s.id === isEditing ? { ...s, ...payload } : s);
@@ -302,7 +305,7 @@ export default function ServicesView() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-white/10">
                 <div>
-                  <label className="block text-sm font-medium text-gray-100 mb-1">Price (USD)</label>
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Price (EUR)</label>
                   <Input type="number" {...register('price', { required: true, valueAsNumber: true })} placeholder="e.g. 5000" />
                 </div>
                 <div>

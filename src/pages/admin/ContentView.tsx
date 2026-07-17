@@ -79,15 +79,38 @@ export default function ContentView() {
     getValue(key)?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const quickAccessKeys = [
-    'home.phase2_label', 'home.phase2_title', 'home.phase2_desc',
-    'home.phase3_label', 'home.phase3_title', 'home.phase3_desc',
-    'home.srv_title',
-    'footer.svc_web', 'home.val_eng_desc',
-    'footer.svc_shop', 'home.val_growth_desc',
-    'footer.svc_workflow', 'home.val_ai_desc',
-    'footer.svc_custom',
-    'home.phase4_title', 'home.phase4_btn'
+  const quickAccessGroups = [
+    {
+      name: 'Navigation & Global',
+      keys: ['nav.services', 'nav.booking', 'nav.admin', 'footer.rights', 'footer.svc_title', 'footer.contact_title']
+    },
+    {
+      name: 'Hero Section',
+      keys: ['home.hero_badge', 'home.hero_title', 'home.hero_subtitle', 'home.hero_cta']
+    },
+    {
+      name: 'Experience / Phases',
+      keys: [
+        'home.phase2_label', 'home.phase2_title', 'home.phase2_desc',
+        'home.phase3_label', 'home.phase3_title', 'home.phase3_desc',
+        'home.phase4_title', 'home.phase4_btn'
+      ]
+    },
+    {
+      name: 'Services & Values',
+      keys: [
+        'home.srv_title', 'home.val_eng_title', 'home.val_eng_desc',
+        'home.val_growth_title', 'home.val_growth_desc',
+        'home.val_ai_title', 'home.val_ai_desc'
+      ]
+    },
+    {
+      name: 'Booking Page',
+      keys: [
+        'booking.title', 'booking.subtitle', 'booking.step_service', 'booking.step_date', 
+        'booking.step_time', 'booking.step_details', 'booking.no_slots'
+      ]
+    }
   ];
 
   return (
@@ -166,27 +189,58 @@ export default function ContentView() {
             </div>
 
             <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-              {/* Highlight Quick Access if no search */}
-              {!searchQuery && (
-                <div className="space-y-4 pb-8 border-b border-white/5">
-                  <h4 className="text-[10px] font-mono uppercase tracking-[0.3em] text-neon-500/50">Core Experience Content</h4>
-                  {quickAccessKeys.map(key => {
+              {/* Grouped Quick Access if no search */}
+              {!searchQuery && quickAccessGroups.map(group => (
+                <div key={group.name} className="space-y-4 pb-8 mb-8 border-b border-white/5 last:border-0">
+                  <h4 className="text-[10px] font-mono uppercase tracking-[0.3em] text-neon-500/50">{group.name}</h4>
+                  {group.keys.map(key => {
                     const value = getValue(key);
                     if (value === undefined) return null;
                     return (
                       <div key={`quick-${key}`} className="bg-dark-950/50 p-4 rounded-xl border border-neon-500/10 focus-within:border-neon-500/50 transition-colors">
-                        <label className="block text-[10px] font-mono text-neon-500/50 mb-3">{key}</label>
-                        {value.length > 50 ? (
+                        <div className="flex justify-between items-center mb-3">
+                          <label className="block text-[10px] font-mono text-neon-500/50">{key}</label>
+                        </div>
+                        {value.length > 80 ? (
                           <Textarea 
                             value={value}
                             onChange={(e) => handleTextChange(key, e.target.value)}
-                            className="bg-transparent border-none text-white focus-visible:ring-0 resize-y min-h-[80px] p-0"
+                            className="bg-transparent border-none text-white focus-visible:ring-0 resize-y min-h-[60px] p-0 font-light leading-relaxed"
                           />
                         ) : (
                           <Input 
                             value={value}
                             onChange={(e) => handleTextChange(key, e.target.value)}
-                            className="bg-transparent border-none text-white focus-visible:ring-0 p-0 h-auto"
+                            className="bg-transparent border-none text-white focus-visible:ring-0 p-0 h-auto font-light"
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+
+              {filteredKeys.length > 0 && searchQuery && (
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-mono uppercase tracking-[0.3em] text-neon-500/50">Search Results</h4>
+                  {filteredKeys.map(key => {
+                    const value = getValue(key);
+                    const isLongText = value && value.length > 50;
+
+                    return (
+                      <div key={key} className="bg-dark-950 p-4 rounded-xl border border-white/5 focus-within:border-neon-500/50 transition-colors">
+                        <label className="block text-xs font-mono text-neon-500/70 mb-3">{key}</label>
+                        {isLongText ? (
+                          <Textarea 
+                            value={value}
+                            onChange={(e) => handleTextChange(key, e.target.value)}
+                            className="bg-dark-900 border-none text-white focus-visible:ring-0 resize-y min-h-[100px]"
+                          />
+                        ) : (
+                          <Input 
+                            value={value}
+                            onChange={(e) => handleTextChange(key, e.target.value)}
+                            className="bg-dark-900 border-none text-white focus-visible:ring-0"
                           />
                         )}
                       </div>
@@ -194,33 +248,6 @@ export default function ContentView() {
                   })}
                 </div>
               )}
-
-              {filteredKeys.map(key => {
-                const value = getValue(key);
-                const isLongText = value && value.length > 50;
-
-                // Don't repeat quick access keys if no search
-                if (!searchQuery && quickAccessKeys.includes(key)) return null;
-
-                return (
-                  <div key={key} className="bg-dark-950 p-4 rounded-xl border border-white/5 focus-within:border-neon-500/50 transition-colors">
-                    <label className="block text-xs font-mono text-neon-500/70 mb-3">{key}</label>
-                    {isLongText ? (
-                      <Textarea 
-                        value={value}
-                        onChange={(e) => handleTextChange(key, e.target.value)}
-                        className="bg-dark-900 border-none text-white focus-visible:ring-0 resize-y min-h-[100px]"
-                      />
-                    ) : (
-                      <Input 
-                        value={value}
-                        onChange={(e) => handleTextChange(key, e.target.value)}
-                        className="bg-dark-900 border-none text-white focus-visible:ring-0"
-                      />
-                    )}
-                  </div>
-                );
-              })}
               
               {filteredKeys.length === 0 && (
                 <div className="text-center py-12 text-gray-500">

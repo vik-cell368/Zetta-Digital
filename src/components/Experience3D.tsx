@@ -1,5 +1,5 @@
-import { Canvas, useFrame } from '@react-three/fiber'
-import { useRef, useMemo } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { useRef, useMemo, memo } from 'react'
 import * as THREE from 'three'
 import { 
   Environment,
@@ -7,7 +7,7 @@ import {
 } from '@react-three/drei'
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
 
-const PARTICLE_COUNT = 8000
+const PARTICLE_COUNT = 5000
 
 // Helper to create the "Z" logo shape
 const createZShape = () => {
@@ -26,7 +26,7 @@ const createZShape = () => {
   return shape
 }
 
-function Particles({ scrollYProgress }: { scrollYProgress: any }) {
+const Particles = memo(({ scrollYProgress }: { scrollYProgress: any }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
   
@@ -118,9 +118,9 @@ function Particles({ scrollYProgress }: { scrollYProgress: any }) {
       <meshBasicMaterial color="#00ffff" transparent opacity={0.6} />
     </instancedMesh>
   )
-}
+})
 
-function ZLogo({ scrollYProgress }: { scrollYProgress: any }) {
+const ZLogo = memo(({ scrollYProgress }: { scrollYProgress: any }) => {
   const meshRef = useRef<THREE.Mesh>(null)
   const zShape = useMemo(() => createZShape(), [])
   
@@ -153,9 +153,9 @@ function ZLogo({ scrollYProgress }: { scrollYProgress: any }) {
       />
     </mesh>
   )
-}
+})
 
-function DataStructure({ scrollYProgress }: { scrollYProgress: any }) {
+const DataStructure = memo(({ scrollYProgress }: { scrollYProgress: any }) => {
   const groupRef = useRef<THREE.Group>(null)
   
   useFrame((state) => {
@@ -188,22 +188,24 @@ function DataStructure({ scrollYProgress }: { scrollYProgress: any }) {
       ))}
     </group>
   )
-}
+})
 
 function Scene({ scrollYProgress }: { scrollYProgress: any }) {
+  const { camera, mouse } = useThree()
+  
   useFrame((state) => {
     const offset = scrollYProgress.get()
     const targetZ = 15 - offset * 110
-    state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, targetZ, 0.1)
+    camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 0.1)
     
-    if (state.camera instanceof THREE.PerspectiveCamera) {
-      state.camera.fov = 50 + Math.sin(offset * Math.PI) * 15
-      state.camera.updateProjectionMatrix()
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.fov = 50 + Math.sin(offset * Math.PI) * 15
+      camera.updateProjectionMatrix()
     }
     
-    state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, state.mouse.x * 3, 0.05)
-    state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, state.mouse.y * 3, 0.05)
-    state.camera.lookAt(0, 0, -250)
+    camera.position.x = THREE.MathUtils.lerp(camera.position.x, mouse.x * 3, 0.05)
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, mouse.y * 3, 0.05)
+    camera.lookAt(0, 0, -250)
   })
 
   return (
@@ -224,7 +226,7 @@ function Scene({ scrollYProgress }: { scrollYProgress: any }) {
   )
 }
 
-export default function Experience3D({ scrollYProgress }: { scrollYProgress: any }) {
+export default memo(function Experience3D({ scrollYProgress }: { scrollYProgress: any }) {
   return (
     <div className="fixed inset-0 z-0 bg-black pointer-events-none" aria-hidden="true">
       <Canvas gl={{ antialias: false, powerPreference: 'high-performance' }} dpr={[1, 1.5]}>
@@ -232,4 +234,4 @@ export default function Experience3D({ scrollYProgress }: { scrollYProgress: any
       </Canvas>
     </div>
   )
-}
+})
