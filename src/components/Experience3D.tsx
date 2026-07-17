@@ -7,7 +7,7 @@ import {
 } from '@react-three/drei'
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
 
-const PARTICLE_COUNT = 15000
+const PARTICLE_COUNT = 8000
 
 // Helper to create the "Z" logo shape
 const createZShape = () => {
@@ -26,7 +26,7 @@ const createZShape = () => {
   return shape
 }
 
-function Particles({ scroll }: { scroll: any }) {
+function Particles({ scrollYProgress }: { scrollYProgress: any }) {
   const meshRef = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
   
@@ -41,15 +41,12 @@ function Particles({ scroll }: { scroll: any }) {
         -100 - Math.random() * 200
       )
       
-      // Act 1 Envelop: Around the Z
-      // We'll map them roughly to a Z shape by randomly picking points on the Z shape
       const act1Env = new THREE.Vector3(
         (Math.random() - 0.5) * 4,
         (Math.random() - 0.5) * 6,
         (Math.random() - 0.5) * 1
       )
 
-      // Act 2: Sphere
       const theta = Math.random() * Math.PI * 2
       const phi = Math.acos(2 * Math.random() - 1)
       const r = 25
@@ -59,7 +56,6 @@ function Particles({ scroll }: { scroll: any }) {
         r * Math.cos(phi)
       )
 
-      // Act 3: Room walls
       const side = Math.floor(Math.random() * 6)
       const act3 = new THREE.Vector3()
       const size = 40
@@ -70,7 +66,6 @@ function Particles({ scroll }: { scroll: any }) {
       if (side === 4) act3.set((Math.random() - 0.5) * size * 2, (Math.random() - 0.5) * size * 2, -size)
       if (side === 5) act3.set((Math.random() - 0.5) * size * 2, (Math.random() - 0.5) * size * 2, size)
 
-      // Act 4: Button
       const act4 = new THREE.Vector3(
         (Math.random() - 0.5) * 8,
         (Math.random() - 0.5) * 4,
@@ -82,41 +77,38 @@ function Particles({ scroll }: { scroll: any }) {
     return data
   }, [])
 
+  const tempTarget = useMemo(() => new THREE.Vector3(), [])
+
   useFrame((state) => {
     if (!meshRef.current) return
-    const offset = scroll.offset
+    const offset = scrollYProgress.get()
     const time = state.clock.getElapsedTime()
 
-    particles.forEach((p, i) => {
-      let target = new THREE.Vector3()
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const p = particles[i]
       
       if (offset < 0.1) {
-        // Phase 1: Flying from depth to Z
         const t = offset * 10
-        target.lerpVectors(p.act1, p.act1Env, THREE.MathUtils.smoothstep(t, 0, 1))
+        tempTarget.lerpVectors(p.act1, p.act1Env, THREE.MathUtils.smoothstep(t, 0, 1))
       } else if (offset < 0.3) {
-        // Phase 2: Forming Sphere
         const t = (offset - 0.1) / 0.2
-        target.lerpVectors(p.act1Env, p.act2, THREE.MathUtils.smoothstep(t, 0, 1))
+        tempTarget.lerpVectors(p.act1Env, p.act2, THREE.MathUtils.smoothstep(t, 0, 1))
       } else if (offset < 0.7) {
-        // Phase 3: Inside the Room
         const t = (offset - 0.3) / 0.4
-        target.lerpVectors(p.act2, p.act3, THREE.MathUtils.smoothstep(t, 0, 1))
+        tempTarget.lerpVectors(p.act2, p.act3, THREE.MathUtils.smoothstep(t, 0, 1))
       } else {
-        // Phase 4: Button formation
         const t = (offset - 0.7) / 0.3
-        target.lerpVectors(p.act3, p.act4, THREE.MathUtils.smoothstep(t, 0, 1))
+        tempTarget.lerpVectors(p.act3, p.act4, THREE.MathUtils.smoothstep(t, 0, 1))
       }
 
-      // Add noise/fluid motion
-      target.x += Math.sin(time * p.speed + i) * 0.1
-      target.y += Math.cos(time * p.speed + i) * 0.1
+      tempTarget.x += Math.sin(time * p.speed + i) * 0.1
+      tempTarget.y += Math.cos(time * p.speed + i) * 0.1
 
-      dummy.position.copy(target)
+      dummy.position.copy(tempTarget)
       dummy.scale.setScalar(offset > 0.8 ? 0.08 : 0.05)
       dummy.updateMatrix()
-      meshRef.current!.setMatrixAt(i, dummy.matrix)
-    })
+      meshRef.current.setMatrixAt(i, dummy.matrix)
+    }
     meshRef.current.instanceMatrix.needsUpdate = true
   })
 
@@ -128,13 +120,13 @@ function Particles({ scroll }: { scroll: any }) {
   )
 }
 
-function ZLogo({ scroll }: { scroll: any }) {
+function ZLogo({ scrollYProgress }: { scrollYProgress: any }) {
   const meshRef = useRef<THREE.Mesh>(null)
   const zShape = useMemo(() => createZShape(), [])
   
   useFrame((state) => {
     if (!meshRef.current) return
-    const offset = scroll.offset
+    const offset = scrollYProgress.get()
     const time = state.clock.getElapsedTime()
     
     if (offset < 0.4) {
@@ -163,12 +155,12 @@ function ZLogo({ scroll }: { scroll: any }) {
   )
 }
 
-function DataStructure({ scroll }: { scroll: any }) {
+function DataStructure({ scrollYProgress }: { scrollYProgress: any }) {
   const groupRef = useRef<THREE.Group>(null)
   
   useFrame((state) => {
     if (!groupRef.current) return
-    const offset = scroll.offset
+    const offset = scrollYProgress.get()
     if (offset > 0.15 && offset < 0.85) {
       groupRef.current.visible = true
       groupRef.current.position.z = -30
@@ -198,8 +190,9 @@ function DataStructure({ scroll }: { scroll: any }) {
   )
 }
 
-function Scene({ offset }: { offset: number }) {
+function Scene({ scrollYProgress }: { scrollYProgress: any }) {
   useFrame((state) => {
+    const offset = scrollYProgress.get()
     const targetZ = 15 - offset * 110
     state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, targetZ, 0.1)
     
@@ -216,9 +209,9 @@ function Scene({ offset }: { offset: number }) {
   return (
     <>
       <PerspectiveCamera makeDefault fov={50} position={[0, 0, 15]} />
-      <Particles scroll={{ offset }} />
-      <ZLogo scroll={{ offset }} />
-      <DataStructure scroll={{ offset }} />
+      <Particles scrollYProgress={scrollYProgress} />
+      <ZLogo scrollYProgress={scrollYProgress} />
+      <DataStructure scrollYProgress={scrollYProgress} />
       
       <ambientLight intensity={0.2} />
       <pointLight position={[0, 0, 0]} intensity={3} color="#00ffff" />
@@ -231,11 +224,11 @@ function Scene({ offset }: { offset: number }) {
   )
 }
 
-export default function Experience3D({ offset = 0 }: { offset?: number }) {
+export default function Experience3D({ scrollYProgress }: { scrollYProgress: any }) {
   return (
     <div className="fixed inset-0 z-0 bg-black pointer-events-none" aria-hidden="true">
       <Canvas gl={{ antialias: false, powerPreference: 'high-performance' }} dpr={[1, 1.5]}>
-        <Scene offset={offset} />
+        <Scene scrollYProgress={scrollYProgress} />
       </Canvas>
     </div>
   )

@@ -53,14 +53,46 @@ export default function Booking() {
 
   useEffect(() => {
     async function fetchServices() {
-      const { data } = await supabase
-        .from('services')
-        .select('*')
-        .eq('is_active', true)
-        .order('price', { ascending: false });
-      
-      if (data) setServices(data);
-      setIsLoading(false);
+      try {
+        const { data } = await supabase
+          .from('services')
+          .select('*')
+          .eq('is_active', true)
+          .order('price', { ascending: false });
+        
+        if (data && data.length > 0) {
+          setServices(data);
+        } else {
+          // Fallback to local storage or defaults
+          const localData = localStorage.getItem('zetta_services');
+          if (localData) {
+            setServices(JSON.parse(localData).filter((s: any) => s.is_active));
+          } else {
+            setServices([
+              {
+                id: '1',
+                name: JSON.stringify({ en: 'Website Development', de: 'Webentwicklung' }),
+                description: JSON.stringify({ en: 'Modern tech stacks, lightning fast performance.', de: 'Moderne Tech-Stacks, blitzschnelle Performance.' }),
+                price: 1500,
+                duration_minutes: 60,
+                is_active: true
+              },
+              {
+                id: '2',
+                name: JSON.stringify({ en: 'Online Shops', de: 'Online-Shops' }),
+                description: JSON.stringify({ en: 'Optimized for conversion and growth.', de: 'Optimiert für Konversion und Wachstum.' }),
+                price: 2500,
+                duration_minutes: 90,
+                is_active: true
+              }
+            ] as Service[]);
+          }
+        }
+      } catch (e) {
+        console.warn("Booking services fetch failed", e);
+      } finally {
+        setIsLoading(false);
+      }
     }
     fetchServices();
   }, []);

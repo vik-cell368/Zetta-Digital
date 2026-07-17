@@ -8,7 +8,7 @@ function Monolith() {
   const { mouse } = useThree()
   
   // High-density Icosahedron for the perfect geometric body
-  const baseGeom = useMemo(() => new THREE.IcosahedronGeometry(2.5, 5), [])
+  const baseGeom = useMemo(() => new THREE.IcosahedronGeometry(2.5, 3), [])
   const count = baseGeom.attributes.position.count
 
   const dummy = useMemo(() => new THREE.Object3D(), [])

@@ -9,17 +9,9 @@ import { getTranslatedText } from '@/lib/utils';
 
 export default function Home() {
   const { t, i18n } = useTranslation();
-  const [scrollOffset, setScrollOffset] = useState(0);
   
   // Use motion's useScroll for smooth tracking
   const { scrollYProgress } = useScroll();
-
-  useEffect(() => {
-    const unsubscribe = scrollYProgress.on('change', (latest) => {
-      setScrollOffset(latest);
-    });
-    return () => unsubscribe();
-  }, [scrollYProgress]);
 
   const [services, setServices] = useState<any[]>([]);
 
@@ -80,7 +72,7 @@ export default function Home() {
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-black">
         Skip to content
       </a>
-      <Experience3D offset={scrollOffset} />
+      <Experience3D scrollYProgress={scrollYProgress} />
       
       <div id="main-content" className="relative z-10" role="main">
         {/* Act 1: Hero */}
