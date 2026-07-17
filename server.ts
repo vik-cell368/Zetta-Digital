@@ -62,10 +62,20 @@ Text to translate:
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*all', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    // Production: serve from dist folder
+    const distPath = path.resolve(process.cwd(), 'dist');
+    app.use(express.static(distPath, { index: false }));
+    
+    app.get('*', (req, res, next) => {
+      // Avoid catching API routes or static files that should have been handled by static middleware
+      if (req.path.startsWith('/api')) return next();
+      
+      res.sendFile(path.join(distPath, 'index.html'), (err) => {
+        if (err) {
+          console.error("Error sending index.html", err);
+          res.status(500).send("Server Error");
+        }
+      });
     });
   }
 

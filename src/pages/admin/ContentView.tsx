@@ -20,6 +20,7 @@ const SUPPORTED_LANGS = [
 export default function ContentView() {
   const { i18n } = useTranslation();
   const [selectedLang, setSelectedLang] = useState('en');
+  const [tick, setTick] = useState(0);
   const [overrides, setOverrides] = useState<Record<string, Record<string, string>>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -49,6 +50,9 @@ export default function ContentView() {
       }
     }));
     setSaved(false);
+    
+    // Force re-render to update inputs immediately
+    setTick(t => t + 1);
   };
 
   const handleSave = () => {

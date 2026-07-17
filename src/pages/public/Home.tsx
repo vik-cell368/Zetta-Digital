@@ -77,9 +77,12 @@ export default function Home() {
 
   return (
     <div className="bg-dark-950 min-h-screen relative overflow-x-hidden">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-black">
+        Skip to content
+      </a>
       <Experience3D offset={scrollOffset} />
       
-      <div className="relative z-10" role="main">
+      <div id="main-content" className="relative z-10" role="main">
         {/* Act 1: Hero */}
         <section className="h-screen flex items-center justify-center" aria-labelledby="hero-title">
           <motion.div 

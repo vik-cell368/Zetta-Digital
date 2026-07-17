@@ -40,6 +40,8 @@ export default function ServicesView() {
 
   const { register, handleSubmit, reset, setValue, getValues } = useForm<ServiceFormData>();
 
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
   const fetchServices = async () => {
     setIsLoading(true);
     try {
@@ -88,10 +90,12 @@ export default function ServicesView() {
         const { error } = await supabase.from('services').update(payload).eq('id', isEditing);
         if (error) throw error;
         setIsEditing(null);
+        setStatusMessage("Service updated successfully");
       } else {
         const { error } = await supabase.from('services').insert(payload);
         if (error) throw error;
         setIsAdding(false);
+        setStatusMessage("Service added successfully");
       }
       fetchServices();
     } catch (err) {
@@ -100,6 +104,7 @@ export default function ServicesView() {
       if (isEditing) {
         updatedServices = updatedServices.map(s => s.id === isEditing ? { ...s, ...payload } : s);
         setIsEditing(null);
+        setStatusMessage("Updated locally (Database offline)");
       } else {
         const newService = {
           ...payload,
@@ -108,9 +113,12 @@ export default function ServicesView() {
         } as Service;
         updatedServices = [newService, ...updatedServices];
         setIsAdding(false);
+        setStatusMessage("Added locally (Database offline)");
       }
       saveToLocal(updatedServices);
     }
+    
+    setTimeout(() => setStatusMessage(null), 3000);
     reset();
   };
 
@@ -204,20 +212,25 @@ export default function ServicesView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-white">Services</h2>
           <p className="text-gray-400">Manage your offerings and pricing.</p>
         </div>
-        {!isAdding && !isEditing && (
-          <Button onClick={() => { 
-            setIsAdding(true); 
-            reset({ is_active: true }); 
-            SUPPORTED_LANGS.forEach(l => { setValue(`name_${l.code}`, ''); setValue(`description_${l.code}`, ''); });
-          }}>
-            <Plus className="h-4 w-4 mr-2" /> Add Service
-          </Button>
-        )}
+        <div className="flex items-center gap-4">
+          {statusMessage && (
+            <span className="text-xs font-mono text-neon-400 animate-pulse">{statusMessage}</span>
+          )}
+          {!isAdding && !isEditing && (
+            <Button onClick={() => { 
+              setIsAdding(true); 
+              reset({ is_active: true }); 
+              SUPPORTED_LANGS.forEach(l => { setValue(`name_${l.code}`, ''); setValue(`description_${l.code}`, ''); });
+            }}>
+              <Plus className="h-4 w-4 mr-2" /> Add Service
+            </Button>
+          )}
+        </div>
       </div>
 
       {(isAdding || isEditing) && (

@@ -40,6 +40,7 @@ export default function PublicLayout() {
       <select 
         value={currentLang}
         onChange={changeLanguage}
+        aria-label="Change language"
         className="appearance-none bg-dark-900 border border-white/10/60 pl-8 pr-8 py-2 text-sm font-medium text-gray-300 hover:text-white hover:border-white/20 hover:shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-neon-500/20 focus:border-neon-500/50 rounded-2xl transition-all"
       >
         <option value="en">EN</option>
@@ -84,9 +85,9 @@ export default function PublicLayout() {
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-10 text-sm font-medium">
-            <Link to="/#services" className="text-gray-400 hover:text-white transition-colors uppercase tracking-widest text-xs">{t('nav.services')}</Link>
-            <Link to="/#about" className="text-gray-400 hover:text-white transition-colors uppercase tracking-widest text-xs">{t('nav.about')}</Link>
+          <nav className="hidden md:flex items-center gap-10 text-sm font-medium" aria-label="Main Navigation">
+            <Link to="/#services" className="text-gray-400 hover:text-white transition-colors uppercase tracking-widest text-xs" aria-label="Services">{t('nav.services')}</Link>
+            <Link to="/#about" className="text-gray-400 hover:text-white transition-colors uppercase tracking-widest text-xs" aria-label="About">{t('nav.about')}</Link>
             
             <div className="ml-2">
               <LanguageSelector />
