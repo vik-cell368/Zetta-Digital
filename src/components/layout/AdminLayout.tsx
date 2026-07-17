@@ -11,6 +11,12 @@ export default function AdminLayout() {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Check transient demo session
+      if ((window as any)._zetta_authenticated) {
+        setIsChecking(false);
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate('/admin/login');
@@ -28,6 +34,7 @@ export default function AdminLayout() {
         await supabase.auth.signOut();
         navigate('/admin/login');
       } else {
+        (window as any)._zetta_authenticated = true;
         setIsChecking(false);
       }
     };
@@ -36,6 +43,7 @@ export default function AdminLayout() {
   }, [navigate]);
 
   const handleLogout = async () => {
+    (window as any)._zetta_authenticated = false;
     await supabase.auth.signOut();
     navigate('/admin/login');
   };

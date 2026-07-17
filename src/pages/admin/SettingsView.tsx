@@ -104,6 +104,35 @@ export default function SettingsView() {
     fetchData();
   };
 
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+    if (newPassword.length < 6) {
+      alert('Password must be at least 6 characters');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      alert('Password updated successfully');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      alert(err.message || 'Failed to update password. Note: If you are logged in with emergency credentials, this action is restricted.');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   return (
@@ -240,6 +269,41 @@ export default function SettingsView() {
                   ))
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Security Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Security</CardTitle>
+              <CardDescription>Update your account password.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handlePasswordChange} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-100 mb-1">New Password</label>
+                  <Input 
+                    type="password" 
+                    value={newPassword} 
+                    onChange={e => setNewPassword(e.target.value)} 
+                    placeholder="Min. 6 characters"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Confirm New Password</label>
+                  <Input 
+                    type="password" 
+                    value={confirmPassword} 
+                    onChange={e => setConfirmPassword(e.target.value)} 
+                  />
+                </div>
+                <Button type="submit" isLoading={isChangingPassword} className="w-full">
+                  Update Password
+                </Button>
+                <p className="text-[10px] text-gray-500 italic mt-2">
+                  * Password changes only apply to real accounts. Emergency access credentials are fixed in system code.
+                </p>
+              </form>
             </CardContent>
           </Card>
         </div>

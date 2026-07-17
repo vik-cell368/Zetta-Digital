@@ -3,10 +3,13 @@ import { supabase } from '@/lib/supabase';
 import { Appointment } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { format, parseISO, isToday, isFuture } from 'date-fns';
+import { getDateLocale } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 import { Calendar, Users, CheckCircle, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
+  const { i18n } = useTranslation();
   const [stats, setStats] = useState({
     upcoming: 0,
     completed: 0,
@@ -155,7 +158,7 @@ export default function Dashboard() {
                   <div className="flex items-center">
                     <div className="w-12 h-12 bg-dark-9500 rounded-full border border-white/10 flex flex-col items-center justify-center mr-4 shadow-sm">
                       <span className="text-xs font-bold text-white">{format(parseISO(apt.appointment_date), 'd')}</span>
-                      <span className="text-[10px] uppercase text-gray-400">{format(parseISO(apt.appointment_date), 'MMM')}</span>
+                      <span className="text-[10px] uppercase text-gray-400">{format(parseISO(apt.appointment_date), 'MMM', { locale: getDateLocale(i18n.language) })}</span>
                     </div>
                     <div>
                       <h4 className="font-semibold text-white">{apt.full_name}</h4>
