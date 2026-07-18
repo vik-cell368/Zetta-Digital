@@ -76,18 +76,20 @@ export default function Login() {
             </div>
           </div>
           <h1 className="text-2xl font-display font-bold tracking-tight text-white uppercase tracking-widest">ZETTA ADMIN</h1>
-          <p className="text-gray-400 text-sm mt-2 font-light">Sign in to manage your agency</p>
+          <p className="text-gray-400 text-sm mt-2 font-light">Anmelden zur Verwaltung Ihrer Agentur</p>
         </div>
 
         <div className="glass-card rounded-xl p-8 border border-white/10 shadow-2xl">
           <form onSubmit={handleLogin} className="space-y-5">
             {error && (
               <div className="p-4 text-sm bg-red-900/20 text-red-400 rounded-md border border-red-900/50">
-                {error}
+                {error === 'Unauthorized access. This account does not have admin privileges.' 
+                  ? 'Nicht autorisierter Zugriff. Dieses Konto verfügt nicht über Administratorrechte.' 
+                  : error}
               </div>
             )}
             <div>
-              <label className="block text-xs uppercase tracking-widest font-semibold text-neon-500/70 mb-2">Email</label>
+              <label className="block text-xs uppercase tracking-widest font-semibold text-neon-500/70 mb-2">E-Mail</label>
               <Input
                 type="email"
                 value={email}
@@ -98,7 +100,7 @@ export default function Login() {
               />
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-widest font-semibold text-neon-500/70 mb-2">Password</label>
+              <label className="block text-xs uppercase tracking-widest font-semibold text-neon-500/70 mb-2">Passwort</label>
               <Input
                 type="password"
                 value={password}
@@ -108,7 +110,7 @@ export default function Login() {
               />
             </div>
             <Button type="submit" className="w-full mt-4 bg-neon-500 hover:bg-neon-400 text-dark-950 uppercase tracking-widest text-xs font-semibold h-12 shadow-[0_0_15px_rgba(197,160,89,0.2)]" isLoading={isLoading}>
-              Sign In
+              Anmelden
             </Button>
           </form>
         </div>

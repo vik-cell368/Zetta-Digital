@@ -71,7 +71,7 @@ export default function PublicLayout() {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-        className="sticky top-0 z-50 w-full border-b border-white/10 bg-dark-950/80 backdrop-blur-xl"
+        className="sticky top-0 z-50 w-full border-b border-white/10 bg-dark-950/80 backdrop-blur-md"
       >
         <div className="container mx-auto px-6 h-24 flex items-center justify-between max-w-[1400px]">
           <Link to="/" className="flex items-center gap-4 group">
@@ -85,16 +85,21 @@ export default function PublicLayout() {
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-10 text-sm font-medium" aria-label="Main Navigation">
-            <Link to="/#services" className="text-gray-400 hover:text-white transition-colors uppercase tracking-widest text-xs" aria-label="Services">{t('nav.services')}</Link>
-            <Link to="/#about" className="text-gray-400 hover:text-white transition-colors uppercase tracking-widest text-xs" aria-label="About">{t('nav.about')}</Link>
+          <nav className="hidden xl:flex items-center gap-8 text-sm font-medium" aria-label="Main Navigation">
+            <Link to="/services" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Services">{t('nav.services')}</Link>
+            <Link to="/pricing" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Pricing">Preise</Link>
+            <Link to="/portfolio" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Portfolio">Referenzen</Link>
+            <Link to="/faq" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="FAQ">FAQ</Link>
+            <Link to="/about" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="About">{t('nav.about')}</Link>
+            <Link to="/blog" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Blog">Blog</Link>
+            <Link to="/contact" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Contact">Kontakt</Link>
             
             <div className="ml-2">
               <LanguageSelector />
             </div>
 
-            <Link to="/booking" className="relative group overflow-hidden bg-neon-500 text-black px-8 py-3.5 hover:bg-neon-400 transition-all border border-neon-500 active:scale-95">
-              <span className="relative z-10 text-xs uppercase tracking-widest font-semibold">{t('nav.book_consultation')}</span>
+            <Link to="/booking" className="relative group overflow-hidden bg-neon-500 text-black px-6 py-3 hover:bg-neon-400 transition-all border border-neon-500 active:scale-95">
+              <span className="relative z-10 text-[10px] uppercase tracking-[0.2em] font-bold">{t('nav.book_consultation')}</span>
             </Link>
           </nav>
 
@@ -128,19 +133,29 @@ export default function PublicLayout() {
             <div>
               <h4 className="font-sans font-semibold tracking-widest uppercase mb-6 text-xs text-white">{t('footer.services')}</h4>
               <ul className="space-y-4 text-sm text-gray-400 font-light">
-                <li className="hover:text-neon-400 transition-colors cursor-pointer">{t('footer.svc_web', 'Website Development')}</li>
-                <li className="hover:text-neon-400 transition-colors cursor-pointer">{t('footer.svc_shop', 'Online Shops')}</li>
-                <li className="hover:text-neon-400 transition-colors cursor-pointer">{t('footer.svc_workflow', 'Workflow Automation')}</li>
-                <li className="hover:text-neon-400 transition-colors cursor-pointer">{t('footer.svc_custom', 'Custom Solutions')}</li>
+                <li><Link to="/services/webdesign" className="hover:text-neon-400 transition-colors">Webdesign</Link></li>
+                <li><Link to="/services/ai-automation" className="hover:text-neon-400 transition-colors">KI Automatisierung</Link></li>
+                <li><Link to="/services/ai-chatbots" className="hover:text-neon-400 transition-colors">KI Chatbots</Link></li>
+                <li><Link to="/services/workflow-automation" className="hover:text-neon-400 transition-colors">Workflow Automation</Link></li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-sans font-semibold tracking-widest uppercase mb-6 text-xs text-white">{t('footer.company')}</h4>
               <ul className="space-y-4 text-sm text-gray-400 font-light">
-                <li><Link to="/admin" className="hover:text-neon-400 transition-colors">{t('footer.admin')}</Link></li>
-                <li className="hover:text-neon-400 transition-colors cursor-pointer">{t('footer.privacy')}</li>
-                <li className="hover:text-neon-400 transition-colors cursor-pointer">{t('footer.terms')}</li>
+                <li><Link to="/about" className="hover:text-neon-400 transition-colors">Über uns</Link></li>
+                <li><Link to="/process" className="hover:text-neon-400 transition-colors">Projektablauf</Link></li>
+                <li><Link to="/pricing" className="hover:text-neon-400 transition-colors">Preise</Link></li>
+                <li><Link to="/blog" className="hover:text-neon-400 transition-colors">Blog</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-sans font-semibold tracking-widest uppercase mb-6 text-xs text-white">Rechtliches</h4>
+              <ul className="space-y-4 text-sm text-gray-400 font-light">
+                <li><Link to="/imprint" className="hover:text-neon-400 transition-colors">Impressum</Link></li>
+                <li><Link to="/privacy" className="hover:text-neon-400 transition-colors">Datenschutz</Link></li>
+                <li><Link to="/admin" className="hover:text-neon-400 transition-colors">Admin Login</Link></li>
               </ul>
             </div>
           </div>

@@ -28,7 +28,21 @@ export default function ContentView() {
 
   // Extract all keys from default English resources as the master list
   const defaultResources = getDefaultResources();
-  const allKeys = Object.keys(defaultResources.en.translation || {});
+
+  const flattenKeys = (obj: any, path: string = ''): string[] => {
+    if (!obj) return [];
+    return Object.keys(obj).reduce((acc: string[], key: string) => {
+      const newPath = path ? `${path}.${key}` : key;
+      if (typeof obj[key] === 'object' && !Array.isArray(obj[key]) && obj[key] !== null) {
+        acc.push(...flattenKeys(obj[key], newPath));
+      } else {
+        acc.push(newPath);
+      }
+      return acc;
+    }, []);
+  };
+
+  const allKeys = flattenKeys(defaultResources.en.translation || {});
 
   useEffect(() => {
     try {
@@ -71,7 +85,17 @@ export default function ContentView() {
       return overrides[selectedLang][key];
     }
     const defaultDict = (defaultResources as any)[selectedLang]?.translation;
-    return defaultDict ? defaultDict[key] : '';
+    if (!defaultDict) return '';
+
+    const parts = key.split('.');
+    let current = defaultDict;
+    for (const part of parts) {
+      if (!current || current[part] === undefined) return '';
+      current = current[part];
+    }
+    
+    if (Array.isArray(current)) return current.join(', ');
+    return typeof current === 'string' ? current : '';
   };
 
   const filteredKeys = allKeys.filter(key => 
@@ -81,34 +105,68 @@ export default function ContentView() {
 
   const quickAccessGroups = [
     {
-      name: 'Navigation & Global',
-      keys: ['nav.services', 'nav.booking', 'nav.admin', 'footer.rights', 'footer.svc_title', 'footer.contact_title']
+      name: 'Navigation & Fußzeile',
+      keys: ['nav.services', 'nav.about', 'nav.book_consultation', 'footer.description', 'footer.rights', 'footer.slogan']
     },
     {
-      name: 'Hero Section',
-      keys: ['home.hero_badge', 'home.hero_title', 'home.hero_subtitle', 'home.hero_cta']
+      name: 'Hero Sektion',
+      keys: ['home.hero_badge', 'home.hero_title', 'home.hero_subtitle', 'home.hero_desc', 'home.book_free', 'home.phase4_btn']
     },
     {
-      name: 'Experience / Phases',
+      name: 'Startseite Sektionen',
       keys: [
         'home.phase2_label', 'home.phase2_title', 'home.phase2_desc',
         'home.phase3_label', 'home.phase3_title', 'home.phase3_desc',
-        'home.phase4_title', 'home.phase4_btn'
+        'home.expertise', 'home.srv_title', 'home.phase4_title'
       ]
     },
     {
-      name: 'Services & Values',
+      name: 'Leistungen Seite',
       keys: [
-        'home.srv_title', 'home.val_eng_title', 'home.val_eng_desc',
-        'home.val_growth_title', 'home.val_growth_desc',
-        'home.val_ai_title', 'home.val_ai_desc'
+        'services.title', 'services.subtitle', 
+        'services.webdesign.title', 'services.webdesign.description',
+        'services.ai_automation.title', 'services.ai_automation.description',
+        'services.ai_chatbots.title', 'services.ai_chatbots.description'
       ]
     },
     {
-      name: 'Booking Page',
+      name: 'Preise Seite',
       keys: [
-        'booking.title', 'booking.subtitle', 'booking.step_service', 'booking.step_date', 
-        'booking.step_time', 'booking.step_details', 'booking.no_slots'
+        'pricing.title', 'pricing.subtitle',
+        'pricing.starter.name', 'pricing.starter.price', 'pricing.starter.desc',
+        'pricing.business.name', 'pricing.business.price', 'pricing.business.desc',
+        'pricing.custom.name', 'pricing.custom.price',
+        'pricing.individual_title', 'pricing.individual_desc', 'pricing.individual_btn'
+      ]
+    },
+    {
+      name: 'Über uns Seite',
+      keys: [
+        'about.title', 'about.subtitle', 
+        'about.mission_title', 'about.mission_desc',
+        'about.vision_title', 'about.vision_desc',
+        'about.why_title'
+      ]
+    },
+    {
+      name: 'FAQ Sektion',
+      keys: [
+        'faq.title', 'faq.subtitle',
+        'faq.cta_title', 'faq.cta_subtitle', 'faq.cta_btn'
+      ]
+    },
+    {
+      name: 'Referenzen',
+      keys: [
+        'portfolio.title', 'portfolio.subtitle',
+        'portfolio.cta_title', 'portfolio.cta_desc'
+      ]
+    },
+    {
+      name: 'Ablauf',
+      keys: [
+        'process.title', 'process.subtitle',
+        'process.cta_title', 'process.cta_desc'
       ]
     }
   ];
@@ -117,24 +175,24 @@ export default function ContentView() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-serif text-white tracking-tight">Content Management</h2>
-          <p className="text-gray-400 mt-1 font-light text-sm">Edit website copy, slogans, and descriptions across all languages.</p>
+          <h2 className="text-2xl font-serif text-white tracking-tight">Inhaltsverwaltung</h2>
+          <p className="text-gray-400 mt-1 font-light text-sm">Bearbeiten Sie Website-Texte, Slogans und Beschreibungen in allen Sprachen.</p>
         </div>
         <div className="flex items-center gap-3">
-          {saved && <span className="text-neon-500 text-sm font-medium flex items-center"><CheckCircle2 className="w-4 h-4 mr-1" /> Saved</span>}
+          {saved && <span className="text-neon-500 text-sm font-medium flex items-center"><CheckCircle2 className="w-4 h-4 mr-1" /> Gespeichert</span>}
           <Button onClick={handleSave} isLoading={isSaving} className="bg-neon-500 hover:bg-neon-400 text-dark-950 px-6 rounded-xl font-semibold text-xs tracking-widest uppercase">
-            <Save className="w-4 h-4 mr-2" /> Save Content
+            <Save className="w-4 h-4 mr-2" /> Inhalt speichern
           </Button>
         </div>
       </div>
 
-      <Card className="p-6 bg-dark-900/50 backdrop-blur-xl border-white/5">
+      <Card className="p-6 bg-dark-900/50 backdrop-blur-md border-white/5">
         <div className="flex flex-col lg:flex-row gap-8">
           
           {/* Language Selector */}
           <div className="lg:w-64 flex-shrink-0 space-y-2">
             <h3 className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-4 flex items-center">
-              <Globe className="w-4 h-4 mr-2" /> Languages
+              <Globe className="w-4 h-4 mr-2" /> Sprachen
             </h3>
             {SUPPORTED_LANGS.map(lang => (
               <button
@@ -155,7 +213,7 @@ export default function ContentView() {
 
             <div className="pt-8 space-y-2">
               <h3 className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-4">
-                Quick Access
+                Schnellzugriff
               </h3>
               <div className="flex flex-wrap gap-2">
                 {['Home', 'Services', 'Footer'].map(tag => (
@@ -171,7 +229,7 @@ export default function ContentView() {
                   onClick={() => setSearchQuery('')}
                   className="px-3 py-1 rounded-full bg-dark-800 text-[10px] text-gray-400 hover:text-white transition-colors"
                 >
-                  Clear
+                  Löschen
                 </button>
               </div>
             </div>
@@ -181,7 +239,7 @@ export default function ContentView() {
           <div className="flex-1 space-y-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <Input 
-                placeholder="Search content keys or text..." 
+                placeholder="Suchbegriff oder Schlüssel..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-dark-950 border-white/10 text-white rounded-xl"
@@ -222,7 +280,7 @@ export default function ContentView() {
 
               {filteredKeys.length > 0 && searchQuery && (
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-mono uppercase tracking-[0.3em] text-neon-500/50">Search Results</h4>
+                  <h4 className="text-[10px] font-mono uppercase tracking-[0.3em] text-neon-500/50">Suchergebnisse</h4>
                   {filteredKeys.map(key => {
                     const value = getValue(key);
                     const isLongText = value && value.length > 50;
@@ -251,7 +309,7 @@ export default function ContentView() {
               
               {filteredKeys.length === 0 && (
                 <div className="text-center py-12 text-gray-500">
-                  No content found matching "{searchQuery}"
+                  Kein Inhalt gefunden für "{searchQuery}"
                 </div>
               )}
             </div>

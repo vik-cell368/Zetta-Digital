@@ -274,7 +274,7 @@ export default function Booking() {
                       key={service.id}
                       onClick={() => { setSelectedService(service); setStep('date'); }}
                       className={cn(
-                        "group p-8 rounded-2xl cursor-pointer transition-all duration-500 border backdrop-blur-xl relative overflow-hidden",
+                        "group p-8 rounded-2xl cursor-pointer transition-all duration-500 border backdrop-blur-md relative overflow-hidden",
                         selectedService?.id === service.id 
                           ? "bg-dark-900 border-neon-500/50 shadow-[0_0_30px_rgba(197,160,89,0.1)]" 
                           : "bg-dark-900/40 border-white/5 hover:border-neon-500/30 hover:bg-dark-900/80"
@@ -308,7 +308,7 @@ export default function Booking() {
               <Button variant="ghost" onClick={() => setStep('service')} className="mb-6 -ml-4 text-gray-400 hover:text-white uppercase tracking-widest text-xs font-mono">
                 <ChevronLeft className="w-4 h-4 mr-2" /> Back
               </Button>
-              <div className="bg-dark-900/50 backdrop-blur-xl rounded-2xl p-8 border border-white/5 flex justify-center">
+              <div className="bg-dark-900/50 backdrop-blur-md rounded-2xl p-8 border border-white/5 flex justify-center">
                 <style>{`
                   .rdp { --rdp-cell-size: 46px; --rdp-accent-color: var(--color-neon-500); --rdp-background-color: var(--color-dark-800); margin: 0; }
                   .rdp-day_selected { font-weight: bold; color: var(--color-dark-950); }
@@ -340,7 +340,7 @@ export default function Booking() {
                 <ChevronLeft className="w-4 h-4 mr-2" /> Back
               </Button>
               
-              <div className="bg-dark-900/50 backdrop-blur-xl rounded-2xl p-8 border border-white/5">
+              <div className="bg-dark-900/50 backdrop-blur-md rounded-2xl p-8 border border-white/5">
                 <h3 className="font-serif text-2xl text-white mb-8">
                   {selectedDate && format(selectedDate, 'EEEE, d. MMMM', { locale: getDateLocale(i18n.language) })}
                 </h3>
@@ -401,7 +401,7 @@ export default function Booking() {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                 <div className="md:col-span-2">
-                  <div className="bg-dark-900/50 backdrop-blur-xl rounded-2xl p-10 border border-white/5">
+                  <div className="bg-dark-900/50 backdrop-blur-md rounded-2xl p-10 border border-white/5">
                     <h2 className="text-3xl font-serif text-white mb-10">{t('booking.your_details')}</h2>
                     
                     <form id="booking-form" onSubmit={handleSubmit(onSubmitDetails)} className="space-y-8">
@@ -452,7 +452,7 @@ export default function Booking() {
                 </div>
                 
                 <div className="md:col-span-1">
-                  <div className="bg-dark-900/80 backdrop-blur-xl rounded-2xl p-8 border border-white/5 sticky top-32">
+                  <div className="bg-dark-900/80 backdrop-blur-md rounded-2xl p-8 border border-white/5 sticky top-32">
                     <h2 className="text-xl font-serif text-white mb-8">{t('booking.summary')}</h2>
                     
                     <div className="space-y-8">
@@ -501,7 +501,7 @@ export default function Booking() {
               initial={{ scale: 0.95, opacity: 0, filter: 'blur(10px)' }}
               animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
               transition={{ type: "spring" as const, bounce: 0.4 }}
-              className="bg-dark-900/50 backdrop-blur-xl border border-white/5 rounded-3xl overflow-hidden"
+              className="bg-dark-900/50 backdrop-blur-md border border-white/5 rounded-3xl overflow-hidden"
             >
               <div className="py-32 px-8 text-center flex flex-col items-center">
                 <div className="w-32 h-32 bg-dark-950 border border-white/5 rounded-full flex items-center justify-center mb-12 shadow-[0_0_50px_rgba(197,160,89,0.1)]">

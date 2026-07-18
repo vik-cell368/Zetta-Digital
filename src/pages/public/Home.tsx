@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, useScroll } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { Monitor, ShoppingBag, Zap, Code } from 'lucide-react';
@@ -13,54 +14,7 @@ export default function Home() {
   // Use motion's useScroll for smooth tracking
   const { scrollYProgress } = useScroll();
 
-  const [services, setServices] = useState<any[]>([]);
-
-  useEffect(() => {
-    async function fetchServices() {
-      try {
-        const { data } = await supabase.from('services').select('*').eq('is_active', true).order('created_at', { ascending: false });
-        if (data && data.length > 0) {
-          setServices(data);
-        } else {
-          // Fallback to local storage or defaults
-          const localData = localStorage.getItem('zetta_services');
-          if (localData) {
-            setServices(JSON.parse(localData).filter((s: any) => s.is_active));
-          } else {
-            setServices([
-              {
-                id: '1',
-                icon: <Monitor className="w-8 h-8" />,
-                name: JSON.stringify({ en: 'Website Development', de: 'Webentwicklung' }),
-                description: JSON.stringify({ en: 'Modern tech stacks, lightning fast performance.', de: 'Moderne Tech-Stacks, blitzschnelle Performance.' }),
-              },
-              {
-                id: '2',
-                icon: <ShoppingBag className="w-8 h-8" />,
-                name: JSON.stringify({ en: 'Online Shops', de: 'Online-Shops' }),
-                description: JSON.stringify({ en: 'Optimized for conversion and growth.', de: 'Optimiert für Konversion und Wachstum.' }),
-              },
-              {
-                id: '3',
-                icon: <Zap className="w-8 h-8" />,
-                name: JSON.stringify({ en: 'Workflow Automation', de: 'Workflow-Automatisierung' }),
-                description: JSON.stringify({ en: 'Streamline processes with intelligent tools.', de: 'Optimieren Sie Abläufe mit intelligenten Tools.' }),
-              },
-              {
-                id: '4',
-                icon: <Code className="w-8 h-8" />,
-                name: JSON.stringify({ en: 'Custom Solutions', de: 'Individuelle Lösungen' }),
-                description: JSON.stringify({ en: 'Interfaces that fascinate.', de: 'Interfaces, die faszinieren.' }),
-              }
-            ]);
-          }
-        }
-      } catch (e) {
-        console.warn("Home services fetch failed", e);
-      }
-    }
-    fetchServices();
-  }, []);
+  const servicesList = t('services.list', { returnObjects: true }) as any[] || [];
 
   const getServiceIcon = (index: number) => {
     const icons = [<Monitor key="m" />, <ShoppingBag key="s" />, <Zap key="z" />, <Code key="c" />];
@@ -103,13 +57,13 @@ export default function Home() {
               className="text-left"
             >
               <span className="font-mono text-neon-400 text-xs uppercase tracking-[0.4em] mb-4 block">
-                {t('home.phase2_label', 'Automation')}
+                {t('home.phase2_label')}
               </span>
               <h2 id="phase2-title" className="text-5xl md:text-8xl font-display font-medium text-white mb-8 leading-[1] tracking-tighter max-w-4xl">
-                {t('home.phase2_title', 'AI Agents: Your sales team, 24/7.')}
+                {t('home.phase2_title')}
               </h2>
               <p className="text-lg md:text-xl text-gray-400 font-light max-w-2xl leading-relaxed">
-                {t('home.phase2_desc', 'Automate your success with intelligent systems that think, learn, and scale for you.')}
+                {t('home.phase2_desc')}
               </p>
             </motion.div>
           </div>
@@ -126,13 +80,13 @@ export default function Home() {
               className="text-right ml-auto"
             >
               <span className="font-mono text-neon-400 text-xs uppercase tracking-[0.4em] mb-4 block">
-                {t('home.phase3_label', 'Craftsmanship')}
+                {t('home.phase3_label')}
               </span>
               <h2 id="phase3-title" className="text-5xl md:text-8xl font-display font-medium text-white mb-8 leading-[1] tracking-tighter max-w-4xl ml-auto">
-                {t('home.phase3_title', 'Digital Architecture.')}
+                {t('home.phase3_title')}
               </h2>
               <p className="text-lg md:text-xl text-gray-400 font-light max-w-2xl ml-auto leading-relaxed">
-                {t('home.phase3_desc', 'We build interfaces that fascinate. Design meets uncompromising performance.')}
+                {t('home.phase3_desc')}
               </p>
             </motion.div>
           </div>
@@ -147,7 +101,7 @@ export default function Home() {
                 whileInView={{ opacity: 1 }}
                 className="font-mono text-neon-400 text-xs uppercase tracking-[0.4em] mb-4 block"
               >
-                {t('home.expertise', 'Expertise')}
+                {t('home.expertise')}
               </motion.span>
               <motion.h2 
                 id="services-grid-title"
@@ -155,32 +109,34 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 className="text-4xl md:text-7xl font-display font-medium text-white tracking-tighter"
               >
-                {t('home.srv_title', 'Unsere Leistungen')}
+                {t('home.srv_title')}
               </motion.h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-              {services.map((service, index) => (
+              {Array.isArray(servicesList) && servicesList.slice(0, 3).map((service, index) => (
                 <motion.div
                   key={service.id || index}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="group relative p-8 rounded-3xl bg-dark-900/50 border border-white/5 hover:border-neon-400/50 transition-all duration-500 overflow-hidden"
+                  className="group relative"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-neon-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  
-                  <div className="relative z-10">
-                    <div className="text-neon-400 mb-6 group-hover:scale-110 transition-transform duration-500">
-                      {service.icon || getServiceIcon(index)}
+                  <Link to={`/services/${service.id || index}`} className="block p-8 rounded-3xl bg-dark-900/50 border border-white/5 hover:border-neon-400/50 transition-all duration-500 overflow-hidden h-full">
+                    <div className="absolute inset-0 bg-gradient-to-br from-neon-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    
+                    <div className="relative z-10">
+                      <div className="text-neon-400 mb-6 group-hover:scale-110 transition-transform duration-500">
+                        {getServiceIcon(index)}
+                      </div>
+                      <h3 className="text-xl font-display font-medium text-white mb-4 tracking-tight">
+                        {service.title}
+                      </h3>
+                      <p className="text-gray-400 text-sm leading-relaxed font-light">
+                        {service.desc}
+                      </p>
                     </div>
-                    <h3 className="text-xl font-display font-medium text-white mb-4 tracking-tight">
-                      {typeof service.name === 'string' ? getTranslatedText(service.name, i18n.language) : service.title}
-                    </h3>
-                    <p className="text-gray-400 text-sm leading-relaxed font-light">
-                      {typeof service.description === 'string' ? getTranslatedText(service.description, i18n.language) : service.desc}
-                    </p>
-                  </div>
+                  </Link>
                 </motion.div>
               ))}
             </div>
@@ -197,15 +153,15 @@ export default function Home() {
               viewport={{ once: false }}
             >
               <h2 id="phase4-title" className="text-5xl md:text-8xl font-display font-medium text-white mb-12 tracking-tighter leading-none">
-                {t('home.phase4_title', 'Ready for the next level?')}
+                {t('home.phase4_title')}
               </h2>
               <Button 
                 size="lg"
                 onClick={() => window.location.assign('/booking')}
-                aria-label={t('home.phase4_btn', 'Request Concept')}
-                className="h-20 md:h-24 px-12 md:px-20 rounded-full bg-white text-black font-bold tracking-[0.2em] uppercase text-lg md:text-xl transition-all hover:scale-105 shadow-[0_0_50px_rgba(255,255,255,0.2)] hover:bg-neon-400 hover:text-white"
+                aria-label={t('home.phase4_btn')}
+                className="h-20 md:h-24 px-12 md:px-20 rounded-full bg-white text-black font-bold tracking-[0.1em] uppercase text-lg md:text-xl transition-all hover:scale-105 shadow-[0_0_50px_rgba(255,255,255,0.2)] hover:bg-neon-400 hover:text-white"
               >
-                {t('home.phase4_btn', 'Request Concept')}
+                {t('home.phase4_btn')}
               </Button>
             </motion.div>
           </div>

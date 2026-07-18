@@ -53,7 +53,7 @@ export default function AdminLayout() {
       <div className="min-h-screen flex items-center justify-center bg-dark-950">
         <div className="animate-pulse flex flex-col items-center gap-4">
           <Layers className="h-8 w-8 text-neon-500/50" />
-          <p className="text-gray-500 text-sm font-light">Verifying access...</p>
+          <p className="text-gray-500 text-sm font-light">Zugriff wird überprüft...</p>
         </div>
       </div>
     );
@@ -61,10 +61,10 @@ export default function AdminLayout() {
 
   const navItems = [
     { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/admin/appointments', icon: CalendarDays, label: 'Appointments' },
-    { path: '/admin/services', icon: Package, label: 'Services' },
-    { path: '/admin/content', icon: Layers, label: 'Content' },
-    { path: '/admin/settings', icon: Settings, label: 'Settings' },
+    { path: '/admin/appointments', icon: CalendarDays, label: 'Termine' },
+    { path: '/admin/services', icon: Package, label: 'Leistungen' },
+    { path: '/admin/content', icon: Layers, label: 'Inhalte' },
+    { path: '/admin/settings', icon: Settings, label: 'Einstellungen' },
   ];
 
   return (
@@ -72,7 +72,7 @@ export default function AdminLayout() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-dark-900 via-dark-950 to-dark-950 opacity-20 pointer-events-none"></div>
       
       {/* Sidebar */}
-      <aside className="w-64 bg-dark-900/80 backdrop-blur-xl text-gray-400 flex flex-col border-r border-white/10 relative z-10">
+      <aside className="w-64 bg-dark-900/80 backdrop-blur-md text-gray-400 flex flex-col border-r border-white/10 relative z-10">
         <div className="h-20 flex items-center px-6 border-b border-white/10">
           <Link to="/" className="flex items-center gap-3 group text-white">
             <div className="relative flex items-center justify-center w-8 h-8 overflow-hidden">
@@ -113,7 +113,7 @@ export default function AdminLayout() {
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4 mr-3" />
-            Sign Out
+            Abmelden
           </Button>
         </div>
       </aside>

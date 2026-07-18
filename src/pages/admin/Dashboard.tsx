@@ -100,39 +100,39 @@ export default function Dashboard() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
-        <p className="text-gray-400">Welcome to Zetta Digital Admin.</p>
+        <p className="text-gray-400">Willkommen im Zetta Digital Admin-Bereich.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardContent className="p-6 flex items-center">
-            <div className="bg-blue-50 p-4 rounded-full mr-4">
-              <Calendar className="h-6 w-6 text-blue-600" />
+            <div className="bg-blue-50/10 p-4 rounded-full mr-4">
+              <Calendar className="h-6 w-6 text-blue-500" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-400">Upcoming Appointments</p>
+              <p className="text-sm font-medium text-gray-400">Anstehende Termine</p>
               <h3 className="text-3xl font-bold text-white">{stats.upcoming}</h3>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6 flex items-center">
-            <div className="bg-green-50 p-4 rounded-full mr-4">
-              <CheckCircle className="h-6 w-6 text-green-600" />
+            <div className="bg-green-50/10 p-4 rounded-full mr-4">
+              <CheckCircle className="h-6 w-6 text-green-500" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-400">Completed Sessions</p>
+              <p className="text-sm font-medium text-gray-400">Abgeschlossene Sitzungen</p>
               <h3 className="text-3xl font-bold text-white">{stats.completed}</h3>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6 flex items-center">
-            <div className="bg-purple-50 p-4 rounded-full mr-4">
-              <Clock className="h-6 w-6 text-purple-600" />
+            <div className="bg-purple-50/10 p-4 rounded-full mr-4">
+              <Clock className="h-6 w-6 text-purple-500" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-400">Active Services</p>
+              <p className="text-sm font-medium text-gray-400">Aktive Leistungen</p>
               <h3 className="text-3xl font-bold text-white">{stats.totalServices}</h3>
             </div>
           </CardContent>
@@ -141,22 +141,22 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Upcoming Schedule</CardTitle>
+          <CardTitle>Anstehende Termine</CardTitle>
           <Link to="/admin/appointments" className="text-sm text-gray-400 hover:text-white font-medium">
-            View all
+            Alle ansehen
           </Link>
         </CardHeader>
         <CardContent>
           {recentAppointments.length === 0 ? (
             <div className="text-center py-8 text-gray-400">
-              No upcoming appointments.
+              Keine anstehenden Termine.
             </div>
           ) : (
             <div className="space-y-4">
               {recentAppointments.map(apt => (
                 <div key={apt.id} className="flex items-center justify-between p-4 border border-white/10 rounded-lg bg-dark-900/30">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-dark-9500 rounded-full border border-white/10 flex flex-col items-center justify-center mr-4 shadow-sm">
+                    <div className="w-12 h-12 bg-dark-950 rounded-full border border-white/10 flex flex-col items-center justify-center mr-4 shadow-sm">
                       <span className="text-xs font-bold text-white">{format(parseISO(apt.appointment_date), 'd')}</span>
                       <span className="text-[10px] uppercase text-gray-400">{format(parseISO(apt.appointment_date), 'MMM', { locale: getDateLocale(i18n.language) })}</span>
                     </div>
@@ -169,11 +169,11 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                      apt.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                      apt.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
+                      apt.status === 'confirmed' ? 'bg-green-900/40 text-green-400' :
+                      apt.status === 'pending' ? 'bg-yellow-900/40 text-yellow-400' :
+                      'bg-red-900/40 text-red-400'
                     }`}>
-                      {apt.status}
+                      {apt.status === 'confirmed' ? 'Bestätigt' : apt.status === 'pending' ? 'Ausstehend' : 'Storniert'}
                     </span>
                   </div>
                 </div>

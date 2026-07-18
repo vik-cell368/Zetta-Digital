@@ -3,6 +3,16 @@ import PublicLayout from './components/layout/PublicLayout';
 import AdminLayout from './components/layout/AdminLayout';
 import Home from './pages/public/Home';
 import Booking from './pages/public/Booking';
+import Services from './pages/public/Services';
+import Pricing from './pages/public/Pricing';
+import Process from './pages/public/Process';
+import Portfolio from './pages/public/Portfolio';
+import FAQ from './pages/public/FAQ';
+import About from './pages/public/About';
+import Blog from './pages/public/Blog';
+import Contact from './pages/public/Contact';
+import Knowledge from './pages/public/Knowledge';
+import Legal from './pages/public/Legal';
 import Login from './pages/admin/Login';
 import Dashboard from './pages/admin/Dashboard';
 import AppointmentsView from './pages/admin/AppointmentsView';
@@ -20,6 +30,18 @@ export default function App() {
           <Route path="/" element={<PublicLayout />}>
             <Route index element={<Home />} />
             <Route path="booking" element={<Booking />} />
+            <Route path="services" element={<Services />} />
+            <Route path="services/:slug" element={<Services />} />
+            <Route path="pricing" element={<Pricing />} />
+            <Route path="process" element={<Process />} />
+            <Route path="portfolio" element={<Portfolio />} />
+            <Route path="faq" element={<FAQ />} />
+            <Route path="about" element={<About />} />
+            <Route path="blog" element={<Blog />} />
+            <Route path="contact" element={<Contact />} />
+            <Route path="knowledge" element={<Knowledge />} />
+            <Route path="imprint" element={<Legal />} />
+            <Route path="privacy" element={<Legal />} />
           </Route>
 
           {/* Admin Auth Route */}

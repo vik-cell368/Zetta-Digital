@@ -1,11 +1,18 @@
 import express from "express";
 import path from "path";
+import helmet from "helmet";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  // Security headers - Reinforced for SSL/TLS environments
+  app.use(helmet({
+    contentSecurityPolicy: false, // Disabled for dev compatibility with Vite, but other headers remain
+    crossOriginEmbedderPolicy: false
+  }));
 
   app.use(express.json());
 

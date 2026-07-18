@@ -7,7 +7,7 @@ import {
 } from '@react-three/drei'
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
 
-const PARTICLE_COUNT = 5000
+const PARTICLE_COUNT = 2500 // Reduced from 5000
 
 // Helper to create the "Z" logo shape
 const createZShape = () => {
@@ -219,8 +219,8 @@ function Scene({ scrollYProgress }: { scrollYProgress: any }) {
       <pointLight position={[0, 0, 0]} intensity={3} color="#00ffff" />
       <Environment preset="night" />
 
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.15} mipmapBlur intensity={2} radius={0.5} />
+      <EffectComposer multisampling={0}>
+        <Bloom luminanceThreshold={0.5} mipmapBlur intensity={1.5} radius={0.4} />
       </EffectComposer>
     </>
   )

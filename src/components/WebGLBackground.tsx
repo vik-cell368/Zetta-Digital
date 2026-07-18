@@ -3,7 +3,7 @@ import { useRef, useMemo } from 'react'
 import * as THREE from 'three'
 
 function Particles() {
-  const count = 2000
+  const count = 1000 // Reduced from 2000
   const mesh = useRef<THREE.InstancedMesh>(null)
   
   const dummy = useMemo(() => new THREE.Object3D(), [])
@@ -12,7 +12,7 @@ function Particles() {
     for (let i = 0; i < count; i++) {
       const t = Math.random() * 100
       const factor = 20 + Math.random() * 100
-      const speed = 0.01 + Math.random() / 200
+      const speed = 0.005 + Math.random() / 300 // Slower for less calculation impact
       const xFactor = -50 + Math.random() * 100
       const yFactor = -50 + Math.random() * 100
       const zFactor = -50 + Math.random() * 100
@@ -58,7 +58,11 @@ function Particles() {
 export default function WebGLBackground() {
   return (
     <div className="fixed inset-0 pointer-events-none z-0 mix-blend-screen opacity-50">
-      <Canvas camera={{ fov: 75, position: [0, 0, 30] }}>
+      <Canvas 
+        camera={{ fov: 75, position: [0, 0, 30] }}
+        dpr={[1, 1.5]}
+        gl={{ powerPreference: "high-performance", antialias: false }}
+      >
         <Particles />
       </Canvas>
     </div>

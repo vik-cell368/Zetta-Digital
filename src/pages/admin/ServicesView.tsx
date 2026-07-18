@@ -71,15 +71,25 @@ export default function ServicesView() {
   const onSubmit = async (data: ServiceFormData) => {
     const nameObj: Record<string, string> = {};
     const descObj: Record<string, string> = {};
+    const featuresObj: Record<string, string> = {};
+    const processObj: Record<string, string> = {};
+    const faqsObj: Record<string, string> = {};
     
     SUPPORTED_LANGS.forEach(lang => {
       nameObj[lang.code] = data[`name_${lang.code}`] || '';
       descObj[lang.code] = data[`description_${lang.code}`] || '';
+      featuresObj[lang.code] = data[`features_${lang.code}`] || '';
+      processObj[lang.code] = data[`process_${lang.code}`] || '';
+      faqsObj[lang.code] = data[`faqs_${lang.code}`] || '';
     });
 
     const payload = {
       name: JSON.stringify(nameObj),
       description: JSON.stringify(descObj),
+      features: JSON.stringify(featuresObj),
+      process: JSON.stringify(processObj),
+      faqs: JSON.stringify(faqsObj),
+      tech: data.tech || '',
       price: data.price,
       duration_minutes: data.duration_minutes,
       is_active: data.is_active ?? true,
@@ -132,8 +142,12 @@ export default function ServicesView() {
     SUPPORTED_LANGS.forEach(lang => {
       setValue(`name_${lang.code}`, getTranslatedText(service.name, lang.code));
       setValue(`description_${lang.code}`, getTranslatedText(service.description, lang.code));
+      setValue(`features_${lang.code}`, getTranslatedText(service.features || '', lang.code));
+      setValue(`process_${lang.code}`, getTranslatedText(service.process || '', lang.code));
+      setValue(`faqs_${lang.code}`, getTranslatedText(service.faqs || '', lang.code));
     });
     
+    setValue('tech', service.tech || '');
     setValue('price', service.price);
     setValue('duration_minutes', service.duration_minutes);
     setValue('is_active', service.is_active);
@@ -217,8 +231,8 @@ export default function ServicesView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Services</h2>
-          <p className="text-gray-400">Manage your offerings and pricing.</p>
+          <h2 className="text-2xl font-bold tracking-tight text-white">Leistungen</h2>
+          <p className="text-gray-400">Verwalten Sie Ihre Angebote und Preise.</p>
         </div>
         <div className="flex items-center gap-4">
           {statusMessage && (
@@ -230,7 +244,7 @@ export default function ServicesView() {
               reset({ is_active: true }); 
               SUPPORTED_LANGS.forEach(l => { setValue(`name_${l.code}`, ''); setValue(`description_${l.code}`, ''); });
             }}>
-              <Plus className="h-4 w-4 mr-2" /> Add Service
+              <Plus className="h-4 w-4 mr-2" /> Leistung hinzufügen
             </Button>
           )}
         </div>
@@ -239,7 +253,7 @@ export default function ServicesView() {
       {(isAdding || isEditing) && (
         <Card className="border-neon-400">
           <CardHeader>
-            <CardTitle>{isEditing ? 'Edit Service' : 'Add New Service'}</CardTitle>
+            <CardTitle>{isEditing ? 'Leistung bearbeiten' : 'Neue Leistung hinzufügen'}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -270,7 +284,7 @@ export default function ServicesView() {
                   className="mb-1 hidden sm:flex"
                 >
                   {isTranslating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Languages className="h-4 w-4 mr-2" />}
-                  Auto Translate All
+                  Alle automatisch übersetzen
                 </Button>
               </div>
               
@@ -284,7 +298,7 @@ export default function ServicesView() {
                   className="w-full"
                 >
                   {isTranslating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Languages className="h-4 w-4 mr-2" />}
-                  Auto Translate to Other Languages
+                  In andere Sprachen übersetzen
                 </Button>
               </div>
 
@@ -292,37 +306,54 @@ export default function ServicesView() {
                 <div key={lang.code} className={activeLangTab === lang.code ? 'block space-y-4' : 'hidden'}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-100 mb-1">Service Name ({lang.label})</label>
-                      <Input {...register(`name_${lang.code}`)} placeholder="e.g. Website Development" />
+                      <label className="block text-sm font-medium text-gray-100 mb-1">Name der Leistung ({lang.label})</label>
+                      <Input {...register(`name_${lang.code}`)} placeholder="z.B. Web-Entwicklung" />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-100 mb-1">Description ({lang.label})</label>
-                      <Textarea {...register(`description_${lang.code}`)} placeholder="Describe the service..." />
+                      <label className="block text-sm font-medium text-gray-100 mb-1">Beschreibung ({lang.label})</label>
+                      <Textarea {...register(`description_${lang.code}`)} placeholder="Beschreiben Sie die Leistung..." />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-100 mb-1">Vorteile ({lang.label}) - Ein Vorteil pro Zeile</label>
+                      <Textarea {...register(`features_${lang.code}`)} placeholder="Vorteil 1&#10;Vorteil 2" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-100 mb-1">Ablauf ({lang.label}) - Ein Schritt pro Zeile</label>
+                      <Textarea {...register(`process_${lang.code}`)} placeholder="Schritt 1&#10;Schritt 2" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-100 mb-1">FAQs ({lang.label}) - Format: Frage|Antwort (eine pro Zeile)</label>
+                      <Textarea {...register(`faqs_${lang.code}`)} placeholder="Wie lange dauert es?|Etwa 2 Wochen.&#10;Was kostet es?|Kommt auf den Umfang an." />
                     </div>
                   </div>
                 </div>
               ))}
 
+              <div className="md:col-span-2 pt-4 border-t border-white/10">
+                <label className="block text-sm font-medium text-gray-100 mb-1">Technologien (Komma-getrennt)</label>
+                <Input {...register('tech')} placeholder="React, Node.js, AI" />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-white/10">
                 <div>
-                  <label className="block text-sm font-medium text-gray-100 mb-1">Price (EUR)</label>
-                  <Input type="number" {...register('price', { required: true, valueAsNumber: true })} placeholder="e.g. 5000" />
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Preis (EUR)</label>
+                  <Input type="number" {...register('price', { required: true, valueAsNumber: true })} placeholder="z.B. 5000" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-100 mb-1">Duration (Minutes)</label>
-                  <Input type="number" {...register('duration_minutes', { required: true, valueAsNumber: true })} placeholder="e.g. 60" />
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Dauer (Minuten)</label>
+                  <Input type="number" {...register('duration_minutes', { required: true, valueAsNumber: true })} placeholder="z.B. 60" />
                 </div>
                 <div className="flex items-center space-x-2 mt-6">
                   <input type="checkbox" id="is_active" {...register('is_active')} className="rounded border-white/20 text-white focus:ring-neon-500/50" />
-                  <label htmlFor="is_active" className="text-sm font-medium text-gray-100">Active (Visible to clients)</label>
+                  <label htmlFor="is_active" className="text-sm font-medium text-gray-100">Aktiv (Sichtbar für Kunden)</label>
                 </div>
               </div>
               <div className="flex justify-end space-x-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => { setIsAdding(false); setIsEditing(null); reset(); }}>
-                  Cancel
+                  Abbrechen
                 </Button>
                 <Button type="submit">
-                  {isEditing ? 'Update Service' : 'Save Service'}
+                  {isEditing ? 'Leistung aktualisieren' : 'Leistung speichern'}
                 </Button>
               </div>
             </form>
@@ -339,18 +370,18 @@ export default function ServicesView() {
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-lg text-white">{getTranslatedText(service.name, currentLang)}</h3>
                     {service.is_active ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                        Active
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-900/40 text-green-400">
+                        Aktiv
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-dark-900 text-gray-100">
-                        Inactive
+                        Inaktiv
                       </span>
                     )}
                   </div>
                   <p className="text-gray-400 text-sm mb-2">{getTranslatedText(service.description, currentLang)}</p>
                   <div className="flex items-center text-sm font-medium text-gray-100 space-x-4">
-                    <span>{service.duration_minutes} min</span>
+                    <span>{service.duration_minutes} Min</span>
                     <span>•</span>
                     <span>{formatCurrency(service.price)}</span>
                   </div>
@@ -358,10 +389,10 @@ export default function ServicesView() {
                 <div className="flex items-center space-x-2">
                   <Button variant="outline" size="sm" onClick={() => toggleActive(service)}>
                     {service.is_active ? <XCircle className="w-4 h-4 mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
-                    {service.is_active ? 'Deactivate' : 'Activate'}
+                    {service.is_active ? 'Deaktivieren' : 'Aktivieren'}
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => handleEdit(service)}>
-                    <Edit2 className="w-4 h-4 mr-1" /> Edit
+                    <Edit2 className="w-4 h-4 mr-1" /> Bearbeiten
                   </Button>
                   <Button variant="danger" size="sm" onClick={() => handleDelete(service.id)}>
                     <Trash2 className="w-4 h-4" />
@@ -371,8 +402,8 @@ export default function ServicesView() {
             </Card>
           ))}
           {services.length === 0 && !isAdding && (
-            <div className="text-center py-12 text-gray-400 bg-dark-9500 rounded-xl border border-white/10">
-              No services found. Add your first service to start accepting bookings.
+            <div className="text-center py-12 text-gray-400 bg-dark-950 rounded-xl border border-white/10">
+              Keine Leistungen gefunden. Fügen Sie Ihre erste Leistung hinzu, um Buchungen entgegenzunehmen.
             </div>
           )}
         </div>

@@ -93,5 +93,179 @@
     "success_desc": "Thank you for booking with Zetta Digital. We've received your request and will send a confirmation email shortly.",
     "return_home": "Return to Home",
     "min": "min"
+  },
+  "services": {
+    "list": [
+      {
+        "id": "webdesign",
+        "title": "Modern Web Design",
+        "desc": "High-performance websites that convert visitors into customers."
+      },
+      {
+        "id": "ai-automation",
+        "title": "AI Automation",
+        "desc": "Eliminate manual processes through intelligent AI workflows."
+      },
+      {
+        "id": "ai-chatbots",
+        "title": "AI Chatbots",
+        "desc": "24/7 customer support and lead generation with intelligent assistants."
+      }
+    ],
+    "title": "Services",
+    "subtitle": "We bridge design with technology and AI to lead your business into the digital age.",
+    "cta_title": "Ready for {{service}}?",
+    "cta_subtitle": "Let's talk about your project.",
+    "cta_btn": "Book a Free Consultation",
+    "webdesign": {
+      "title": "Modern Web Design",
+      "description": "High-performance websites that convert visitors into customers.",
+      "features": ["Responsive Design", "SEO Optimization", "Conversion Focus", "High Speed Performance"],
+      "process": ["Analysis", "Concept", "Design", "Development", "Launch"],
+      "tech": ["React", "Next.js", "Tailwind CSS", "Vite"],
+      "faq_q1": "How long does a website take?",
+      "faq_a1": "Usually between 2-6 weeks.",
+      "faq_q2": "Is the site SEO-optimized?",
+      "faq_a2": "Yes, we build every site to modern SEO standards."
+    },
+    "ai_automation": {
+      "title": "AI Automation",
+      "description": "Eliminate manual processes through intelligent AI workflows.",
+      "features": ["Data Extraction", "Auto-Reporting", "Smart Lead Scoring", "Email Automation"],
+      "process": ["Audit", "Identification", "Implementation", "Monitoring"],
+      "tech": ["Python", "n8n", "Zapier", "OpenAI"],
+      "faq_q1": "What can be automated?",
+      "faq_a1": "Almost any repetitive digital process."
+    },
+    "ai_chatbots": {
+      "title": "AI Chatbots",
+      "description": "24/7 customer support and lead generation with intelligent assistants.",
+      "features": ["Real-time Answers", "Lead Qualification", "Seamless Integration", "Multilingual"],
+      "process": ["Knowledge-Base Setup", "Training", "Testing", "Integration"],
+      "tech": ["Gemini Pro", "GPT-4", "Voiceflow", "Custom API"],
+      "faq_q1": "Does the bot understand my customers?",
+      "faq_a1": "Yes, using state-of-the-art NLP models like Gemini."
+    },
+    "workflow_automation": {
+      "title": "Workflow Optimization",
+      "description": "Optimize your internal operations for maximum efficiency.",
+      "features": ["System Integration", "Real-time Sync", "Dashboarding", "Error Reduction"],
+      "process": ["Mapping", "Optimization", "Integration", "Training"],
+      "tech": ["Make", "Airtable", "Slack Integration"],
+      "faq_q1": "Do I need new software?",
+      "faq_a1": "Often we can connect existing tools."
+    }
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "Transparent pricing for your digital transformation. No hidden costs.",
+    "individual_title": "Do you need a custom quote?",
+    "individual_desc": "Every project is unique. Let's find out in a free initial consultation what influences the price for your specific requirements.",
+    "individual_btn": "Book a Free Consultation",
+    "starter": {
+      "name": "Starter",
+      "price": "990",
+      "desc": "Perfect for small projects and one-pagers.",
+      "features": ["Modern Landing Page Design", "Responsive & Mobile Optimized", "Basic SEO Optimization", "Contact Form Integration", "1 Month Support"]
+    },
+    "business": {
+      "name": "Business",
+      "price": "2,490",
+      "desc": "For companies looking to grow digitally.",
+      "features": ["Up to 5 Subpages", "AI Chatbot Integration", "Advanced SEO Strategy", "Content Management System", "3 Months Support", "High Speed Performance"]
+    },
+    "custom": {
+      "name": "Custom",
+      "price": "Quote",
+      "desc": "Individual AI automations & large-scale projects.",
+      "features": ["Individual AI Workflows", "Complex System Integrations", "Custom API Development", "White Label Solutions", "Premium 24/7 Support", "Workshop & Strategy"]
+    }
+  },
+  "faq": {
+    "title": "FAQ",
+    "subtitle": "Frequently asked questions about our services, processes, and technologies.",
+    "cta_title": "Still have questions?",
+    "cta_subtitle": "Write us a message directly.",
+    "cta_btn": "Book a Free Consultation Now",
+    "questions": [
+      {
+        "category": "General",
+        "items": [
+          {
+            "q": "How long does a typical project take?",
+            "a": "A simple web design project usually takes 2-4 weeks. Complex AI automations can take 4-8 weeks, depending on scope and integration depth."
+          },
+          {
+            "q": "Does Zetta Digital work internationally?",
+            "a": "Yes, we work with clients from all over the world. Digital tools make distance no obstacle to premium results."
+          }
+        ]
+      },
+      {
+        "category": "AI & Chatbots",
+        "items": [
+          {
+            "q": "Which AI models do you use?",
+            "a": "We primarily use Google Gemini Pro and GPT-4. For specific use cases, we also use open-source models or specialized interfaces."
+          }
+        ]
+      }
+    ]
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "subtitle": "Selected projects realized with passion and precision.",
+    "cta_title": "Ready for your own success story?",
+    "cta_desc": "Let's find out together how we can achieve impressive digital results for your company too.",
+    "projects": [
+      {
+        "title": "EcoCharge Solutions",
+        "category": "Web Design & Branding",
+        "desc": "A high-performance platform for e-mobility providers.",
+        "result": "+45% Conversion Rate"
+      },
+      {
+        "title": "Aura AI Assistant",
+        "category": "AI Automation",
+        "desc": "Intelligent customer support agent for SaaS companies.",
+        "result": "80% Automation Rate"
+      }
+    ]
+  },
+  "process": {
+    "title": "Project Process",
+    "subtitle": "A structured path from the first idea to successful release and beyond.",
+    "cta_title": "Ready for the next step?",
+    "cta_desc": "We look forward to building your digital future together with you. Start now with a free initial consultation.",
+    "steps": [
+      {
+        "title": "Initial Consultation",
+        "desc": "We get to know each other, understand your goals and check the feasibility of your vision.",
+        "duration": "30-60 Min"
+      },
+      {
+        "title": "Planning & Strategy",
+        "desc": "We define the scope, create user stories and set the technological roadmap.",
+        "duration": "1 Week"
+      }
+    ]
+  },
+  "about": {
+    "title": "We are Zetta Digital.",
+    "subtitle": "A boutique agency at the intersection of design, technology, and artificial intelligence. We help forward-thinking companies overcome digital barriers.",
+    "mission_title": "Our Mission",
+    "mission_desc": "Our mission is to make complex technologies like AI accessible and usable. We don't just build websites or bots; we create digital experiences and automated systems that enable real growth and create time for what matters most.",
+    "vision_title": "Our Vision",
+    "vision_desc": "We see a world where technology works seamlessly in the background, amplifying human potential. Zetta Digital strives to be the leading partner for companies that want to not only keep up but actively shape the digital change.",
+    "why_title": "Why Zetta Digital?"
+  },
+  "contact": {
+    "title": "Contact",
+    "subtitle": "Have a project in mind or just want to say 'Hello'? We look forward to your message.",
+    "form_name": "Name",
+    "form_email": "Email",
+    "form_subject": "Subject",
+    "form_message": "Message",
+    "form_btn": "Send Message"
   }
 }

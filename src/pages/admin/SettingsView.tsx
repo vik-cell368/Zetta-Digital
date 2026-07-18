@@ -7,8 +7,11 @@ import { Input } from '@/components/ui/Input';
 import { useForm } from 'react-hook-form';
 import { format, parseISO } from 'date-fns';
 import { Trash2 } from 'lucide-react';
+import { getDateLocale } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 export default function SettingsView() {
+  const { i18n } = useTranslation();
   const [settings, setSettings] = useState<BusinessSettings | null>(null);
   const [hours, setHours] = useState<BusinessHours[]>([]);
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
@@ -133,13 +136,13 @@ export default function SettingsView() {
     }
   };
 
-  const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const daysOfWeek = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Settings</h2>
-        <p className="text-gray-400">Manage your business profile and availability.</p>
+        <h2 className="text-2xl font-bold tracking-tight text-white">Einstellungen</h2>
+        <p className="text-gray-400">Verwalten Sie Ihr Unternehmensprofil und Ihre Verfügbarkeit.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -147,39 +150,39 @@ export default function SettingsView() {
         {/* Business Profile Settings */}
         <Card>
           <CardHeader>
-            <CardTitle>Business Profile</CardTitle>
-            <CardDescription>Company information visible to clients.</CardDescription>
+            <CardTitle>Unternehmensprofil</CardTitle>
+            <CardDescription>Unternehmensinformationen, die für Kunden sichtbar sind.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSettingsSubmit(onSaveSettings)} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-100 mb-1">Business Name</label>
+                <label className="block text-sm font-medium text-gray-100 mb-1">Unternehmensname</label>
                 <Input {...registerSettings('business_name')} placeholder="Zetta Digital" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-100 mb-1">Business Email</label>
+                <label className="block text-sm font-medium text-gray-100 mb-1">E-Mail Adresse</label>
                 <Input type="email" {...registerSettings('business_email')} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-100 mb-1">Business Phone</label>
+                <label className="block text-sm font-medium text-gray-100 mb-1">Telefonnummer</label>
                 <Input {...registerSettings('business_phone')} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-100 mb-1">Business Address</label>
+                <label className="block text-sm font-medium text-gray-100 mb-1">Adresse</label>
                 <Input {...registerSettings('business_address')} />
               </div>
               <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4 mt-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-100 mb-1">Slot Interval (mins)</label>
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Termin-Intervall (Min)</label>
                   <Input type="number" {...registerSettings('slot_interval_minutes', { valueAsNumber: true })} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-100 mb-1">Booking Notice (hours)</label>
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Buchungsvorlauf (Std)</label>
                   <Input type="number" {...registerSettings('booking_notice_hours', { valueAsNumber: true })} />
                 </div>
               </div>
               <Button type="submit" isLoading={isSaving} className="mt-4">
-                Save Profile
+                Profil speichern
               </Button>
             </form>
           </CardContent>
@@ -189,8 +192,8 @@ export default function SettingsView() {
           {/* Business Hours */}
           <Card>
             <CardHeader>
-              <CardTitle>Operating Hours</CardTitle>
-              <CardDescription>Define your weekly availability.</CardDescription>
+              <CardTitle>Öffnungszeiten</CardTitle>
+              <CardDescription>Definieren Sie Ihre wöchentliche Verfügbarkeit.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -213,7 +216,7 @@ export default function SettingsView() {
                           onChange={(e) => handleHourChange(i, 'start_time', e.target.value)}
                           className="w-32 h-8 text-sm"
                         />
-                        <span className="text-gray-500">to</span>
+                        <span className="text-gray-500 text-xs">bis</span>
                         <Input 
                           type="time" 
                           value={h.end_time} 
@@ -222,12 +225,12 @@ export default function SettingsView() {
                         />
                       </div>
                     ) : (
-                      <div className="text-sm text-gray-500 italic px-4">Closed</div>
+                      <div className="text-sm text-gray-500 italic px-4">Geschlossen</div>
                     )}
                   </div>
                 ))}
                 <Button onClick={saveHours} isLoading={isSaving} className="w-full mt-4">
-                  Save Hours
+                  Zeiten speichern
                 </Button>
               </div>
             </CardContent>
@@ -236,33 +239,33 @@ export default function SettingsView() {
           {/* Blocked Dates */}
           <Card>
             <CardHeader>
-              <CardTitle>Blocked Dates</CardTitle>
-              <CardDescription>Add specific dates when you are unavailable.</CardDescription>
+              <CardTitle>Blockierte Termine</CardTitle>
+              <CardDescription>Fügen Sie spezifische Daten hinzu, an denen Sie nicht verfügbar sind.</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={addBlockedDate} className="flex items-end gap-2 mb-6">
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-100 mb-1">Date</label>
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Datum</label>
                   <Input type="date" value={newBlockedDate} onChange={e => setNewBlockedDate(e.target.value)} required />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-100 mb-1">Reason (Optional)</label>
-                  <Input value={newBlockedReason} onChange={e => setNewBlockedReason(e.target.value)} placeholder="e.g. Holiday" />
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Grund (Optional)</label>
+                  <Input value={newBlockedReason} onChange={e => setNewBlockedReason(e.target.value)} placeholder="z.B. Urlaub" />
                 </div>
-                <Button type="submit">Add</Button>
+                <Button type="submit">Hinzufügen</Button>
               </form>
 
               <div className="space-y-2">
                 {blockedDates.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-4">No blocked dates.</p>
+                  <p className="text-sm text-gray-400 text-center py-4">Keine blockierten Daten.</p>
                 ) : (
                   blockedDates.map(b => (
                     <div key={b.id} className="flex items-center justify-between p-3 border border-white/10 rounded-lg">
                       <div>
-                        <div className="font-medium text-sm text-white">{format(parseISO(b.blocked_date), 'MMM d, yyyy')}</div>
+                        <div className="font-medium text-sm text-white">{format(parseISO(b.blocked_date), 'd. MMM yyyy', { locale: getDateLocale(i18n.language) })}</div>
                         {b.reason && <div className="text-xs text-gray-400">{b.reason}</div>}
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => deleteBlockedDate(b.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                      <Button variant="ghost" size="sm" onClick={() => deleteBlockedDate(b.id)} className="text-red-500 hover:text-red-700">
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -275,22 +278,22 @@ export default function SettingsView() {
           {/* Security Settings */}
           <Card>
             <CardHeader>
-              <CardTitle>Security</CardTitle>
-              <CardDescription>Update your account password.</CardDescription>
+              <CardTitle>Sicherheit</CardTitle>
+              <CardDescription>Aktualisieren Sie Ihr Kontopasswort.</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handlePasswordChange} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-100 mb-1">New Password</label>
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Neues Passwort</label>
                   <Input 
                     type="password" 
                     value={newPassword} 
                     onChange={e => setNewPassword(e.target.value)} 
-                    placeholder="Min. 6 characters"
+                    placeholder="Mind. 6 Zeichen"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-100 mb-1">Confirm New Password</label>
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Neues Passwort bestätigen</label>
                   <Input 
                     type="password" 
                     value={confirmPassword} 
@@ -298,10 +301,10 @@ export default function SettingsView() {
                   />
                 </div>
                 <Button type="submit" isLoading={isChangingPassword} className="w-full">
-                  Update Password
+                  Passwort aktualisieren
                 </Button>
                 <p className="text-[10px] text-gray-500 italic mt-2">
-                  * Password changes only apply to real accounts. Emergency access credentials are fixed in system code.
+                  * Passwortänderungen gelten nur für echte Konten. Notfallzugangsdaten sind im Systemcode fest hinterlegt.
                 </p>
               </form>
             </CardContent>

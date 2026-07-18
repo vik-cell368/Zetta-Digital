@@ -1,6 +1,6 @@
 {
   "nav": {
-    "services": "Leistungen",
+    "services": "Unsere Leistungen",
     "about": "Über uns",
     "book_consultation": "Beratung buchen"
   },
@@ -62,7 +62,7 @@
     "phase3_title": "Digitale Architektur: Präzision bis ins Kerning.",
     "phase3_desc": "Wir bauen Interfaces, die nicht nur funktionieren, sondern faszinieren. Design trifft auf kompromisslose Performance.",
     "phase4_title": "Bereit für das nächste Level?",
-    "phase4_btn": "Konzept anfordern"
+    "phase4_btn": "Jetzt kostenlose Beratung buchen"
   },
   "booking": {
     "title": "Beratung buchen",
@@ -93,5 +93,179 @@
     "success_desc": "Vielen Dank für Ihre Buchung bei Zetta Digital. Wir haben Ihre Anfrage erhalten und werden in Kürze eine Bestätigungs-E-Mail senden.",
     "return_home": "Zurück zur Startseite",
     "min": "Min."
+  },
+  "services": {
+    "list": [
+      {
+        "id": "webdesign",
+        "title": "Modernes Webdesign",
+        "desc": "Hochperformante Websites, die Besucher in Kunden verwandeln."
+      },
+      {
+        "id": "ai-automation",
+        "title": "KI Automatisierung",
+        "desc": "Beseitigen Sie manuelle Prozesse durch intelligente KI-Workflows."
+      },
+      {
+        "id": "ai-chatbots",
+        "title": "KI Chatbots",
+        "desc": "24/7 Kundensupport und Lead-Generierung mit intelligenten Assistenten."
+      }
+    ],
+    "title": "Leistungen",
+    "subtitle": "Wir verbinden Design mit Technologie und KI, um Ihr Unternehmen ins digitale Zeitalter zu führen.",
+    "cta_title": "Bereit für {{service}}?",
+    "cta_subtitle": "Lassen Sie uns über Ihr Projekt sprechen.",
+    "cta_btn": "Jetzt kostenlose Beratung buchen",
+    "webdesign": {
+      "title": "Modernes Webdesign",
+      "description": "Hochperformante Websites, die Besucher in Kunden verwandeln.",
+      "features": ["Responsive Design", "SEO Optimierung", "Conversion Fokus", "High Speed Performance"],
+      "process": ["Analyse", "Konzept", "Design", "Entwicklung", "Launch"],
+      "tech": ["React", "Next.js", "Tailwind CSS", "Vite"],
+      "faq_q1": "Wie lange dauert eine Website?",
+      "faq_a1": "In der Regel zwischen 2-6 Wochen.",
+      "faq_q2": "Ist die Seite SEO-optimiert?",
+      "faq_a2": "Ja, wir bauen jede Seite nach aktuellen SEO-Standards."
+    },
+    "ai_automation": {
+      "title": "KI Automatisierung",
+      "description": "Beseitigen Sie manuelle Prozesse durch intelligente KI-Workflows.",
+      "features": ["Datenextraktion", "Auto-Reporting", "Smart Lead Scoring", "Email-Automatisierung"],
+      "process": ["Audit", "Identifikation", "Implementierung", "Monitoring"],
+      "tech": ["Python", "n8n", "Zapier", "OpenAI"],
+      "faq_q1": "Was kann man automatisieren?",
+      "faq_a1": "Fast jeden repetitiven digitalen Prozess."
+    },
+    "ai_chatbots": {
+      "title": "KI Chatbots",
+      "description": "24/7 Kundensupport und Lead-Generierung mit intelligenten Assistenten.",
+      "features": ["Echtzeit-Antworten", "Lead Qualifizierung", "Nahtlose Integration", "Mehrsprachig"],
+      "process": ["Knowledge-Base Setup", "Training", "Testing", "Integration"],
+      "tech": ["Gemini Pro", "GPT-4", "Voiceflow", "Custom API"],
+      "faq_q1": "Versteht der Bot meine Kunden?",
+      "faq_a1": "Ja, durch modernste NLP-Modelle wie Gemini."
+    },
+    "workflow_automation": {
+      "title": "Workflow Optimierung",
+      "description": "Optimieren Sie Ihre internen Abläufe für maximale Effizienz.",
+      "features": ["System Integration", "Echtzeit-Sync", "Dashboarding", "Fehler-Reduktion"],
+      "process": ["Mapping", "Optimierung", "Integration", "Training"],
+      "tech": ["Make", "Airtable", "Slack Integration"],
+      "faq_q1": "Brauche ich neue Software?",
+      "faq_a1": "Oft können wir bestehende Tools verbinden."
+    }
+  },
+  "pricing": {
+    "title": "Preise",
+    "subtitle": "Transparente Preisgestaltung für Ihre digitale Transformation. Keine versteckten Kosten.",
+    "individual_title": "Brauchen Sie ein individuelles Angebot?",
+    "individual_desc": "Jedes Projekt ist einzigartig. Lassen Sie uns in einem kostenlosen Erstgespräch herausfinden, was den Preis für Ihre spezifischen Anforderungen beeinflusst.",
+    "individual_btn": "Jetzt kostenlose Beratung buchen",
+    "starter": {
+      "name": "Starter",
+      "price": "990",
+      "desc": "Perfekt für kleine Projekte und One-Pager.",
+      "features": ["Modernes Landing Page Design", "Responsiv & Mobil-optimiert", "Basis SEO-Optimierung", "Kontaktformular Integration", "1 Monat Support"]
+    },
+    "business": {
+      "name": "Business",
+      "price": "2.490",
+      "desc": "Für Unternehmen, die digital wachsen wollen.",
+      "features": ["Bis zu 5 Unterseiten", "KI Chatbot Integration", "Erweiterte SEO-Strategie", "Content Management System", "3 Monate Support", "High Speed Performance"]
+    },
+    "custom": {
+      "name": "Custom",
+      "price": "Anfrage",
+      "desc": "Individuelle KI-Automatisierungen & Großprojekte.",
+      "features": ["Individuelle KI-Workflows", "Komplexe Systemintegrationen", "Custom API-Entwicklung", "White Label Lösungen", "Premium 24/7 Support", "Workshop & Strategie"]
+    }
+  },
+  "faq": {
+    "title": "FAQ",
+    "subtitle": "Häufig gestellte Fragen zu unseren Leistungen, Prozessen und Technologien.",
+    "cta_title": "Noch Fragen offen?",
+    "cta_subtitle": "Schreiben Sie uns direkt eine Nachricht.",
+    "cta_btn": "Jetzt kostenlose Beratung buchen",
+    "questions": [
+      {
+        "category": "Allgemein",
+        "items": [
+          {
+            "q": "Wie lange dauert ein durchschnittliches Projekt?",
+            "a": "Ein einfaches Webdesign-Projekt dauert in der Regel 2-4 Wochen. Komplexe KI-Automatisierungen können 4-8 Wochen in Anspruch nehmen, je nach Umfang und Integrationstiefe."
+          },
+          {
+            "q": "Arbeitet Zetta Digital international?",
+            "a": "Ja, wir arbeiten mit Kunden aus der ganzen Welt zusammen. Dank digitaler Tools ist die Distanz kein Hindernis für erstklassige Ergebnisse."
+          }
+        ]
+      },
+      {
+        "category": "KI & Chatbots",
+        "items": [
+          {
+            "q": "Welche KI-Modelle verwendet ihr?",
+            "a": "Wir nutzen primär Google Gemini Pro und GPT-4. Für spezifische Anwendungsfälle setzen wir auch auf Open-Source Modelle oder spezialisierte Schnittstellen."
+          }
+        ]
+      }
+    ]
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "subtitle": "Ausgewählte Projekte, die wir mit Leidenschaft und Präzision realisiert haben.",
+    "cta_title": "Bereit für Ihr eigenes Erfolgsbeispiel?",
+    "cta_desc": "Lassen Sie uns gemeinsam herausfinden, wie wir auch für Ihr Unternehmen beeindruckende digitale Ergebnisse erzielen können.",
+    "projects": [
+      {
+        "title": "EcoCharge Solutions",
+        "category": "Web Design & Branding",
+        "desc": "Eine hochperformante Plattform für E-Mobility Anbieter.",
+        "result": "+45% Conversion Rate"
+      },
+      {
+        "title": "Aura AI Assistant",
+        "category": "KI Automatisierung",
+        "desc": "Intelligenter Kundensupport-Agent für SaaS Unternehmen.",
+        "result": "80% Automatisierungsrate"
+      }
+    ]
+  },
+  "process": {
+    "title": "Projektablauf",
+    "subtitle": "Ein strukturierter Weg von der ersten Idee bis zur erfolgreichen Veröffentlichung und darüber hinaus.",
+    "cta_title": "Bereit für den nächsten Schritt?",
+    "cta_desc": "Wir freuen uns darauf, gemeinsam mit Ihnen an Ihrer digitalen Zukunft zu bauen. Starten Sie jetzt mit einem kostenlosen Erstgespräch.",
+    "steps": [
+      {
+        "title": "Erstgespräch",
+        "desc": "Wir lernen uns kennen, verstehen Ihre Ziele und prüfen die Machbarkeit Ihrer Vision.",
+        "duration": "30-60 Min"
+      },
+      {
+        "title": "Planung & Strategie",
+        "desc": "Wir definieren den Scope, erstellen User Stories und legen die technologische Roadmap fest.",
+        "duration": "1 Woche"
+      }
+    ]
+  },
+  "about": {
+    "title": "Wir sind Zetta Digital.",
+    "subtitle": "Eine Boutique-Agentur an der Schnittstelle von Design, Technologie und künstlicher Intelligenz. Wir helfen zukunftsorientierten Unternehmen, digitale Barrieren zu überwinden.",
+    "mission_title": "Unsere Mission",
+    "mission_desc": "Unsere Mission ist es, komplexe Technologien wie KI zugänglich und nutzbar zu machen. Wir bauen nicht nur Websites oder Bots; wir schaffen digitale Erlebnisse und automatisierte Systeme, die echtes Wachstum ermöglichen und Zeit für das Wesentliche schaffen.",
+    "vision_title": "Unsere Vision",
+    "vision_desc": "Wir sehen eine Welt, in der Technologie nahtlos im Hintergrund arbeitet und menschliches Potenzial verstärkt. Zetta Digital strebt danach, der führende Partner für Unternehmen zu sein, die nicht nur mithalten, sondern den digitalen Wandel aktiv gestalten wollen.",
+    "why_title": "Warum Zetta Digital?"
+  },
+  "contact": {
+    "title": "Kontakt",
+    "subtitle": "Haben Sie ein Projekt im Kopf oder möchten Sie einfach nur \"Hallo\" sagen? Wir freuen uns auf Ihre Nachricht.",
+    "form_name": "Name",
+    "form_email": "E-Mail",
+    "form_subject": "Thema",
+    "form_message": "Nachricht",
+    "form_btn": "Nachricht senden"
   }
 }

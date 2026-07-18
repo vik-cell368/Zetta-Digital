@@ -7,8 +7,8 @@ function Monolith() {
   const meshRef = useRef<THREE.InstancedMesh>(null)
   const { mouse } = useThree()
   
-  // High-density Icosahedron for the perfect geometric body
-  const baseGeom = useMemo(() => new THREE.IcosahedronGeometry(2.5, 3), [])
+  // Reduced density for performance (subdivision 2 instead of 3)
+  const baseGeom = useMemo(() => new THREE.IcosahedronGeometry(2.5, 2), [])
   const count = baseGeom.attributes.position.count
 
   const dummy = useMemo(() => new THREE.Object3D(), [])
@@ -112,7 +112,17 @@ function Monolith() {
 export default function Hero3D() {
   return (
     <div className="absolute inset-0 z-0 opacity-100">
-      <Canvas camera={{ position: [0, 0, 9], fov: 45 }} gl={{ antialias: true, alpha: true }}>
+      <Canvas 
+        camera={{ position: [0, 0, 9], fov: 45 }} 
+        dpr={[1, 1.5]}
+        gl={{ 
+          antialias: true, 
+          alpha: true, 
+          powerPreference: "high-performance",
+          stencil: false,
+          depth: true
+        }}
+      >
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 15, 10]} angle={0.4} penumbra={1} intensity={2} color="#ffffff" />
         <spotLight position={[-10, -15, -10]} angle={0.4} penumbra={1} intensity={1} color="#8a2be2" />

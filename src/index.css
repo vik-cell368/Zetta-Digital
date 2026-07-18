@@ -30,7 +30,7 @@
 
 @layer utilities {
   .glass-card {
-    @apply bg-dark-900/80 backdrop-blur-xl border border-white/5 shadow-sm rounded-3xl;
+    @apply bg-dark-900/80 backdrop-blur-md border border-white/5 shadow-sm rounded-3xl;
   }
 }
 

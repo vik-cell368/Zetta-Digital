@@ -82,8 +82,8 @@ export default function AppointmentsView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Appointments</h2>
-          <p className="text-gray-400">Manage your bookings and schedule.</p>
+          <h2 className="text-2xl font-bold tracking-tight text-white">Termine</h2>
+          <p className="text-gray-400">Verwalten Sie Ihre Buchungen und Ihren Zeitplan.</p>
         </div>
         <div className="flex space-x-2 bg-dark-900 p-1 rounded-lg">
           {(['all', 'pending', 'confirmed', 'cancelled'] as const).map(f => (
@@ -91,10 +91,10 @@ export default function AppointmentsView() {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-4 py-1.5 rounded-md text-sm font-medium capitalize transition-colors ${
-                filter === f ? 'bg-dark-9500 text-white shadow-sm' : 'text-gray-400 hover:text-white'
+                filter === f ? 'bg-dark-950 text-white shadow-sm' : 'text-gray-400 hover:text-white'
               }`}
             >
-              {f}
+              {f === 'all' ? 'Alle' : f === 'pending' ? 'Ausstehend' : f === 'confirmed' ? 'Bestätigt' : 'Storniert'}
             </button>
           ))}
         </div>
@@ -121,11 +121,11 @@ export default function AppointmentsView() {
                       </div>
                       <div className="mt-2">
                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                          apt.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                          apt.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
+                          apt.status === 'confirmed' ? 'bg-green-900/40 text-green-400' :
+                          apt.status === 'pending' ? 'bg-yellow-900/40 text-yellow-400' :
+                          'bg-red-900/40 text-red-400'
                         }`}>
-                          {apt.status}
+                          {apt.status === 'confirmed' ? 'Bestätigt' : apt.status === 'pending' ? 'Ausstehend' : 'Storniert'}
                         </span>
                       </div>
                     </div>
@@ -166,14 +166,14 @@ export default function AppointmentsView() {
                           className="bg-green-600 hover:bg-green-700 text-white"
                           onClick={() => updateStatus(apt.id, 'confirmed')}
                         >
-                          <Check className="w-4 h-4 mr-1" /> Confirm
+                          <Check className="w-4 h-4 mr-1" /> Bestätigen
                         </Button>
                         <Button 
                           variant="danger" 
                           size="sm"
                           onClick={() => updateStatus(apt.id, 'cancelled')}
                         >
-                          <X className="w-4 h-4 mr-1" /> Cancel
+                          <X className="w-4 h-4 mr-1" /> Stornieren
                         </Button>
                       </>
                     )}
@@ -183,7 +183,7 @@ export default function AppointmentsView() {
                         size="sm"
                         onClick={() => updateStatus(apt.id, 'cancelled')}
                       >
-                        <X className="w-4 h-4 mr-1" /> Cancel Booking
+                        <X className="w-4 h-4 mr-1" /> Buchung stornieren
                       </Button>
                     )}
                   </div>
@@ -193,8 +193,8 @@ export default function AppointmentsView() {
             </Card>
           ))}
           {appointments.length === 0 && (
-            <div className="text-center py-12 text-gray-400 bg-dark-9500 rounded-xl border border-white/10">
-              No appointments found for this filter.
+            <div className="text-center py-12 text-gray-400 bg-dark-950 rounded-xl border border-white/10">
+              Keine Termine für diesen Filter gefunden.
             </div>
           )}
         </div>
