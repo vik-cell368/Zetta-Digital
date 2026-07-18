@@ -10,11 +10,22 @@ import { Trash2 } from 'lucide-react';
 import { getDateLocale } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 
+const AVAILABLE_LANGS = [
+  { code: 'en', name: 'English' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'fr', name: 'Français' },
+  { code: 'es', name: 'Español' },
+  { code: 'it', name: 'Italiano' },
+  { code: 'ru', name: 'Русский' },
+  { code: 'uk', name: 'Українська' }
+];
+
 export default function SettingsView() {
   const { i18n } = useTranslation();
   const [settings, setSettings] = useState<BusinessSettings | null>(null);
   const [hours, setHours] = useState<BusinessHours[]>([]);
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
+  const [enabledLangs, setEnabledLangs] = useState<string[]>(['en', 'de']);
   
   const [isSaving, setIsSaving] = useState(false);
   
@@ -33,6 +44,10 @@ export default function SettingsView() {
     if (s) {
       setSettings(s);
       resetSettings(s);
+      if (s.enabled_languages) {
+        setEnabledLangs(s.enabled_languages.split(','));
+        localStorage.setItem('zetta_enabled_languages', s.enabled_languages);
+      }
     }
     
     if (h) {
@@ -51,12 +66,26 @@ export default function SettingsView() {
     fetchData();
   }, []);
 
+  const toggleLanguage = (code: string) => {
+    if (enabledLangs.includes(code) && enabledLangs.length === 1) return;
+    const newLangs = enabledLangs.includes(code)
+      ? enabledLangs.filter(c => c !== code)
+      : [...enabledLangs, code];
+    setEnabledLangs(newLangs);
+  };
+
   const onSaveSettings = async (data: BusinessSettings) => {
     setIsSaving(true);
+    const updatedData = {
+      ...data,
+      enabled_languages: enabledLangs.join(',')
+    };
+    localStorage.setItem('zetta_enabled_languages', updatedData.enabled_languages);
+    
     if (settings?.id) {
-      await supabase.from('business_settings').update(data).eq('id', settings.id);
+      await supabase.from('business_settings').update(updatedData).eq('id', settings.id);
     } else {
-      await supabase.from('business_settings').insert(data);
+      await supabase.from('business_settings').insert(updatedData);
     }
     setIsSaving(false);
     alert('Settings saved successfully');
@@ -185,6 +214,39 @@ export default function SettingsView() {
                 Profil speichern
               </Button>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Language Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Sprachverwaltung</CardTitle>
+            <CardDescription>Aktivieren oder deaktivieren Sie Sprachen für Ihre Website.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3">
+              {AVAILABLE_LANGS.map(lang => (
+                <button
+                  key={lang.code}
+                  onClick={() => toggleLanguage(lang.code)}
+                  className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                    enabledLangs.includes(lang.code)
+                      ? 'bg-neon-500/10 border-neon-500/50 text-white'
+                      : 'bg-dark-900/50 border-white/5 text-gray-500 hover:border-white/20'
+                  }`}
+                >
+                  <span className="text-sm font-medium">{lang.name}</span>
+                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                    enabledLangs.includes(lang.code) ? 'border-neon-500 bg-neon-500' : 'border-white/20'
+                  }`}>
+                    {enabledLangs.includes(lang.code) && <div className="w-1.5 h-1.5 rounded-full bg-dark-950" />}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-gray-500 mt-4 italic">
+              * Mindestens eine Sprache muss aktiviert bleiben. Änderungen werden nach dem Speichern des Profils übernommen.
+            </p>
           </CardContent>
         </Card>
 

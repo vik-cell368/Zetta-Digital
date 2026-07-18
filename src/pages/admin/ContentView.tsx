@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Globe, Save, CheckCircle2 } from 'lucide-react';
 import { updateTranslations, getDefaultResources } from '@/i18n';
 
-const SUPPORTED_LANGS = [
+const ALL_LANGS = [
   { code: 'en', name: 'English' },
   { code: 'de', name: 'Deutsch' },
   { code: 'fr', name: 'Français' },
@@ -20,6 +20,7 @@ const SUPPORTED_LANGS = [
 export default function ContentView() {
   const { i18n } = useTranslation();
   const [selectedLang, setSelectedLang] = useState('en');
+  const [enabledLangs, setEnabledLangs] = useState<string[]>(['en', 'de']);
   const [tick, setTick] = useState(0);
   const [overrides, setOverrides] = useState<Record<string, Record<string, string>>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -50,10 +51,24 @@ export default function ContentView() {
       if (savedOverrides) {
         setOverrides(JSON.parse(savedOverrides));
       }
+
+      const savedEnabledLangs = localStorage.getItem('zetta_enabled_languages');
+      if (savedEnabledLangs) {
+        setEnabledLangs(savedEnabledLangs.split(','));
+      }
     } catch (e) {
       console.error(e);
     }
   }, []);
+
+  const supportedLangs = ALL_LANGS.filter(l => enabledLangs.includes(l.code));
+
+  useEffect(() => {
+    // If current selected lang is no longer enabled, switch to first enabled one
+    if (enabledLangs.length > 0 && !enabledLangs.includes(selectedLang)) {
+      setSelectedLang(enabledLangs[0]);
+    }
+  }, [enabledLangs, selectedLang]);
 
   const handleTextChange = (key: string, value: string) => {
     setOverrides(prev => ({
@@ -194,7 +209,7 @@ export default function ContentView() {
             <h3 className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-4 flex items-center">
               <Globe className="w-4 h-4 mr-2" /> Sprachen
             </h3>
-            {SUPPORTED_LANGS.map(lang => (
+            {supportedLangs.map(lang => (
               <button
                 key={lang.code}
                 onClick={() => setSelectedLang(lang.code)}

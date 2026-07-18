@@ -50,6 +50,7 @@ export type BusinessSettings = {
   business_address: string;
   slot_interval_minutes: number;
   booking_notice_hours: number;
+  enabled_languages: string; // Comma-separated language codes, e.g., "en,de"
   created_at: string;
 };
 

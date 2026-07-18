@@ -19,7 +19,8 @@ export default function PublicLayout() {
         .then(data => {
           if (data && data.languages) {
             const primaryLang = data.languages.split(',')[0].split('-')[0];
-            const supported = ['en', 'de', 'fr', 'es', 'it', 'uk', 'ru'];
+            const savedLangs = localStorage.getItem('zetta_enabled_languages');
+            const supported = savedLangs ? savedLangs.split(',') : ['en', 'de', 'fr', 'es', 'it', 'uk', 'ru'];
             if (supported.includes(primaryLang)) {
               i18n.changeLanguage(primaryLang);
             }
@@ -35,6 +36,15 @@ export default function PublicLayout() {
 
   const currentLang = i18n.language.split('-')[0];
 
+  const [enabledLangs, setEnabledLangs] = React.useState<string[]>(['en', 'de', 'fr', 'es', 'it', 'uk', 'ru']);
+
+  useEffect(() => {
+    const savedLangs = localStorage.getItem('zetta_enabled_languages');
+    if (savedLangs) {
+      setEnabledLangs(savedLangs.split(','));
+    }
+  }, []);
+
   const LanguageSelector = () => (
     <div className="relative flex items-center">
       
@@ -44,13 +54,13 @@ export default function PublicLayout() {
         aria-label="Change language"
         className="appearance-none bg-dark-900 border border-white/10/60 pl-8 pr-8 py-2 text-sm font-medium text-gray-300 hover:text-white hover:border-white/20 hover:shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-neon-500/20 focus:border-neon-500/50 rounded-2xl transition-all"
       >
-        <option value="en">EN</option>
-        <option value="de">DE</option>
-        <option value="fr">FR</option>
-        <option value="es">ES</option>
-        <option value="it">IT</option>
-        <option value="uk">UK</option>
-        <option value="ru">RU</option>
+        {enabledLangs.includes('en') && <option value="en">EN</option>}
+        {enabledLangs.includes('de') && <option value="de">DE</option>}
+        {enabledLangs.includes('fr') && <option value="fr">FR</option>}
+        {enabledLangs.includes('es') && <option value="es">ES</option>}
+        {enabledLangs.includes('it') && <option value="it">IT</option>}
+        {enabledLangs.includes('uk') && <option value="uk">UK</option>}
+        {enabledLangs.includes('ru') && <option value="ru">RU</option>}
       </select>
       <div className="absolute right-3 pointer-events-none">
         <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
