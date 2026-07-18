@@ -1,7 +1,6 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
-import { playHoverSound, playClickSound } from '@/lib/audio';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
@@ -35,14 +34,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           className
         )}
         disabled={isLoading || disabled}
-        onMouseEnter={(e) => {
-          if (!disabled && !isLoading) playHoverSound();
-          if (onMouseEnter) onMouseEnter(e);
-        }}
-        onClick={(e) => {
-          if (!disabled && !isLoading) playClickSound();
-          if (onClick) onClick(e);
-        }}
+        onMouseEnter={onMouseEnter}
+        onClick={onClick}
         {...props}
       >
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

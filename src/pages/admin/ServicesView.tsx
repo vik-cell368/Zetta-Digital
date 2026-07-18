@@ -99,25 +99,38 @@ export default function ServicesView() {
       let updatedServices = [...services];
       if (isEditing) {
         const { error } = await supabase.from('services').update(payload).eq('id', isEditing);
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase update error:", error);
+          throw error;
+        }
         updatedServices = updatedServices.map(s => s.id === isEditing ? { ...s, ...payload } : s);
         setIsEditing(null);
         setStatusMessage("Service updated successfully");
       } else {
-        const { data, error } = await supabase.from('services').insert(payload).select().single();
-        if (error) throw error;
+        // Try to insert with a generated ID just in case the table doesn't auto-generate it
+        const id = crypto.randomUUID();
+        const { data, error } = await supabase.from('services').insert({ ...payload, id }).select().single();
+        
+        if (error) {
+          console.error("Supabase insert error:", error);
+          throw error;
+        }
+        
         updatedServices = [data, ...updatedServices];
         setIsAdding(false);
         setStatusMessage("Service added successfully");
       }
       saveToLocal(updatedServices);
-    } catch (err) {
-      console.warn("Supabase save failed, saving to localStorage only", err);
+    } catch (err: any) {
+      console.warn("Supabase operation failed:", err);
+      const errorMessage = err?.message || "Unknown error";
+      
+      // Fallback to local storage if it's truly a connection/database error
       let updatedServices = [...services];
       if (isEditing) {
         updatedServices = updatedServices.map(s => s.id === isEditing ? { ...s, ...payload } : s);
         setIsEditing(null);
-        setStatusMessage("Updated locally (Database offline)");
+        setStatusMessage(`Updated locally (Error: ${errorMessage})`);
       } else {
         const newService = {
           ...payload,
@@ -126,9 +139,14 @@ export default function ServicesView() {
         } as Service;
         updatedServices = [newService, ...updatedServices];
         setIsAdding(false);
-        setStatusMessage("Added locally (Database offline)");
+        setStatusMessage(`Added locally (Error: ${errorMessage})`);
       }
       saveToLocal(updatedServices);
+      
+      // Also show an alert so the user knows why it failed
+      if (errorMessage.includes("column") || errorMessage.includes("field")) {
+        alert("Datenbankfehler: Die Tabellenstruktur in Supabase scheint veraltet zu sein. Bitte kontaktieren Sie den Support.");
+      }
     }
     
     setTimeout(() => setStatusMessage(null), 3000);
@@ -241,8 +259,20 @@ export default function ServicesView() {
           {!isAdding && !isEditing && (
             <Button onClick={() => { 
               setIsAdding(true); 
-              reset({ is_active: true }); 
-              SUPPORTED_LANGS.forEach(l => { setValue(`name_${l.code}`, ''); setValue(`description_${l.code}`, ''); });
+              reset({ 
+                is_active: true,
+                price: 0,
+                duration_minutes: 0,
+                tech: ''
+              }); 
+              SUPPORTED_LANGS.forEach(l => { 
+                setValue(`name_${l.code}`, ''); 
+                setValue(`description_${l.code}`, ''); 
+                setValue(`features_${l.code}`, '');
+                setValue(`process_${l.code}`, '');
+                setValue(`faqs_${l.code}`, '');
+              });
+              setActiveLangTab('de'); // Default to German for better local UX
             }}>
               <Plus className="h-4 w-4 mr-2" /> Leistung hinzufügen
             </Button>
@@ -306,8 +336,8 @@ export default function ServicesView() {
                 <div key={lang.code} className={activeLangTab === lang.code ? 'block space-y-4' : 'hidden'}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-100 mb-1">Name der Leistung ({lang.label})</label>
-                      <Input {...register(`name_${lang.code}`)} placeholder="z.B. Web-Entwicklung" />
+                      <label className="block text-sm font-medium text-gray-100 mb-1">Name der Leistung ({lang.label}) *</label>
+                      <Input {...register(`name_${lang.code}`, { required: lang.code === 'de' })} placeholder="z.B. Web-Entwicklung" />
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-100 mb-1">Beschreibung ({lang.label})</label>

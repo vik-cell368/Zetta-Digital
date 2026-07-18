@@ -15,7 +15,5 @@ if (!root) {
 }
 
 root.render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
+  <App />
 );

@@ -35,7 +35,12 @@ export default function Services() {
         if (error) throw error;
         if (data) setDbServices(data);
       } catch (err) {
-        console.error("Failed to fetch services:", err);
+        console.warn("Failed to fetch services from Supabase, checking localStorage:", err);
+        const localData = localStorage.getItem('zetta_services');
+        if (localData) {
+          const parsed = JSON.parse(localData);
+          setDbServices(parsed.filter((s: any) => s.is_active));
+        }
       } finally {
         setIsLoading(false);
       }
@@ -100,39 +105,69 @@ export default function Services() {
     }
   };
 
-  // Merge DB services with hardcoded ones
-  const allServices = dbServices.map(s => {
-    const fallback = servicesData[s.id as keyof typeof servicesData];
-    
-    const featuresRaw = getTranslatedText(s.features || '', currentLang);
-    const processRaw = getTranslatedText(s.process || '', currentLang);
-    const faqsRaw = getTranslatedText(s.faqs || '', currentLang);
+  const displayServices = React.useMemo(() => {
+    // Merge DB services with hardcoded ones
+    const finalServices = Object.values(servicesData).map((fallback, i) => {
+      const dbService = dbServices.find(s => s.id === fallback.id);
+      if (!dbService) return { ...fallback, icon: getServiceIcon(fallback.id, i) };
 
-    const features = featuresRaw ? featuresRaw.split('\n').filter(Boolean) : fallback?.features || [];
-    const process = processRaw ? processRaw.split('\n').filter(Boolean) : fallback?.process || [];
-    const tech = s.tech ? s.tech.split(',').map(t => t.trim()) : fallback?.tech || [];
-    const faq = faqsRaw ? faqsRaw.split('\n').filter(Boolean).map(line => {
-      const [q, a] = line.split('|');
-      return { q: q?.trim(), a: a?.trim() };
-    }).filter(item => item.q && item.a) : fallback?.faq || [];
+      const featuresRaw = getTranslatedText(dbService.features || '', currentLang);
+      const processRaw = getTranslatedText(dbService.process || '', currentLang);
+      const faqsRaw = getTranslatedText(dbService.faqs || '', currentLang);
 
-    return {
-      id: s.id,
-      title: getTranslatedText(s.name, currentLang) || fallback?.title,
-      description: getTranslatedText(s.description, currentLang) || fallback?.description,
-      features,
-      process,
-      tech,
-      faq,
-      icon: getServiceIcon(s.id, 0)
-    };
-  });
+      const features = featuresRaw ? featuresRaw.split('\n').filter(Boolean) : fallback.features;
+      const process = processRaw ? processRaw.split('\n').filter(Boolean) : fallback.process;
+      const tech = dbService.tech ? dbService.tech.split(',').map(t => t.trim()) : fallback.tech;
+      const faq = faqsRaw ? faqsRaw.split('\n').filter(Boolean).map(line => {
+        const [q, a] = line.split('|');
+        return { q: q?.trim(), a: a?.trim() };
+      }).filter(item => item.q && item.a) : fallback.faq;
 
-  // If no DB services, use hardcoded ones as fallback
-  const displayServices = allServices.length > 0 ? allServices : Object.values(servicesData).map((s, i) => ({
-    ...s,
-    icon: getServiceIcon(s.id, i)
-  }));
+      return {
+        id: dbService.id,
+        title: getTranslatedText(dbService.name, currentLang) || fallback.title,
+        description: getTranslatedText(dbService.description, currentLang) || fallback.description,
+        features,
+        process,
+        tech,
+        faq,
+        icon: getServiceIcon(dbService.id, i)
+      };
+    });
+
+    // Also include any NEW services from DB that aren't in hardcoded list
+    const extraServices = dbServices
+      .filter(s => !servicesData[s.id as keyof typeof servicesData])
+      .map((s, i) => {
+        const featuresRaw = getTranslatedText(s.features || '', currentLang);
+        const processRaw = getTranslatedText(s.process || '', currentLang);
+        const faqsRaw = getTranslatedText(s.faqs || '', currentLang);
+
+        return {
+          id: s.id,
+          title: getTranslatedText(s.name, currentLang),
+          description: getTranslatedText(s.description, currentLang),
+          features: featuresRaw ? featuresRaw.split('\n').filter(Boolean) : [],
+          process: processRaw ? processRaw.split('\n').filter(Boolean) : [],
+          tech: s.tech ? s.tech.split(',').map(t => t.trim()) : [],
+          faq: faqsRaw ? faqsRaw.split('\n').filter(Boolean).map(line => {
+            const [q, a] = line.split('|');
+            return { q: q?.trim(), a: a?.trim() };
+          }).filter(item => item.q && item.a) : [],
+          icon: getServiceIcon(s.id, i + Object.keys(servicesData).length)
+        };
+      });
+
+    return [...finalServices, ...extraServices];
+  }, [dbServices, currentLang, i18n.language]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-dark-950">
+        <div className="w-12 h-12 border-4 border-neon-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (slug) {
     const service = displayServices.find(s => s.id === slug);
@@ -228,6 +263,13 @@ export default function Services() {
               </div>
             </motion.div>
           </div>
+        </div>
+      );
+    } else {
+      // If slug exists but service not found yet, show loading instead of falling through to list
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-dark-950">
+          <div className="w-12 h-12 border-4 border-neon-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       );
     }

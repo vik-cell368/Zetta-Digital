@@ -61,7 +61,7 @@ export default function WebGLBackground() {
       <Canvas 
         camera={{ fov: 75, position: [0, 0, 30] }}
         dpr={[1, 1.5]}
-        gl={{ powerPreference: "high-performance", antialias: false }}
+        gl={{ alpha: true, antialias: false, powerPreference: 'high-performance' }}
       >
         <Particles />
       </Canvas>

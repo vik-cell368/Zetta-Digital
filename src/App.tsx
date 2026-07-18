@@ -9,9 +9,7 @@ import Process from './pages/public/Process';
 import Portfolio from './pages/public/Portfolio';
 import FAQ from './pages/public/FAQ';
 import About from './pages/public/About';
-import Blog from './pages/public/Blog';
 import Contact from './pages/public/Contact';
-import Knowledge from './pages/public/Knowledge';
 import Legal from './pages/public/Legal';
 import Login from './pages/admin/Login';
 import Dashboard from './pages/admin/Dashboard';
@@ -20,11 +18,13 @@ import ServicesView from './pages/admin/ServicesView';
 import SettingsView from './pages/admin/SettingsView';
 import ContentView from './pages/admin/ContentView';
 import SmoothScroll from './components/SmoothScroll';
+import ScrollToTop from './components/ScrollToTop';
 
 export default function App() {
   return (
-    <SmoothScroll>
-      <Router>
+    <Router>
+      <SmoothScroll>
+        <ScrollToTop />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<PublicLayout />}>
@@ -37,9 +37,7 @@ export default function App() {
             <Route path="portfolio" element={<Portfolio />} />
             <Route path="faq" element={<FAQ />} />
             <Route path="about" element={<About />} />
-            <Route path="blog" element={<Blog />} />
             <Route path="contact" element={<Contact />} />
-            <Route path="knowledge" element={<Knowledge />} />
             <Route path="imprint" element={<Legal />} />
             <Route path="privacy" element={<Legal />} />
           </Route>
@@ -57,7 +55,7 @@ export default function App() {
             <Route path="settings" element={<SettingsView />} />
           </Route>
         </Routes>
-      </Router>
-    </SmoothScroll>
+      </SmoothScroll>
+    </Router>
   );
 }

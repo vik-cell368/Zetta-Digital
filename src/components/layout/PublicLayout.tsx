@@ -1,9 +1,10 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import PageTransition from "../PageTransition";
 import { motion, AnimatePresence } from 'motion/react';
+
 import WebGLBackground from '../WebGLBackground';
 
 export default function PublicLayout() {
@@ -91,7 +92,6 @@ export default function PublicLayout() {
             <Link to="/portfolio" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Portfolio">Referenzen</Link>
             <Link to="/faq" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="FAQ">FAQ</Link>
             <Link to="/about" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="About">{t('nav.about')}</Link>
-            <Link to="/blog" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Blog">Blog</Link>
             <Link to="/contact" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Contact">Kontakt</Link>
             
             <div className="ml-2">
@@ -146,7 +146,6 @@ export default function PublicLayout() {
                 <li><Link to="/about" className="hover:text-neon-400 transition-colors">Über uns</Link></li>
                 <li><Link to="/process" className="hover:text-neon-400 transition-colors">Projektablauf</Link></li>
                 <li><Link to="/pricing" className="hover:text-neon-400 transition-colors">Preise</Link></li>
-                <li><Link to="/blog" className="hover:text-neon-400 transition-colors">Blog</Link></li>
               </ul>
             </div>
 

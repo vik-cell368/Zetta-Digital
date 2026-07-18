@@ -7,7 +7,7 @@ import {
 } from '@react-three/drei'
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
 
-const PARTICLE_COUNT = 2500 // Reduced from 5000
+const PARTICLE_COUNT = 2000 // Optimized balance
 
 // Helper to create the "Z" logo shape
 const createZShape = () => {
@@ -26,7 +26,7 @@ const createZShape = () => {
   return shape
 }
 
-const Particles = memo(({ scrollYProgress }: { scrollYProgress: any }) => {
+const Particles = ({ scrollYProgress }: { scrollYProgress: any }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
   
@@ -118,9 +118,9 @@ const Particles = memo(({ scrollYProgress }: { scrollYProgress: any }) => {
       <meshBasicMaterial color="#00ffff" transparent opacity={0.6} />
     </instancedMesh>
   )
-})
+}
 
-const ZLogo = memo(({ scrollYProgress }: { scrollYProgress: any }) => {
+const ZLogo = ({ scrollYProgress }: { scrollYProgress: any }) => {
   const meshRef = useRef<THREE.Mesh>(null)
   const zShape = useMemo(() => createZShape(), [])
   
@@ -153,9 +153,9 @@ const ZLogo = memo(({ scrollYProgress }: { scrollYProgress: any }) => {
       />
     </mesh>
   )
-})
+}
 
-const DataStructure = memo(({ scrollYProgress }: { scrollYProgress: any }) => {
+const DataStructure = ({ scrollYProgress }: { scrollYProgress: any }) => {
   const groupRef = useRef<THREE.Group>(null)
   
   useFrame((state) => {
@@ -188,7 +188,7 @@ const DataStructure = memo(({ scrollYProgress }: { scrollYProgress: any }) => {
       ))}
     </group>
   )
-})
+}
 
 function Scene({ scrollYProgress }: { scrollYProgress: any }) {
   const { camera, mouse } = useThree()
@@ -220,18 +220,18 @@ function Scene({ scrollYProgress }: { scrollYProgress: any }) {
       <Environment preset="night" />
 
       <EffectComposer multisampling={0}>
-        <Bloom luminanceThreshold={0.5} mipmapBlur intensity={1.5} radius={0.4} />
+        <Bloom luminanceThreshold={0.8} mipmapBlur intensity={1.2} radius={0.3} />
       </EffectComposer>
     </>
   )
 }
 
-export default memo(function Experience3D({ scrollYProgress }: { scrollYProgress: any }) {
+export default function Experience3D({ scrollYProgress }: { scrollYProgress: any }) {
   return (
     <div className="fixed inset-0 z-0 bg-black pointer-events-none" aria-hidden="true">
-      <Canvas gl={{ antialias: false, powerPreference: 'high-performance' }} dpr={[1, 1.5]}>
+      <Canvas dpr={[1, 2]} gl={{ alpha: true, antialias: false, powerPreference: 'high-performance' }}>
         <Scene scrollYProgress={scrollYProgress} />
       </Canvas>
     </div>
   )
-})
+}

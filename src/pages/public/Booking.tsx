@@ -13,7 +13,6 @@ import { cn, formatCurrency, getTranslatedText } from '@/lib/utils';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
-import Hero3D from '@/components/Hero3D';
 
 type Step = 'service' | 'date' | 'time' | 'details' | 'success';
 

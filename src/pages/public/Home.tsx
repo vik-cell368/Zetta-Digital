@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { Monitor, ShoppingBag, Zap, Code } from 'lucide-react';
-import Experience3D from "@/components/Experience3D";
 import { Button } from "@/components/ui/Button";
 import { supabase } from '@/lib/supabase';
 import { getTranslatedText } from '@/lib/utils';
+
+import Experience3D from "@/components/Experience3D";
 
 export default function Home() {
   const { t, i18n } = useTranslation();
