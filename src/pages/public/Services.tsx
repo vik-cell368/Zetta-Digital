@@ -106,6 +106,14 @@ export default function Services() {
   };
 
   const displayServices = React.useMemo(() => {
+    // If no DB services, return defaults
+    if (!dbServices || dbServices.length === 0) {
+      return Object.values(servicesData).map((s, i) => ({
+        ...s,
+        icon: getServiceIcon(s.id, i)
+      }));
+    }
+
     // Merge DB services with hardcoded ones
     const finalServices = Object.values(servicesData).map((fallback, i) => {
       const dbService = dbServices.find(s => s.id === fallback.id);
@@ -115,27 +123,22 @@ export default function Services() {
       const processRaw = getTranslatedText(dbService.process || '', currentLang);
       const faqsRaw = getTranslatedText(dbService.faqs || '', currentLang);
 
-      const features = featuresRaw ? featuresRaw.split('\n').filter(Boolean) : fallback.features;
-      const process = processRaw ? processRaw.split('\n').filter(Boolean) : fallback.process;
-      const tech = dbService.tech ? dbService.tech.split(',').map(t => t.trim()) : fallback.tech;
-      const faq = faqsRaw ? faqsRaw.split('\n').filter(Boolean).map(line => {
-        const [q, a] = line.split('|');
-        return { q: q?.trim(), a: a?.trim() };
-      }).filter(item => item.q && item.a) : fallback.faq;
-
       return {
         id: dbService.id,
         title: getTranslatedText(dbService.name, currentLang) || fallback.title,
         description: getTranslatedText(dbService.description, currentLang) || fallback.description,
-        features,
-        process,
-        tech,
-        faq,
+        features: featuresRaw ? featuresRaw.split('\n').filter(Boolean) : fallback.features,
+        process: processRaw ? processRaw.split('\n').filter(Boolean) : fallback.process,
+        tech: dbService.tech ? dbService.tech.split(',').map(t => t.trim()) : fallback.tech,
+        faq: faqsRaw ? faqsRaw.split('\n').filter(Boolean).map(line => {
+          const [q, a] = line.split('|');
+          return { q: q?.trim(), a: a?.trim() };
+        }).filter(item => item.q && item.a) : fallback.faq,
         icon: getServiceIcon(dbService.id, i)
       };
     });
 
-    // Also include any NEW services from DB that aren't in hardcoded list
+    // Add extra services from DB
     const extraServices = dbServices
       .filter(s => !servicesData[s.id as keyof typeof servicesData])
       .map((s, i) => {

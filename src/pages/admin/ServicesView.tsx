@@ -47,15 +47,46 @@ export default function ServicesView() {
     try {
       const { data, error } = await supabase.from('services').select('*').order('created_at', { ascending: false });
       if (error) throw error;
-      if (data) setServices(data);
+      if (data && data.length > 0) {
+        setServices(data);
+        localStorage.setItem('zetta_services', JSON.stringify(data));
+      } else {
+        // If Supabase is empty, check localStorage
+        const localData = localStorage.getItem('zetta_services');
+        if (localData) {
+          setServices(JSON.parse(localData));
+        } else {
+          seedFromDefaults();
+        }
+      }
     } catch (err) {
       console.warn("Supabase fetch failed, falling back to localStorage", err);
       const localData = localStorage.getItem('zetta_services');
       if (localData) {
         setServices(JSON.parse(localData));
+      } else {
+        // Automatically seed defaults if completely empty
+        seedFromDefaults();
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const seedFromDefaults = () => {
+    const defaultServices = t('services.list', { returnObjects: true });
+    if (Array.isArray(defaultServices)) {
+      const seeded = defaultServices.map(s => ({
+        id: s.id,
+        name: JSON.stringify({ de: s.title, en: s.title }),
+        description: JSON.stringify({ de: s.desc, en: s.desc }),
+        price: 0,
+        duration_minutes: 60,
+        is_active: true,
+        created_at: new Date().toISOString()
+      })) as Service[];
+      saveToLocal(seeded);
+      setStatusMessage("Standard-Leistungen geladen");
     }
   };
 
@@ -433,7 +464,10 @@ export default function ServicesView() {
           ))}
           {services.length === 0 && !isAdding && (
             <div className="text-center py-12 text-gray-400 bg-dark-950 rounded-xl border border-white/10">
-              Keine Leistungen gefunden. Fügen Sie Ihre erste Leistung hinzu, um Buchungen entgegenzunehmen.
+              <p className="mb-4">Keine Leistungen gefunden. Fügen Sie Ihre erste Leistung hinzu, um Buchungen entgegenzunehmen.</p>
+              <Button variant="outline" onClick={seedFromDefaults}>
+                Standard-Leistungen laden
+              </Button>
             </div>
           )}
         </div>

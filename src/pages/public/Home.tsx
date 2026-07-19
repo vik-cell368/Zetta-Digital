@@ -9,8 +9,44 @@ import { getTranslatedText } from '@/lib/utils';
 
 export default function Home() {
   const { t, i18n } = useTranslation();
+  const currentLang = i18n.language.split('-')[0] || 'de';
   
-  const servicesList = t('services.list', { returnObjects: true }) as any[] || [];
+  const [servicesList, setServicesList] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        const { data, error } = await supabase.from('services').select('*').eq('is_active', true).limit(4);
+        if (error) throw error;
+        if (data && data.length > 0) {
+          setServicesList(data.map(s => ({
+            id: s.id,
+            title: getTranslatedText(s.name, currentLang),
+            desc: getTranslatedText(s.description, currentLang)
+          })));
+          return;
+        }
+      } catch (err) {
+        console.warn("Home fetch failed:", err);
+      }
+      
+      const local = localStorage.getItem('zetta_services');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (parsed.length > 0) {
+          setServicesList(parsed.filter((s: any) => s.is_active).map((s: any) => ({
+            id: s.id,
+            title: getTranslatedText(s.name, currentLang),
+            desc: getTranslatedText(s.description, currentLang)
+          })));
+          return;
+        }
+      }
+      
+      setServicesList(t('services.list', { returnObjects: true }) as any[] || []);
+    }
+    fetchServices();
+  }, [t, currentLang]);
 
   const getServiceIcon = (index: number) => {
     const icons = [<Monitor key="m" />, <ShoppingBag key="s" />, <Zap key="z" />, <Code key="c" />];

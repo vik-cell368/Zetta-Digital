@@ -132,7 +132,11 @@ export default function AppointmentsView() {
 
                   {/* Middle Column: Details */}
                   <div className="flex-1 space-y-3 border-t lg:border-t-0 lg:border-l border-white/10 pt-4 lg:pt-0 lg:pl-6">
-                    <div className="font-semibold text-lg text-white mb-2">{getTranslatedText(apt.services?.name, currentLang)}</div>
+                    <div className="font-semibold text-lg text-white mb-2">
+                      {apt.services?.name 
+                        ? (typeof apt.services.name === 'string' ? apt.services.name : getTranslatedText(apt.services.name, currentLang)) 
+                        : 'Unbekannter Service'}
+                    </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="flex items-center text-sm text-gray-400">

@@ -185,6 +185,7 @@ export default function Booking() {
 
     const payload = {
       service_id: selectedService.id,
+      services: { name: selectedService.name }, // For local display in admin
       full_name: data.full_name,
       email: data.email,
       phone: data.phone,

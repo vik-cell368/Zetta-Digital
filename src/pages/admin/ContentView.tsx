@@ -220,13 +220,30 @@ function ListEditor({ title, storageKey, fields }: { title: string, storageKey: 
 
   useEffect(() => {
     const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      setItems(JSON.parse(saved));
+    const parsed = saved ? JSON.parse(saved) : null;
+    
+    if (parsed && parsed.length > 0) {
+      setItems(parsed);
     } else {
-      // Load defaults if none
+      // Load defaults if none or empty
       const defaultResources = getDefaultResources();
       const prefix = storageKey.replace('zetta_', '');
-      const defaults = (defaultResources.en.translation as any)[prefix];
+      let defaults = (defaultResources.de.translation as any)[prefix];
+      
+      // Handle nested structures
+      if (prefix === 'portfolio' && defaults?.projects) defaults = defaults.projects;
+      if (prefix === 'faq' && defaults?.questions) defaults = defaults.questions;
+      if (prefix === 'pricing') {
+        // Filter out non-tier keys
+        const tiers = { ...defaults };
+        delete tiers.title;
+        delete tiers.subtitle;
+        delete tiers.individual_title;
+        delete tiers.individual_desc;
+        delete tiers.individual_btn;
+        defaults = Object.values(tiers);
+      }
+
       if (defaults && (Array.isArray(defaults) || typeof defaults === 'object')) {
         const initial = Array.isArray(defaults) ? defaults : Object.values(defaults);
         setItems(initial);

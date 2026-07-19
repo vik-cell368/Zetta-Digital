@@ -34,33 +34,42 @@ export default function Login() {
       });
 
       if (authError) {
-        setError(authError.message);
+        setError(authError.message === 'Invalid login credentials' ? 'Ungültige E-Mail oder Passwort.' : authError.message);
         setIsLoading(false);
         return;
       }
 
       if (data.user) {
         // Check if user is an admin
-        const { data: adminUser } = await supabase
+        const { data: adminUser, error: dbError } = await supabase
           .from('admin_users')
           .select('*')
           .eq('user_id', data.user.id)
           .single();
 
-        if (!adminUser) {
+        if (dbError || !adminUser) {
+          if (dbError?.message?.includes('does not exist')) {
+            setError('Supabase-Setup fehlt: Tabelle "admin_users" nicht gefunden.');
+          } else {
+            setError('Keine Administratorberechtigung für dieses Konto.');
+          }
           await supabase.auth.signOut();
-          setError('Unauthorized access. This account does not have admin privileges.');
         } else {
           (window as any)._zetta_authenticated = true;
           navigate('/admin/dashboard');
         }
       }
     } catch (err) {
-      console.warn("Auth failed, checking if it was a network error", err);
-      setError("An unexpected error occurred. Please check your connection.");
+      console.warn("Auth failed", err);
+      setError("Anmeldefunktion momentan nicht verfügbar. Bitte nutzen Sie den Demo-Login.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const useDemoLogin = () => {
+    setEmail('admin@zettadigital.com');
+    setPassword('zetta-admin-2026');
   };
 
   return (
@@ -111,6 +120,15 @@ export default function Login() {
             </div>
             <Button type="submit" className="w-full mt-4 bg-neon-500 hover:bg-neon-400 text-dark-950 uppercase tracking-widest text-xs font-semibold h-12 shadow-[0_0_15px_rgba(197,160,89,0.2)]" isLoading={isLoading}>
               Anmelden
+            </Button>
+            
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5"></span></div>
+              <div className="relative flex justify-center text-xs uppercase"><span className="bg-dark-950 px-2 text-gray-500 font-mono">ODER</span></div>
+            </div>
+
+            <Button type="button" variant="outline" onClick={useDemoLogin} className="w-full border-white/10 text-gray-400 hover:text-white hover:border-white/20 uppercase tracking-widest text-[10px] h-10">
+              Demo-Daten verwenden
             </Button>
           </form>
         </div>
