@@ -7,33 +7,47 @@ import { useTranslation } from 'react-i18next';
 
 export default function Pricing() {
   const { t } = useTranslation();
+  const [tiers, setTiers] = React.useState<any[]>([]);
 
-  const tiers = [
-    {
-      name: t('pricing.starter.name'),
-      price: t('pricing.starter.price'),
-      description: t('pricing.starter.desc'),
-      features: t('pricing.starter.features', { returnObjects: true }) as string[],
-      cta: t('home.phase4_btn'),
-      popular: false
-    },
-    {
-      name: t('pricing.business.name'),
-      price: t('pricing.business.price'),
-      description: t('pricing.business.desc'),
-      features: t('pricing.business.features', { returnObjects: true }) as string[],
-      cta: t('home.phase4_btn'),
-      popular: true
-    },
-    {
-      name: t('pricing.custom.name'),
-      price: t('pricing.custom.price'),
-      description: t('pricing.custom.desc'),
-      features: t('pricing.custom.features', { returnObjects: true }) as string[],
-      cta: t('home.phase4_btn'),
-      popular: false
+  React.useEffect(() => {
+    const saved = localStorage.getItem('zetta_pricing');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setTiers(parsed.map((p: any) => ({
+        ...p,
+        features: Array.isArray(p.features) ? p.features : (p.features || '').split('\n').filter(Boolean),
+        cta: t('home.phase4_btn'),
+        popular: p.popular || false
+      })));
+    } else {
+      setTiers([
+        {
+          name: t('pricing.starter.name'),
+          price: t('pricing.starter.price'),
+          description: t('pricing.starter.desc'),
+          features: t('pricing.starter.features', { returnObjects: true }) as string[],
+          cta: t('home.phase4_btn'),
+          popular: false
+        },
+        {
+          name: t('pricing.business.name'),
+          price: t('pricing.business.price'),
+          description: t('pricing.business.desc'),
+          features: t('pricing.business.features', { returnObjects: true }) as string[],
+          cta: t('home.phase4_btn'),
+          popular: true
+        },
+        {
+          name: t('pricing.custom.name'),
+          price: t('pricing.custom.price'),
+          description: t('pricing.custom.desc'),
+          features: t('pricing.custom.features', { returnObjects: true }) as string[],
+          cta: t('home.phase4_btn'),
+          popular: false
+        }
+      ]);
     }
-  ];
+  }, [t]);
 
   return (
     <div className="min-h-screen pt-32 pb-20 px-6">
@@ -42,17 +56,17 @@ export default function Pricing() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-20"
+          className="text-center mb-16 sm:mb-20"
         >
-          <h1 className="text-6xl md:text-8xl font-serif text-white mb-8 tracking-tight italic">
+          <h1 className="text-4xl sm:text-6xl md:text-8xl font-serif text-white mb-6 sm:mb-8 tracking-tight italic">
             {t('pricing.title')}
           </h1>
-          <p className="text-xl text-gray-400 font-light max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-gray-400 font-light max-w-2xl mx-auto leading-relaxed">
             {t('pricing.subtitle')}
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {tiers.map((tier, index) => (
             <motion.div
               key={tier.name}
@@ -60,10 +74,10 @@ export default function Pricing() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               viewport={{ once: true }}
-              className={`relative bg-dark-900/40 backdrop-blur-md border ${tier.popular ? 'border-neon-500/50' : 'border-white/5'} rounded-[2.5rem] p-10 flex flex-col`}
+              className={`relative bg-dark-900/40 backdrop-blur-md border ${tier.popular ? 'border-neon-500/50' : 'border-white/5'} rounded-3xl md:rounded-[2.5rem] p-8 sm:p-10 flex flex-col`}
             >
               {tier.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-neon-500 rounded-full text-[10px] font-mono font-bold text-dark-950 uppercase tracking-widest flex items-center">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-neon-500 rounded-full text-[10px] font-mono font-bold text-dark-950 uppercase tracking-widest flex items-center whitespace-nowrap">
                   <Star className="w-3 h-3 mr-1 fill-dark-950" /> Meistgewählt
                 </div>
               )}
@@ -74,10 +88,10 @@ export default function Pricing() {
               </div>
 
               <div className="mb-8 flex items-baseline">
-                <span className="text-4xl font-serif text-white font-bold italic">
+                <span className="text-3xl sm:text-4xl font-serif text-white font-bold italic">
                   {tier.price !== 'Anfrage' && tier.price !== 'Quote' ? `€${tier.price}` : tier.price}
                 </span>
-                {tier.price !== 'Anfrage' && tier.price !== 'Quote' && <span className="text-gray-500 ml-2 font-light">Ab-Preis</span>}
+                {tier.price !== 'Anfrage' && tier.price !== 'Quote' && <span className="text-gray-500 ml-2 font-light text-sm">Ab-Preis</span>}
               </div>
 
               <ul className="space-y-4 mb-10 flex-grow">

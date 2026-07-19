@@ -1,13 +1,18 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Globe } from 'lucide-react';
+import { Globe, Menu, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import React, { useEffect, lazy, Suspense } from 'react';
+import React, { useEffect, useState } from 'react';
 import PageTransition from "../PageTransition";
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function PublicLayout() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const hasSetLanguage = localStorage.getItem('i18nextLng');
@@ -91,13 +96,12 @@ export default function PublicLayout() {
             </div>
           </Link>
 
-          <nav className="hidden xl:flex items-center gap-8 text-sm font-medium" aria-label="Main Navigation">
+          <nav className="hidden lg:flex items-center gap-8 text-sm font-medium" aria-label="Main Navigation">
             <Link to="/services" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Services">{t('nav.services')}</Link>
             <Link to="/pricing" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Pricing">Preise</Link>
             <Link to="/portfolio" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Portfolio">Referenzen</Link>
             <Link to="/faq" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="FAQ">FAQ</Link>
             <Link to="/about" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="About">{t('nav.about')}</Link>
-            <Link to="/contact" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Contact">Kontakt</Link>
             
             <div className="ml-2">
               <LanguageSelector />
@@ -108,11 +112,42 @@ export default function PublicLayout() {
             </Link>
           </nav>
 
-          {/* Mobile menu and language toggle */}
-          <div className="md:hidden flex items-center gap-4">
+          {/* Mobile menu toggle */}
+          <div className="lg:hidden flex items-center gap-4">
             <LanguageSelector />
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 text-white hover:text-neon-500 transition-colors"
+              aria-expanded={isMobileMenuOpen}
+              aria-label="Toggle navigation menu"
+            >
+              {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu drawer */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="lg:hidden border-t border-white/5 bg-dark-950 overflow-hidden"
+            >
+              <div className="container mx-auto px-6 py-8 flex flex-col gap-6">
+                <Link to="/services" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-xs py-2">{t('nav.services')}</Link>
+                <Link to="/pricing" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-xs py-2">Preise</Link>
+                <Link to="/portfolio" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-xs py-2">Referenzen</Link>
+                <Link to="/faq" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-xs py-2">FAQ</Link>
+                <Link to="/about" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-xs py-2">{t('nav.about')}</Link>
+                <Link to="/booking" className="bg-neon-500 text-black px-6 py-4 text-center rounded-lg uppercase tracking-[0.2em] text-xs font-bold active:scale-[0.98] transition-all">
+                  {t('nav.book_consultation')}
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.header>
 
       <main className="flex-1 flex flex-col relative z-10">

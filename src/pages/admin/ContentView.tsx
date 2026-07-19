@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
-import { Globe, Save, CheckCircle2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Globe, Save, CheckCircle2 } from 'lucide-react';
 import { updateTranslations, getDefaultResources } from '@/i18n';
 
 const ALL_LANGS = [
@@ -19,171 +19,26 @@ const ALL_LANGS = [
 
 export default function ContentView() {
   const { i18n } = useTranslation();
+  const [activeTab, setActiveTab] = useState('services');
   const [selectedLang, setSelectedLang] = useState('en');
   const [enabledLangs, setEnabledLangs] = useState<string[]>(['en', 'de']);
-  const [tick, setTick] = useState(0);
-  const [overrides, setOverrides] = useState<Record<string, Record<string, string>>>({});
-  const [isSaving, setIsSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Extract all keys from default English resources as the master list
-  const defaultResources = getDefaultResources();
-
-  const flattenKeys = (obj: any, path: string = ''): string[] => {
-    if (!obj) return [];
-    return Object.keys(obj).reduce((acc: string[], key: string) => {
-      const newPath = path ? `${path}.${key}` : key;
-      if (typeof obj[key] === 'object' && !Array.isArray(obj[key]) && obj[key] !== null) {
-        acc.push(...flattenKeys(obj[key], newPath));
-      } else {
-        acc.push(newPath);
-      }
-      return acc;
-    }, []);
-  };
-
-  const allKeys = flattenKeys(defaultResources.en.translation || {});
 
   useEffect(() => {
-    try {
-      const savedOverrides = localStorage.getItem('zetta_content_overrides');
-      if (savedOverrides) {
-        setOverrides(JSON.parse(savedOverrides));
-      }
-
-      const savedEnabledLangs = localStorage.getItem('zetta_enabled_languages');
-      if (savedEnabledLangs) {
-        setEnabledLangs(savedEnabledLangs.split(','));
-      }
-    } catch (e) {
-      console.error(e);
+    const savedEnabledLangs = localStorage.getItem('zetta_enabled_languages');
+    if (savedEnabledLangs) {
+      setEnabledLangs(savedEnabledLangs.split(','));
     }
   }, []);
 
   const supportedLangs = ALL_LANGS.filter(l => enabledLangs.includes(l.code));
 
-  useEffect(() => {
-    // If current selected lang is no longer enabled, switch to first enabled one
-    if (enabledLangs.length > 0 && !enabledLangs.includes(selectedLang)) {
-      setSelectedLang(enabledLangs[0]);
-    }
-  }, [enabledLangs, selectedLang]);
-
-  const handleTextChange = (key: string, value: string) => {
-    setOverrides(prev => ({
-      ...prev,
-      [selectedLang]: {
-        ...(prev[selectedLang] || {}),
-        [key]: value
-      }
-    }));
-    setSaved(false);
-    
-    // Force re-render to update inputs immediately
-    setTick(t => t + 1);
-  };
-
-  const handleSave = () => {
-    setIsSaving(true);
-    updateTranslations(overrides);
-    setTimeout(() => {
-      setIsSaving(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    }, 800);
-  };
-
-  const getValue = (key: string) => {
-    // Return override if exists, otherwise default
-    if (overrides[selectedLang] && overrides[selectedLang][key] !== undefined) {
-      return overrides[selectedLang][key];
-    }
-    const defaultDict = (defaultResources as any)[selectedLang]?.translation;
-    if (!defaultDict) return '';
-
-    const parts = key.split('.');
-    let current = defaultDict;
-    for (const part of parts) {
-      if (!current || current[part] === undefined) return '';
-      current = current[part];
-    }
-    
-    if (Array.isArray(current)) return current.join(', ');
-    return typeof current === 'string' ? current : '';
-  };
-
-  const filteredKeys = allKeys.filter(key => 
-    key.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    getValue(key)?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const quickAccessGroups = [
-    {
-      name: 'Navigation & Fußzeile',
-      keys: ['nav.services', 'nav.about', 'nav.book_consultation', 'footer.description', 'footer.rights', 'footer.slogan']
-    },
-    {
-      name: 'Hero Sektion',
-      keys: ['home.hero_badge', 'home.hero_title', 'home.hero_subtitle', 'home.hero_desc', 'home.book_free', 'home.phase4_btn']
-    },
-    {
-      name: 'Startseite Sektionen',
-      keys: [
-        'home.phase2_label', 'home.phase2_title', 'home.phase2_desc',
-        'home.phase3_label', 'home.phase3_title', 'home.phase3_desc',
-        'home.expertise', 'home.srv_title', 'home.phase4_title'
-      ]
-    },
-    {
-      name: 'Leistungen Seite',
-      keys: [
-        'services.title', 'services.subtitle', 
-        'services.webdesign.title', 'services.webdesign.description',
-        'services.ai_automation.title', 'services.ai_automation.description',
-        'services.ai_chatbots.title', 'services.ai_chatbots.description'
-      ]
-    },
-    {
-      name: 'Preise Seite',
-      keys: [
-        'pricing.title', 'pricing.subtitle',
-        'pricing.starter.name', 'pricing.starter.price', 'pricing.starter.desc',
-        'pricing.business.name', 'pricing.business.price', 'pricing.business.desc',
-        'pricing.custom.name', 'pricing.custom.price',
-        'pricing.individual_title', 'pricing.individual_desc', 'pricing.individual_btn'
-      ]
-    },
-    {
-      name: 'Über uns Seite',
-      keys: [
-        'about.title', 'about.subtitle', 
-        'about.mission_title', 'about.mission_desc',
-        'about.vision_title', 'about.vision_desc',
-        'about.why_title'
-      ]
-    },
-    {
-      name: 'FAQ Sektion',
-      keys: [
-        'faq.title', 'faq.subtitle',
-        'faq.cta_title', 'faq.cta_subtitle', 'faq.cta_btn'
-      ]
-    },
-    {
-      name: 'Referenzen',
-      keys: [
-        'portfolio.title', 'portfolio.subtitle',
-        'portfolio.cta_title', 'portfolio.cta_desc'
-      ]
-    },
-    {
-      name: 'Ablauf',
-      keys: [
-        'process.title', 'process.subtitle',
-        'process.cta_title', 'process.cta_desc'
-      ]
-    }
+  const sections = [
+    { id: 'services', name: 'Unsere Leistungen', icon: Globe },
+    { id: 'pricing', name: 'Preise', icon: Save }, // Using Save as placeholder for pricing
+    { id: 'portfolio', name: 'Referenzen', icon: CheckCircle2 },
+    { id: 'faq', name: 'FAQ', icon: Save },
+    { id: 'about', name: 'Über uns', icon: Save },
+    { id: 'raw', name: 'Alle Texte (Roh)', icon: Globe }
   ];
 
   return (
@@ -191,147 +46,418 @@ export default function ContentView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-serif text-white tracking-tight">Inhaltsverwaltung</h2>
-          <p className="text-gray-400 mt-1 font-light text-sm">Bearbeiten Sie Website-Texte, Slogans und Beschreibungen in allen Sprachen.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {saved && <span className="text-neon-500 text-sm font-medium flex items-center"><CheckCircle2 className="w-4 h-4 mr-1" /> Gespeichert</span>}
-          <Button onClick={handleSave} isLoading={isSaving} className="bg-neon-500 hover:bg-neon-400 text-dark-950 px-6 rounded-xl font-semibold text-xs tracking-widest uppercase">
-            <Save className="w-4 h-4 mr-2" /> Inhalt speichern
-          </Button>
+          <p className="text-gray-400 mt-1 font-light text-sm">Verwalten Sie alle Inhalte Ihrer Website an einem zentralen Ort.</p>
         </div>
       </div>
 
-      <Card className="p-6 bg-dark-900/50 backdrop-blur-md border-white/5">
-        <div className="flex flex-col lg:flex-row gap-8">
-          
-          {/* Language Selector */}
-          <div className="lg:w-64 flex-shrink-0 space-y-2">
-            <h3 className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-4 flex items-center">
-              <Globe className="w-4 h-4 mr-2" /> Sprachen
-            </h3>
-            {supportedLangs.map(lang => (
-              <button
-                key={lang.code}
-                onClick={() => setSelectedLang(lang.code)}
-                className={`w-full text-left px-4 py-3 rounded-xl transition-all font-medium text-sm flex items-center justify-between ${
-                  selectedLang === lang.code 
-                    ? 'bg-neon-500/10 text-neon-500 border border-neon-500/20' 
-                    : 'text-gray-400 hover:bg-dark-800 hover:text-white border border-transparent'
-                }`}
-              >
-                {lang.name}
-                {overrides[lang.code] && Object.keys(overrides[lang.code]).length > 0 && (
-                  <span className="w-2 h-2 rounded-full bg-neon-500"></span>
-                )}
-              </button>
-            ))}
+      <div className="flex flex-wrap gap-2 border-b border-white/5 pb-4">
+        {sections.map(section => (
+          <button
+            key={section.id}
+            onClick={() => setActiveTab(section.id)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              activeTab === section.id 
+                ? 'bg-neon-500 text-dark-950' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            {section.name}
+          </button>
+        ))}
+      </div>
 
-            <div className="pt-8 space-y-2">
-              <h3 className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-4">
-                Schnellzugriff
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {['Home', 'Services', 'Footer'].map(tag => (
-                  <button 
-                    key={tag}
-                    onClick={() => setSearchQuery(tag.toLowerCase())}
-                    className="px-3 py-1 rounded-full bg-dark-800 text-[10px] text-gray-400 hover:text-white transition-colors"
-                  >
-                    #{tag}
-                  </button>
-                ))}
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  className="px-3 py-1 rounded-full bg-dark-800 text-[10px] text-gray-400 hover:text-white transition-colors"
-                >
-                  Löschen
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Editor */}
-          <div className="flex-1 space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Input 
-                placeholder="Suchbegriff oder Schlüssel..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-dark-950 border-white/10 text-white rounded-xl"
-              />
-            </div>
-
-            <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-              {/* Grouped Quick Access if no search */}
-              {!searchQuery && quickAccessGroups.map(group => (
-                <div key={group.name} className="space-y-4 pb-8 mb-8 border-b border-white/5 last:border-0">
-                  <h4 className="text-[10px] font-mono uppercase tracking-[0.3em] text-neon-500/50">{group.name}</h4>
-                  {group.keys.map(key => {
-                    const value = getValue(key);
-                    if (value === undefined) return null;
-                    return (
-                      <div key={`quick-${key}`} className="bg-dark-950/50 p-4 rounded-xl border border-neon-500/10 focus-within:border-neon-500/50 transition-colors">
-                        <div className="flex justify-between items-center mb-3">
-                          <label className="block text-[10px] font-mono text-neon-500/50">{key}</label>
-                        </div>
-                        {value.length > 80 ? (
-                          <Textarea 
-                            value={value}
-                            onChange={(e) => handleTextChange(key, e.target.value)}
-                            className="bg-transparent border-none text-white focus-visible:ring-0 resize-y min-h-[60px] p-0 font-light leading-relaxed"
-                          />
-                        ) : (
-                          <Input 
-                            value={value}
-                            onChange={(e) => handleTextChange(key, e.target.value)}
-                            className="bg-transparent border-none text-white focus-visible:ring-0 p-0 h-auto font-light"
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-
-              {filteredKeys.length > 0 && searchQuery && (
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-mono uppercase tracking-[0.3em] text-neon-500/50">Suchergebnisse</h4>
-                  {filteredKeys.map(key => {
-                    const value = getValue(key);
-                    const isLongText = value && value.length > 50;
-
-                    return (
-                      <div key={key} className="bg-dark-950 p-4 rounded-xl border border-white/5 focus-within:border-neon-500/50 transition-colors">
-                        <label className="block text-xs font-mono text-neon-500/70 mb-3">{key}</label>
-                        {isLongText ? (
-                          <Textarea 
-                            value={value}
-                            onChange={(e) => handleTextChange(key, e.target.value)}
-                            className="bg-dark-900 border-none text-white focus-visible:ring-0 resize-y min-h-[100px]"
-                          />
-                        ) : (
-                          <Input 
-                            value={value}
-                            onChange={(e) => handleTextChange(key, e.target.value)}
-                            className="bg-dark-900 border-none text-white focus-visible:ring-0"
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              
-              {filteredKeys.length === 0 && (
-                <div className="text-center py-12 text-gray-500">
-                  Kein Inhalt gefunden für "{searchQuery}"
-                </div>
-              )}
-            </div>
-          </div>
-
-        </div>
-      </Card>
+      <div className="mt-8">
+        {activeTab === 'services' && <ServicesView />}
+        {activeTab === 'raw' && <RawContentEditor />}
+        {activeTab === 'pricing' && <PricingEditor />}
+        {activeTab === 'portfolio' && <PortfolioEditor />}
+        {activeTab === 'faq' && <FAQEditor />}
+        {activeTab === 'about' && <AboutEditor />}
+      </div>
     </div>
   );
 }
+
+// Sub-components will be defined below or moved to separate files
+function RawContentEditor() {
+  const { i18n } = useTranslation();
+  const [selectedLang, setSelectedLang] = useState('en');
+  const [enabledLangs, setEnabledLangs] = useState<string[]>(['en', 'de']);
+  const [overrides, setOverrides] = useState<Record<string, Record<string, string>>>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const defaultResources = getDefaultResources();
+  const allKeys = Object.keys(defaultResources.en.translation || {}).reduce((acc: string[], key: string) => {
+    const val = (defaultResources.en.translation as any)[key];
+    if (typeof val === 'object' && !Array.isArray(val)) {
+      Object.keys(val).forEach(subKey => acc.push(`${key}.${subKey}`));
+    } else {
+      acc.push(key);
+    }
+    return acc;
+  }, []);
+
+  useEffect(() => {
+    const savedOverrides = localStorage.getItem('zetta_content_overrides');
+    if (savedOverrides) setOverrides(JSON.parse(savedOverrides));
+    const savedEnabledLangs = localStorage.getItem('zetta_enabled_languages');
+    if (savedEnabledLangs) setEnabledLangs(savedEnabledLangs.split(','));
+  }, []);
+
+  const supportedLangs = ALL_LANGS.filter(l => enabledLangs.includes(l.code));
+
+  const handleTextChange = (key: string, value: string) => {
+    setOverrides(prev => ({
+      ...prev,
+      [selectedLang]: { ...(prev[selectedLang] || {}), [key]: value }
+    }));
+    setSaved(false);
+  };
+
+  const handleSave = () => {
+    setIsSaving(true);
+    updateTranslations(overrides);
+    setTimeout(() => { setIsSaving(false); setSaved(true); setTimeout(() => setSaved(false), 3000); }, 800);
+  };
+
+  const getValue = (key: string) => {
+    if (overrides[selectedLang]?.[key] !== undefined) return overrides[selectedLang][key];
+    const parts = key.split('.');
+    let current = (defaultResources as any)[selectedLang]?.translation;
+    for (const part of parts) { if (!current || current[part] === undefined) return ''; current = current[part]; }
+    return typeof current === 'string' ? current : '';
+  };
+
+  return (
+    <Card className="p-6 bg-dark-900/50 backdrop-blur-md border-white/5">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex gap-2">
+          {supportedLangs.map(lang => (
+            <button
+              key={lang.code}
+              onClick={() => setSelectedLang(lang.code)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                selectedLang === lang.code ? 'bg-neon-500/20 text-neon-500 border border-neon-500/30' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {lang.name}
+            </button>
+          ))}
+        </div>
+        <Button onClick={handleSave} isLoading={isSaving} size="sm">
+          <Save className="w-4 h-4 mr-2" /> Speichern
+        </Button>
+      </div>
+      <Input 
+        placeholder="Suche..." 
+        value={searchQuery} 
+        onChange={e => setSearchQuery(e.target.value)} 
+        className="mb-6 bg-dark-950 border-white/10"
+      />
+      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+        {allKeys.filter(k => k.toLowerCase().includes(searchQuery.toLowerCase())).map(key => (
+          <div key={key} className="space-y-1">
+            <label className="text-[10px] font-mono text-gray-500">{key}</label>
+            <Input 
+              value={getValue(key)} 
+              onChange={e => handleTextChange(key, e.target.value)}
+              className="bg-dark-950 border-white/5"
+            />
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// Placeholder editors - these will be filled with logic for specific i18n keys
+function PricingEditor() {
+  return <ListEditor 
+    title="Preispakete" 
+    storageKey="zetta_pricing"
+    fields={[
+      { id: 'name', label: 'Name', type: 'text' },
+      { id: 'price', label: 'Preis', type: 'text' },
+      { id: 'desc', label: 'Beschreibung', type: 'textarea' },
+      { id: 'features', label: 'Features (einzelne Zeilen)', type: 'textarea' }
+    ]}
+  />;
+}
+
+function PortfolioEditor() {
+  return <ListEditor 
+    title="Referenzen" 
+    storageKey="zetta_portfolio"
+    fields={[
+      { id: 'title', label: 'Titel', type: 'text' },
+      { id: 'category', label: 'Kategorie', type: 'text' },
+      { id: 'desc', label: 'Beschreibung', type: 'textarea' },
+      { id: 'image', label: 'Bild URL', type: 'text' },
+      { id: 'result', label: 'Ergebnis', type: 'text' },
+      { id: 'tags', label: 'Tags (Komma-getrennt)', type: 'text' }
+    ]}
+  />;
+}
+
+function FAQEditor() {
+  return <ListEditor 
+    title="FAQ" 
+    storageKey="zetta_faq"
+    fields={[
+      { id: 'question', label: 'Frage', type: 'text' },
+      { id: 'answer', label: 'Antwort', type: 'textarea' },
+      { id: 'category', label: 'Kategorie', type: 'text' }
+    ]}
+  />;
+}
+
+function ListEditor({ title, storageKey, fields }: { title: string, storageKey: string, fields: any[] }) {
+  const [items, setItems] = useState<any[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [newItem, setNewItem] = useState<any>({});
+
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      setItems(JSON.parse(saved));
+    } else {
+      // Load defaults if none
+      const defaultResources = getDefaultResources();
+      const prefix = storageKey.replace('zetta_', '');
+      const defaults = (defaultResources.en.translation as any)[prefix];
+      if (defaults && (Array.isArray(defaults) || typeof defaults === 'object')) {
+        const initial = Array.isArray(defaults) ? defaults : Object.values(defaults);
+        setItems(initial);
+      }
+    }
+  }, [storageKey]);
+
+  const save = (updated: any[]) => {
+    localStorage.setItem(storageKey, JSON.stringify(updated));
+    setItems(updated);
+    setEditingIndex(null);
+    setNewItem({});
+  };
+
+  const handleAdd = () => {
+    save([...items, { ...newItem, id: crypto.randomUUID() }]);
+  };
+
+  const handleDelete = (index: number) => {
+    if (confirm('Löschen?')) {
+      const updated = [...items];
+      updated.splice(index, 1);
+      save(updated);
+    }
+  };
+
+  const handleUpdate = () => {
+    const updated = [...items];
+    updated[editingIndex!] = newItem;
+    save(updated);
+  };
+
+  return (
+    <Card className="p-6 bg-dark-900/50 border-white/5">
+      <div className="flex justify-between items-center mb-8">
+        <h3 className="text-xl text-white font-serif italic">{title}</h3>
+        <Button size="sm" onClick={() => { setEditingIndex(-1); setNewItem({}); }}>
+          <Plus className="w-4 h-4 mr-2" /> Hinzufügen
+        </Button>
+      </div>
+
+      {(editingIndex !== null) && (
+        <div className="mb-12 p-6 bg-dark-950 rounded-2xl border border-neon-500/30 space-y-4">
+          <h4 className="text-sm font-mono text-neon-500 uppercase tracking-widest mb-4">
+            {editingIndex === -1 ? 'Neues Element' : 'Bearbeiten'}
+          </h4>
+          <div className="grid grid-cols-1 gap-4">
+            {fields.map(f => (
+              <div key={f.id}>
+                <label className="text-[10px] text-gray-500 uppercase tracking-widest block mb-2">{f.label}</label>
+                {f.type === 'textarea' ? (
+                  <Textarea 
+                    value={newItem[f.id] || ''} 
+                    onChange={e => setNewItem({ ...newItem, [f.id]: e.target.value })}
+                    className="bg-dark-900 border-white/5 text-white min-h-[100px]"
+                  />
+                ) : (
+                  <Input 
+                    value={newItem[f.id] || ''} 
+                    onChange={e => setNewItem({ ...newItem, [f.id]: e.target.value })}
+                    className="bg-dark-900 border-white/5 text-white"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="ghost" onClick={() => setEditingIndex(null)}>Abbrechen</Button>
+            <Button onClick={editingIndex === -1 ? handleAdd : handleUpdate}>Speichern</Button>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-4">
+        {items.map((item, i) => (
+          <div key={i} className="p-4 bg-dark-950 rounded-xl border border-white/5 flex justify-between items-center">
+            <div>
+              <div className="text-white font-medium">{item.name || item.title || item.question || `Element ${i+1}`}</div>
+              <div className="text-xs text-gray-500">{item.category || item.price || ''}</div>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => { setEditingIndex(i); setNewItem(item); }}>
+                <Edit2 className="w-4 h-4" />
+              </Button>
+              <Button size="sm" variant="danger" onClick={() => handleDelete(i)}>
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        ))}
+        {items.length === 0 && <div className="text-center py-12 text-gray-500">Noch keine Einträge vorhanden.</div>}
+      </div>
+    </Card>
+  );
+}
+function AboutEditor() { 
+  const { i18n } = useTranslation();
+  const [selectedLang, setSelectedLang] = useState('de');
+  const [overrides, setOverrides] = useState<Record<string, Record<string, string>>>({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('zetta_content_overrides');
+    if (saved) setOverrides(JSON.parse(saved));
+  }, []);
+
+  const handleSave = () => {
+    setIsSaving(true);
+    updateTranslations(overrides);
+    setTimeout(() => setIsSaving(false), 500);
+  };
+
+  const aboutKeys = [
+    { key: 'about.title', label: 'Name / Titel' },
+    { key: 'about.subtitle', label: 'Beschreibung / Slogan' },
+    { key: 'about.mission_title', label: 'Mission Titel' },
+    { key: 'about.mission_desc', label: 'Mission Beschreibung' },
+    { key: 'about.vision_title', label: 'Vision Titel' },
+    { key: 'about.vision_desc', label: 'Vision Beschreibung' },
+    { key: 'about.why_title', label: 'Warum Zetta Titel' }
+  ];
+
+  return (
+    <Card className="p-6 bg-dark-900/50 border-white/5">
+      <div className="flex justify-between items-center mb-8">
+        <h3 className="text-xl text-white font-serif italic">Über uns verwalten</h3>
+        <div className="flex gap-4">
+          <select 
+            value={selectedLang} 
+            onChange={e => setSelectedLang(e.target.value)}
+            className="bg-dark-950 border-white/10 text-white text-xs rounded-lg px-3 py-1"
+          >
+            <option value="de">Deutsch</option>
+            <option value="en">English</option>
+          </select>
+          <Button onClick={handleSave} isLoading={isSaving} size="sm">Speichern</Button>
+        </div>
+      </div>
+      <div className="space-y-6">
+        {aboutKeys.map(item => {
+          const defaultResources = getDefaultResources();
+          const parts = item.key.split('.');
+          const defaultVal = (defaultResources as any)[selectedLang]?.translation[parts[0]]?.[parts[1]] || '';
+          const val = overrides[selectedLang]?.[item.key] || defaultVal;
+          return (
+            <div key={item.key}>
+              <label className="block text-xs text-gray-500 mb-2 uppercase tracking-widest">{item.label}</label>
+              {val.length > 60 ? (
+                <Textarea 
+                  value={val} 
+                  onChange={e => setOverrides(prev => ({ ...prev, [selectedLang]: { ...(prev[selectedLang] || {}), [item.key]: e.target.value } }))}
+                  className="bg-dark-950 border-white/10 text-white min-h-[100px]"
+                />
+              ) : (
+                <Input 
+                  value={val} 
+                  onChange={e => setOverrides(prev => ({ ...prev, [selectedLang]: { ...(prev[selectedLang] || {}), [item.key]: e.target.value } }))}
+                  className="bg-dark-950 border-white/10 text-white"
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+function SectionEditor({ title, prefix }: { title: string, prefix: string }) {
+  const { i18n } = useTranslation();
+  const [selectedLang, setSelectedLang] = useState('de');
+  const [overrides, setOverrides] = useState<Record<string, Record<string, string>>>({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('zetta_content_overrides');
+    if (saved) setOverrides(JSON.parse(saved));
+  }, []);
+
+  const handleSave = () => {
+    setIsSaving(true);
+    updateTranslations(overrides);
+    setTimeout(() => setIsSaving(false), 500);
+  };
+
+  const defaultResources = getDefaultResources();
+  const keys = Object.keys((defaultResources.en.translation as any)[prefix] || {}).map(k => `${prefix}.${k}`);
+
+  return (
+    <Card className="p-6 bg-dark-900/50 border-white/5">
+      <div className="flex justify-between items-center mb-8">
+        <h3 className="text-lg text-white font-serif">{title}</h3>
+        <div className="flex gap-4">
+          <select 
+            value={selectedLang} 
+            onChange={e => setSelectedLang(e.target.value)}
+            className="bg-dark-950 border-white/10 text-white text-xs rounded-lg px-3 py-1"
+          >
+            <option value="de">Deutsch</option>
+            <option value="en">English</option>
+          </select>
+          <Button onClick={handleSave} isLoading={isSaving} size="sm">Speichern</Button>
+        </div>
+      </div>
+      <div className="space-y-6">
+        {keys.map(key => {
+          const val = overrides[selectedLang]?.[key] || (defaultResources as any)[selectedLang]?.translation[prefix]?.[key.split('.')[1]] || '';
+          if (typeof val === 'object') return null; // Skip nested objects for this simple editor
+          return (
+            <div key={key}>
+              <label className="block text-xs text-gray-500 mb-2 uppercase tracking-widest">{key}</label>
+              {val.length > 60 ? (
+                <Textarea 
+                  value={val} 
+                  onChange={e => setOverrides(prev => ({ ...prev, [selectedLang]: { ...(prev[selectedLang] || {}), [key]: e.target.value } }))}
+                  className="bg-dark-950 border-white/10 text-white min-h-[100px]"
+                />
+              ) : (
+                <Input 
+                  value={val} 
+                  onChange={e => setOverrides(prev => ({ ...prev, [selectedLang]: { ...(prev[selectedLang] || {}), [key]: e.target.value } }))}
+                  className="bg-dark-950 border-white/10 text-white"
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+// Import ServicesView as a subcomponent or just copy logic
+import ServicesView from './ServicesView';

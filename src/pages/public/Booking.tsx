@@ -185,9 +185,9 @@ export default function Booking() {
 
     const payload = {
       service_id: selectedService.id,
-      client_name: data.full_name,
-      client_email: data.email,
-      client_phone: data.phone,
+      full_name: data.full_name,
+      email: data.email,
+      phone: data.phone,
       start_time: startDateTime.toISOString(),
       end_time: endDateTime.toISOString(),
       status: 'pending',
@@ -225,34 +225,31 @@ export default function Booking() {
           <p className="text-gray-400 font-light max-w-lg mx-auto">Schedule an executive discussion to outline your technological trajectory.</p>
         </div>
 
-        {/* Progress Indication */}
-        {step !== 'success' && (
-          <div className="flex justify-center mb-16">
-            <div className="flex items-center gap-2 md:gap-4 font-mono text-xs uppercase tracking-widest overflow-x-auto pb-4 scrollbar-hide w-full max-w-2xl">
+          <div className="flex justify-center mb-16 px-2 overflow-hidden">
+            <div className="flex items-center gap-2 md:gap-4 font-mono text-[10px] md:text-xs uppercase tracking-widest overflow-x-auto pb-4 scrollbar-hide w-full max-w-2xl no-scrollbar">
               {['service', 'date', 'time', 'details'].map((s, i, arr) => (
-                <div key={s} className="flex items-center whitespace-nowrap">
+                <div key={s} className="flex items-center whitespace-nowrap flex-shrink-0">
                   <span className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center border transition-colors",
+                    "w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center border transition-colors text-[10px]",
                     step === s ? "bg-neon-500 border-neon-500 text-dark-950 font-bold" : 
                     arr.indexOf(step) > i ? "bg-white/10 border-transparent text-white" : "border-white/20 text-gray-500"
                   )}>
                     {i + 1}
                   </span>
                   <span className={cn(
-                    "ml-3 tracking-[0.2em] transition-colors hidden md:block",
+                    "ml-2 md:ml-3 tracking-[0.2em] transition-colors hidden sm:block",
                     step === s ? "text-neon-500" : 
                     arr.indexOf(step) > i ? "text-white" : "text-gray-500"
                   )}>
                     {t(`booking.step_${s}`)}
                   </span>
                   {i < arr.length - 1 && (
-                    <div className="w-8 md:w-16 h-px bg-white/10 mx-2 md:mx-4" />
+                    <div className="w-4 md:w-16 h-px bg-white/10 mx-2 md:mx-4" />
                   )}
                 </div>
               ))}
             </div>
           </div>
-        )}
 
         <AnimatePresence mode="wait">
           {/* STEP: SERVICE */}
@@ -302,27 +299,28 @@ export default function Booking() {
             <motion.div 
               key="date"
               initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}
-              className="max-w-md mx-auto"
+              className="max-w-md mx-auto px-2"
             >
-              <Button variant="ghost" onClick={() => setStep('service')} className="mb-6 -ml-4 text-gray-400 hover:text-white uppercase tracking-widest text-xs font-mono">
+              <Button variant="ghost" onClick={() => setStep('service')} className="mb-6 -ml-4 text-gray-400 hover:text-white uppercase tracking-widest text-[10px] md:text-xs font-mono">
                 <ChevronLeft className="w-4 h-4 mr-2" /> Back
               </Button>
-              <div className="bg-dark-900/50 backdrop-blur-md rounded-2xl p-8 border border-white/5 flex justify-center">
+              <div className="bg-dark-900/50 backdrop-blur-md rounded-2xl p-4 md:p-8 border border-white/5 flex justify-center overflow-hidden">
                 <style>{`
-                  .rdp { --rdp-cell-size: 46px; --rdp-accent-color: var(--color-neon-500); --rdp-background-color: var(--color-dark-800); margin: 0; }
+                  .rdp { --rdp-cell-size: 40px; --rdp-accent-color: var(--color-neon-500); --rdp-background-color: var(--color-dark-800); margin: 0; }
+                  @media (min-width: 768px) { .rdp { --rdp-cell-size: 46px; } }
                   .rdp-day_selected { font-weight: bold; color: var(--color-dark-950); }
                   .rdp-button:hover:not([disabled]):not(.rdp-day_selected) { background-color: var(--color-dark-800); }
                   .rdp-day { border-radius: 50%; font-family: var(--font-sans); }
                   .rdp-nav_button { color: white; }
-                  .rdp-head_cell { color: #888; font-weight: normal; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; }
-                  .rdp-caption_label { font-family: var(--font-serif); font-size: 1.25rem; }
+                  .rdp-head_cell { color: #888; font-weight: normal; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; }
+                  .rdp-caption_label { font-family: var(--font-serif); font-size: 1.1rem; }
                 `}</style>
                 <DayPicker
                   mode="single"
                   selected={selectedDate}
                   onSelect={handleDateSelect}
                   disabled={[{ before: new Date() }, { dayOfWeek: [0, 6] }]}
-                  className="text-white"
+                  className="text-white mx-auto"
                 />
               </div>
             </motion.div>
@@ -333,25 +331,26 @@ export default function Booking() {
             <motion.div 
               key="time"
               initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}
-              className="max-w-2xl mx-auto"
+              className="max-w-2xl mx-auto px-2"
             >
               <Button variant="ghost" onClick={() => setStep('date')} className="mb-6 -ml-4 text-gray-400 hover:text-white uppercase tracking-widest text-xs font-mono">
                 <ChevronLeft className="w-4 h-4 mr-2" /> Back
               </Button>
               
-              <div className="bg-dark-900/50 backdrop-blur-md rounded-2xl p-8 border border-white/5">
-                <h3 className="font-serif text-2xl text-white mb-8">
+              <div className="bg-dark-900/50 backdrop-blur-md rounded-2xl p-6 md:p-10 border border-white/5">
+                <h3 className="font-serif text-xl md:text-2xl text-white mb-8">
                   {selectedDate && format(selectedDate, 'EEEE, d. MMMM', { locale: getDateLocale(i18n.language) })}
                 </h3>
                 
                 {isTimesLoading ? (
-                  <div className="flex justify-center py-20">
+                  <div className="flex justify-center py-20" aria-live="polite">
                     <Loader2 className="w-10 h-10 text-neon-500 animate-spin" />
+                    <span className="sr-only">Lade verfügbare Zeiten...</span>
                   </div>
                 ) : availableTimes.length === 0 ? (
                   <p className="text-gray-400 font-light">{t('booking.no_slots')}</p>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
                     {availableTimes.map(time => {
                       const timeDisplay = format(parse(time, 'HH:mm:ss', new Date()), 'HH:mm');
                       const isSelected = selectedTime === time;
@@ -359,8 +358,9 @@ export default function Booking() {
                         <button
                           key={time}
                           onClick={() => setSelectedTime(time)}
+                          aria-pressed={isSelected}
                           className={cn(
-                            "py-4 rounded-xl font-mono text-sm transition-all duration-300 border",
+                            "py-5 rounded-xl font-mono text-base transition-all duration-300 border active:scale-95 touch-manipulation",
                             isSelected 
                               ? "bg-neon-500 border-neon-500 text-dark-950 font-bold shadow-[0_0_20px_rgba(197,160,89,0.2)]" 
                               : "bg-dark-950 border-white/5 hover:border-neon-500/30 hover:bg-dark-900 text-gray-300"

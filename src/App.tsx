@@ -9,7 +9,6 @@ import Process from './pages/public/Process';
 import Portfolio from './pages/public/Portfolio';
 import FAQ from './pages/public/FAQ';
 import About from './pages/public/About';
-import Contact from './pages/public/Contact';
 import Legal from './pages/public/Legal';
 import Login from './pages/admin/Login';
 import Dashboard from './pages/admin/Dashboard';
@@ -37,7 +36,6 @@ export default function App() {
             <Route path="portfolio" element={<Portfolio />} />
             <Route path="faq" element={<FAQ />} />
             <Route path="about" element={<About />} />
-            <Route path="contact" element={<Contact />} />
             <Route path="imprint" element={<Legal />} />
             <Route path="privacy" element={<Legal />} />
           </Route>

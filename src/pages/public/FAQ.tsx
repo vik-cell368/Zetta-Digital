@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Minus, Search } from 'lucide-react';
 
@@ -8,8 +8,28 @@ export default function FAQ() {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeIndices, setActiveIndices] = useState<string[]>([]);
+  const [faqs, setFaqs] = useState<any[]>([]);
 
-  const faqs = t('faq.questions', { returnObjects: true }) as any[] || [];
+  useEffect(() => {
+    const saved = localStorage.getItem('zetta_faq');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Group by category for the UI
+      const grouped = parsed.reduce((acc: any[], item: any) => {
+        const cat = item.category || 'Allgemein';
+        let group = acc.find(g => g.category === cat);
+        if (!group) {
+          group = { category: cat, items: [] };
+          acc.push(group);
+        }
+        group.items.push({ q: item.question, a: item.answer });
+        return acc;
+      }, []);
+      setFaqs(grouped);
+    } else {
+      setFaqs(t('faq.questions', { returnObjects: true }) as any[] || []);
+    }
+  }, [t]);
 
   const toggleAccordion = (id: string) => {
     setActiveIndices(prev => 

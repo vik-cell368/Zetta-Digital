@@ -187,20 +187,20 @@ export default function Services() {
                 <span className="text-xs font-mono uppercase tracking-[0.3em] font-medium">Service Detail</span>
               </div>
               
-              <h1 className="text-5xl md:text-7xl font-serif text-white mb-8 tracking-tight italic">
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-serif text-white mb-8 tracking-tight italic">
                 {service.title}
               </h1>
               
-              <p className="text-xl text-gray-400 font-light leading-relaxed mb-16 max-w-2xl">
+              <p className="text-lg sm:text-xl text-gray-400 font-light leading-relaxed mb-12 sm:mb-16 max-w-2xl">
                 {service.description}
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-16 mb-20">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 sm:gap-16 mb-16 sm:mb-20">
                 <div>
-                  <h3 className="text-xl font-medium text-white mb-8 border-b border-white/10 pb-4">Hauptvorteile</h3>
+                  <h3 className="text-lg sm:text-xl font-medium text-white mb-6 sm:mb-8 border-b border-white/10 pb-4">Hauptvorteile</h3>
                   <ul className="space-y-4">
                     {service.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center text-gray-400">
+                      <li key={idx} className="flex items-center text-sm sm:text-base text-gray-400">
                         <CheckCircle2 className="w-5 h-5 text-neon-500 mr-3 shrink-0" />
                         <span>{feature}</span>
                       </li>
@@ -209,53 +209,53 @@ export default function Services() {
                 </div>
                 
                 <div>
-                  <h3 className="text-xl font-medium text-white mb-8 border-b border-white/10 pb-4">Der Ablauf</h3>
+                  <h3 className="text-lg sm:text-xl font-medium text-white mb-6 sm:mb-8 border-b border-white/10 pb-4">Der Ablauf</h3>
                   <div className="space-y-6">
                     {service.process.map((step, index) => (
                       <div key={index} className="flex items-center group">
-                        <span className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-xs font-mono text-neon-500 mr-4 group-hover:border-neon-500/50 transition-colors">
+                        <span className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-white/10 flex items-center justify-center text-[10px] sm:text-xs font-mono text-neon-500 mr-4 group-hover:border-neon-500/50 transition-colors">
                           0{index + 1}
                         </span>
-                        <span className="text-gray-300 font-light">{step}</span>
+                        <span className="text-sm sm:text-base text-gray-300 font-light">{step}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="bg-dark-900/50 backdrop-blur-md border border-white/5 rounded-3xl p-12 mb-20">
-                <h3 className="text-2xl font-serif text-white mb-8 italic">Technologien</h3>
-                <div className="flex flex-wrap gap-4">
+              <div className="bg-dark-900/50 backdrop-blur-md border border-white/5 rounded-2xl sm:rounded-3xl p-6 sm:p-12 mb-16 sm:mb-20">
+                <h3 className="text-xl sm:text-2xl font-serif text-white mb-8 italic">Technologien</h3>
+                <div className="flex flex-wrap gap-3 sm:gap-4">
                   {service.tech.map((t, idx) => (
-                    <span key={idx} className="px-6 py-2 rounded-full border border-white/10 bg-white/5 text-gray-300 text-sm font-mono">
+                    <span key={idx} className="px-4 sm:px-6 py-2 rounded-full border border-white/10 bg-white/5 text-gray-300 text-xs sm:text-sm font-mono">
                       {t}
                     </span>
                   ))}
                 </div>
               </div>
 
-              <div className="mb-20">
-                <h3 className="text-3xl font-serif text-white mb-12 italic tracking-tight">Häufige Fragen</h3>
+              <div className="mb-16 sm:mb-20">
+                <h3 className="text-2xl sm:text-3xl font-serif text-white mb-8 sm:mb-12 italic tracking-tight">Häufige Fragen</h3>
                 <div className="space-y-8">
                   {service.faq.map((item, i) => (
-                    <div key={i} className="border-b border-white/5 pb-8">
-                      <h4 className="text-lg text-white mb-3 font-medium">{item.q}</h4>
-                      <p className="text-gray-400 font-light leading-relaxed">{item.a}</p>
+                    <div key={i} className="border-b border-white/5 pb-6 sm:pb-8">
+                      <h4 className="text-base sm:text-lg text-white mb-3 font-medium">{item.q}</h4>
+                      <p className="text-sm sm:text-base text-gray-400 font-light leading-relaxed">{item.a}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-between p-12 bg-neon-500 rounded-3xl text-dark-950">
-                <div className="mb-8 sm:mb-0">
-                  <h3 className="text-3xl font-serif font-bold mb-2 italic">
+              <div className="flex flex-col sm:flex-row items-center justify-between p-8 sm:p-12 bg-neon-500 rounded-2xl sm:rounded-3xl text-dark-950">
+                <div className="mb-8 sm:mb-0 text-center sm:text-left">
+                  <h3 className="text-2xl sm:text-3xl font-serif font-bold mb-2 italic leading-tight">
                     {t('services.cta_title', { service: service.title })}
                   </h3>
-                  <p className="text-dark-950/70 font-medium">{t('services.cta_subtitle')}</p>
+                  <p className="text-dark-950/70 font-medium text-sm sm:text-base">{t('services.cta_subtitle')}</p>
                 </div>
                 <Link 
                   to="/booking"
-                  className="px-10 py-5 bg-dark-950 text-white rounded-full font-medium flex items-center group hover:scale-105 transition-transform"
+                  className="w-full sm:w-auto px-10 py-5 bg-dark-950 text-white rounded-full font-medium flex items-center justify-center group hover:scale-105 transition-transform"
                 >
                   {t('services.cta_btn')}
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -284,15 +284,15 @@ export default function Services() {
           transition={{ duration: 0.6 }}
         >
           <div className="text-center mb-20">
-            <h1 className="text-6xl md:text-8xl font-serif text-white mb-8 tracking-tight italic">
+            <h1 className="text-4xl sm:text-6xl md:text-8xl font-serif text-white mb-8 tracking-tight italic">
               {t('services.title')}
             </h1>
-            <p className="text-xl text-gray-400 font-light max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl text-gray-400 font-light max-w-2xl mx-auto leading-relaxed">
               {t('services.subtitle')}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {displayServices.map((service, index) => {
               const Icon = service.icon;
               return (
@@ -304,14 +304,14 @@ export default function Services() {
                   viewport={{ once: true }}
                 >
                   <Link to={`/services/${service.id}`} className="group block h-full">
-                    <div className="bg-dark-900/40 backdrop-blur-md border border-white/5 rounded-[2.5rem] p-10 h-full hover:border-neon-500/30 transition-all flex flex-col">
-                      <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-neon-500 mb-8 group-hover:scale-110 transition-transform">
-                        <Icon className="w-8 h-8" />
+                    <div className="bg-dark-900/40 backdrop-blur-md border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 sm:p-10 h-full hover:border-neon-500/30 transition-all flex flex-col">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/5 flex items-center justify-center text-neon-500 mb-6 sm:mb-8 group-hover:scale-110 transition-transform">
+                        <Icon className="w-6 h-6 sm:w-8 sm:h-8" />
                       </div>
-                      <h3 className="text-3xl font-serif text-white mb-4 italic group-hover:text-neon-400 transition-colors">
+                      <h3 className="text-2xl sm:text-3xl font-serif text-white mb-4 italic group-hover:text-neon-400 transition-colors">
                         {service.title}
                       </h3>
-                      <p className="text-gray-400 font-light leading-relaxed mb-8 flex-grow">
+                      <p className="text-sm sm:text-gray-400 font-light leading-relaxed mb-8 flex-grow">
                         {service.description}
                       </p>
                       <div className="flex items-center text-neon-500 font-mono text-xs uppercase tracking-[0.2em]">

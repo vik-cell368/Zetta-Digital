@@ -22,7 +22,7 @@ export default function Dashboard() {
     async function fetchDashboardData() {
       setIsLoading(true);
       
-      const today = format(new Date(), 'yyyy-MM-dd');
+      const now = new Date();
       let appointments: Appointment[] = [];
       let servicesCount = 0;
 
@@ -31,7 +31,6 @@ export default function Dashboard() {
         const { data, error } = await supabase
           .from('appointments')
           .select('*, services(name)')
-          .order('appointment_date', { ascending: false })
           .order('start_time', { ascending: false });
         
         if (error) throw error;
@@ -54,10 +53,10 @@ export default function Dashboard() {
       if (appointments) {
         const upcoming = appointments.filter(a => 
           a.status !== 'cancelled' && 
-          (a.appointment_date > today || (a.appointment_date === today && a.start_time > format(new Date(), 'HH:mm:ss')))
+          new Date(a.start_time) >= now
         );
         
-        const completed = appointments.filter(a => a.status === 'confirmed' && a.appointment_date < today);
+        const completed = appointments.filter(a => a.status === 'confirmed' && new Date(a.start_time) < now);
         
         setStats({
           upcoming: upcoming.length,
@@ -68,11 +67,7 @@ export default function Dashboard() {
         // Get 5 most recent upcoming/pending
         setRecentAppointments(
           upcoming
-            .sort((a, b) => {
-              const dateA = new Date(`${a.appointment_date}T${a.start_time}`);
-              const dateB = new Date(`${b.appointment_date}T${b.start_time}`);
-              return dateA.getTime() - dateB.getTime();
-            })
+            .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
             .slice(0, 5)
         );
       }
@@ -157,13 +152,13 @@ export default function Dashboard() {
                 <div key={apt.id} className="flex items-center justify-between p-4 border border-white/10 rounded-lg bg-dark-900/30">
                   <div className="flex items-center">
                     <div className="w-12 h-12 bg-dark-950 rounded-full border border-white/10 flex flex-col items-center justify-center mr-4 shadow-sm">
-                      <span className="text-xs font-bold text-white">{format(parseISO(apt.appointment_date), 'd')}</span>
-                      <span className="text-[10px] uppercase text-gray-400">{format(parseISO(apt.appointment_date), 'MMM', { locale: getDateLocale(i18n.language) })}</span>
+                      <span className="text-xs font-bold text-white">{format(parseISO(apt.start_time), 'd')}</span>
+                      <span className="text-[10px] uppercase text-gray-400">{format(parseISO(apt.start_time), 'MMM', { locale: getDateLocale(i18n.language) })}</span>
                     </div>
                     <div>
                       <h4 className="font-semibold text-white">{apt.full_name}</h4>
                       <p className="text-sm text-gray-400">
-                        {apt.services?.name} • {apt.start_time.substring(0, 5)}
+                        {apt.services?.name} • {format(parseISO(apt.start_time), 'HH:mm')}
                       </p>
                     </div>
                   </div>

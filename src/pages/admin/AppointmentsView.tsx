@@ -23,7 +23,6 @@ export default function AppointmentsView() {
       let query = supabase
         .from('appointments')
         .select('*, services(name)')
-        .order('appointment_date', { ascending: false })
         .order('start_time', { ascending: false });
 
       if (filter !== 'all') {
@@ -110,14 +109,14 @@ export default function AppointmentsView() {
                   {/* Left Column: Date & Status */}
                   <div className="flex items-start lg:w-1/4">
                     <div className="bg-dark-900 p-3 rounded-xl mr-4 text-center min-w-[70px]">
-                      <div className="text-xs font-bold text-gray-400 uppercase">{format(parseISO(apt.appointment_date), 'MMM', { locale: getDateLocale(i18n.language) })}</div>
-                      <div className="text-2xl font-black text-white">{format(parseISO(apt.appointment_date), 'd')}</div>
+                      <div className="text-xs font-bold text-gray-400 uppercase">{format(parseISO(apt.start_time), 'MMM', { locale: getDateLocale(i18n.language) })}</div>
+                      <div className="text-2xl font-black text-white">{format(parseISO(apt.start_time), 'd')}</div>
                     </div>
                     <div>
-                      <div className="font-medium text-white">{format(parseISO(apt.appointment_date), 'EEEE', { locale: getDateLocale(i18n.language) })}</div>
+                      <div className="font-medium text-white">{format(parseISO(apt.start_time), 'EEEE', { locale: getDateLocale(i18n.language) })}</div>
                       <div className="flex items-center text-gray-400 text-sm mt-1">
                         <Clock className="w-3.5 h-3.5 mr-1" />
-                        {apt.start_time.substring(0, 5)} - {apt.end_time.substring(0, 5)}
+                        {format(parseISO(apt.start_time), 'HH:mm')} - {format(parseISO(apt.end_time), 'HH:mm')}
                       </div>
                       <div className="mt-2">
                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
