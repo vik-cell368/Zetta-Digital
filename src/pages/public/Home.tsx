@@ -1,20 +1,15 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll } from 'motion/react';
+import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { Monitor, ShoppingBag, Zap, Code } from 'lucide-react';
 import { Button } from "@/components/ui/Button";
 import { supabase } from '@/lib/supabase';
 import { getTranslatedText } from '@/lib/utils';
 
-import Experience3D from "@/components/Experience3D";
-
 export default function Home() {
   const { t, i18n } = useTranslation();
   
-  // Use motion's useScroll for smooth tracking
-  const { scrollYProgress } = useScroll();
-
   const servicesList = t('services.list', { returnObjects: true }) as any[] || [];
 
   const getServiceIcon = (index: number) => {
@@ -27,7 +22,6 @@ export default function Home() {
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-black">
         Skip to content
       </a>
-      <Experience3D scrollYProgress={scrollYProgress} />
       
       <div id="main-content" className="relative z-10" role="main">
         {/* Act 1: Hero */}

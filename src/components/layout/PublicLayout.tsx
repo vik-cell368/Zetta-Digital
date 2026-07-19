@@ -5,8 +5,6 @@ import React, { useEffect, lazy, Suspense } from 'react';
 import PageTransition from "../PageTransition";
 import { motion, AnimatePresence } from 'motion/react';
 
-import WebGLBackground from '../WebGLBackground';
-
 export default function PublicLayout() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
@@ -70,9 +68,6 @@ export default function PublicLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-dark-950 text-gray-100 font-sans overflow-x-hidden relative">
-      
-      {/* WebGL GPU Background - only if not on home page */}
-      {location.pathname !== '/' && <WebGLBackground />}
       
       {/* Soft warm background gradients */}
       <div className="fixed top-0 left-[-10%] w-[50%] h-[50%] bg-dark-900 blur-[120px] pointer-events-none z-[-1]" />
