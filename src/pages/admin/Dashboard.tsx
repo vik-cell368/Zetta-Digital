@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Appointment } from '@/lib/types';
+import { BusinessHours } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { format, parseISO, isToday, isFuture } from 'date-fns';
 import { getDateLocale } from '@/lib/utils';
@@ -16,6 +17,7 @@ export default function Dashboard() {
     totalServices: 0
   });
   const [recentAppointments, setRecentAppointments] = useState<Appointment[]>([]);
+  const [hours, setHours] = useState<BusinessHours[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -41,6 +43,10 @@ export default function Dashboard() {
           .from('services')
           .select('*', { count: 'exact', head: true });
         servicesCount = count || 0;
+
+        // Fetch business hours
+        const { data: hData } = await supabase.from('business_hours').select('*').order('weekday');
+        if (hData) setHours(hData);
       } catch (err) {
         console.warn("Supabase dashboard fetch failed, using localStorage", err);
         const localApps = localStorage.getItem('zetta_appointments');
@@ -91,6 +97,8 @@ export default function Dashboard() {
     );
   }
 
+  const daysOfWeek = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+
   return (
     <div className="space-y-8">
       <div>
@@ -134,49 +142,90 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Anstehende Termine</CardTitle>
-          <Link to="/admin/appointments" className="text-sm text-gray-400 hover:text-white font-medium">
-            Alle ansehen
-          </Link>
-        </CardHeader>
-        <CardContent>
-          {recentAppointments.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
-              Keine anstehenden Termine.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {recentAppointments.map(apt => (
-                <div key={apt.id} className="flex items-center justify-between p-4 border border-white/10 rounded-lg bg-dark-900/30">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-dark-950 rounded-full border border-white/10 flex flex-col items-center justify-center mr-4 shadow-sm">
-                      <span className="text-xs font-bold text-white">{format(parseISO(apt.start_time), 'd')}</span>
-                      <span className="text-[10px] uppercase text-gray-400">{format(parseISO(apt.start_time), 'MMM', { locale: getDateLocale(i18n.language) })}</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-white">{apt.full_name}</h4>
-                      <p className="text-sm text-gray-400">
-                        {apt.services?.name} • {format(parseISO(apt.start_time), 'HH:mm')}
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                      apt.status === 'confirmed' ? 'bg-green-900/40 text-green-400' :
-                      apt.status === 'pending' ? 'bg-yellow-900/40 text-yellow-400' :
-                      'bg-red-900/40 text-red-400'
-                    }`}>
-                      {apt.status === 'confirmed' ? 'Bestätigt' : apt.status === 'pending' ? 'Ausstehend' : 'Storniert'}
-                    </span>
-                  </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Anstehende Termine</CardTitle>
+              <Link to="/admin/appointments" className="text-sm text-gray-400 hover:text-white font-medium">
+                Alle ansehen
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {recentAppointments.length === 0 ? (
+                <div className="text-center py-8 text-gray-400">
+                  Keine anstehenden Termine.
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              ) : (
+                <div className="space-y-4">
+                  {recentAppointments.map(apt => (
+                    <div key={apt.id} className="flex items-center justify-between p-4 border border-white/10 rounded-lg bg-dark-900/30">
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 bg-dark-950 rounded-full border border-white/10 flex flex-col items-center justify-center mr-4 shadow-sm">
+                          <span className="text-xs font-bold text-white">{format(parseISO(apt.start_time), 'd')}</span>
+                          <span className="text-[10px] uppercase text-gray-400">{format(parseISO(apt.start_time), 'MMM', { locale: getDateLocale(i18n.language) })}</span>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-white">{apt.full_name}</h4>
+                          <p className="text-sm text-gray-400">
+                            {apt.services?.name} • {format(parseISO(apt.start_time), 'HH:mm')}
+                          </p>
+                        </div>
+                      </div>
+                      <div>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                          apt.status === 'confirmed' ? 'bg-green-900/40 text-green-400' :
+                          apt.status === 'pending' ? 'bg-yellow-900/40 text-yellow-400' :
+                          'bg-red-900/40 text-red-400'
+                        }`}>
+                          {apt.status === 'confirmed' ? 'Bestätigt' : apt.status === 'pending' ? 'Ausstehend' : 'Storniert'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Clock className="w-4 h-4 text-neon-500" />
+                Heutige Öffnungszeiten
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {daysOfWeek.map((day, idx) => {
+                  const dayShifts = hours.filter(h => h.weekday === idx);
+                  const isTodayDay = new Date().getDay() === idx;
+                  
+                  return (
+                    <div key={day} className={`flex items-center justify-between text-xs py-1 ${isTodayDay ? 'text-neon-500 font-bold' : 'text-gray-400'}`}>
+                      <span>{day}</span>
+                      <div className="text-right">
+                        {dayShifts.length === 0 ? (
+                          <span className="opacity-50">Geschlossen</span>
+                        ) : (
+                          dayShifts.map((s, i) => (
+                            <div key={i}>{s.start_time.substring(0, 5)} - {s.end_time.substring(0, 5)}</div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <Link to="/admin/settings" className="block text-center mt-6 text-[10px] uppercase tracking-widest text-gray-500 hover:text-white transition-colors">
+                Zeiten bearbeiten
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

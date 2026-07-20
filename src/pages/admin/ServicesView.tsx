@@ -74,19 +74,28 @@ export default function ServicesView() {
   };
 
   const seedFromDefaults = () => {
-    const defaultServices = t('services.list', { returnObjects: true });
-    if (Array.isArray(defaultServices)) {
-      const seeded = defaultServices.map(s => ({
-        id: s.id,
-        name: JSON.stringify({ de: s.title, en: s.title }),
-        description: JSON.stringify({ de: s.desc, en: s.desc }),
+    let defaultServices = t('services.list', { returnObjects: true });
+    
+    // Handle if i18next returns an object instead of array
+    if (defaultServices && !Array.isArray(defaultServices) && typeof defaultServices === 'object') {
+      defaultServices = Object.values(defaultServices);
+    }
+
+    if (Array.isArray(defaultServices) && defaultServices.length > 0) {
+      const seeded = defaultServices.map((s: any) => ({
+        id: s.id || crypto.randomUUID(),
+        name: JSON.stringify({ de: s.title || '', en: s.title || '' }),
+        description: JSON.stringify({ de: s.desc || '', en: s.desc || '' }),
         price: 0,
         duration_minutes: 60,
         is_active: true,
         created_at: new Date().toISOString()
       })) as Service[];
       saveToLocal(seeded);
-      setStatusMessage("Standard-Leistungen geladen");
+      setStatusMessage("Standard-Leistungen erfolgreich geladen");
+    } else {
+      console.warn("No default services found in translation files");
+      setStatusMessage("Keine Standard-Leistungen in Übersetzungen gefunden");
     }
   };
 
