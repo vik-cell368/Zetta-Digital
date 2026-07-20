@@ -42,8 +42,16 @@ export default function SettingsView() {
     ]);
     
     if (s) {
-      setSettings(s);
-      resetSettings(s);
+      // Ensure defaults for new fields
+      const settingsWithDefaults = {
+        ...s,
+        booking_phone_required: s.booking_phone_required ?? true,
+        booking_phone_visible: s.booking_phone_visible ?? true,
+        booking_email_required: s.booking_email_required ?? true,
+        booking_email_visible: s.booking_email_visible ?? true
+      };
+      setSettings(settingsWithDefaults);
+      resetSettings(settingsWithDefaults);
       if (s.enabled_languages) {
         setEnabledLangs(s.enabled_languages.split(','));
         localStorage.setItem('zetta_enabled_languages', s.enabled_languages);
@@ -214,6 +222,79 @@ export default function SettingsView() {
                 Profil speichern
               </Button>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Booking Form Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Buchungsformular-Felder</CardTitle>
+            <CardDescription>Konfigurieren Sie, welche Informationen von Kunden abgefragt werden.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between p-4 bg-dark-900/50 rounded-2xl border border-white/5">
+                <div>
+                  <h4 className="text-sm font-medium text-white">E-Mail Adresse</h4>
+                  <p className="text-xs text-gray-500">Muss der Kunde eine E-Mail angeben?</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-gray-500 uppercase tracking-widest">Sichtbar</span>
+                    <input 
+                      type="checkbox" 
+                      checked={settings?.booking_email_visible}
+                      onChange={(e) => setSettings(prev => prev ? { ...prev, booking_email_visible: e.target.checked } : null)}
+                      className="rounded border-white/20 text-neon-500 focus:ring-neon-500/50"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-gray-500 uppercase tracking-widest">Pflicht</span>
+                    <input 
+                      type="checkbox" 
+                      checked={settings?.booking_email_required}
+                      onChange={(e) => setSettings(prev => prev ? { ...prev, booking_email_required: e.target.checked } : null)}
+                      className="rounded border-white/20 text-neon-500 focus:ring-neon-500/50"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-dark-900/50 rounded-2xl border border-white/5">
+                <div>
+                  <h4 className="text-sm font-medium text-white">Telefonnummer</h4>
+                  <p className="text-xs text-gray-500">Muss der Kunde eine Telefonnummer angeben?</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-gray-500 uppercase tracking-widest">Sichtbar</span>
+                    <input 
+                      type="checkbox" 
+                      checked={settings?.booking_phone_visible}
+                      onChange={(e) => setSettings(prev => prev ? { ...prev, booking_phone_visible: e.target.checked } : null)}
+                      className="rounded border-white/20 text-neon-500 focus:ring-neon-500/50"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-gray-500 uppercase tracking-widest">Pflicht</span>
+                    <input 
+                      type="checkbox" 
+                      checked={settings?.booking_phone_required}
+                      onChange={(e) => setSettings(prev => prev ? { ...prev, booking_phone_required: e.target.checked } : null)}
+                      className="rounded border-white/20 text-neon-500 focus:ring-neon-500/50"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Button 
+                onClick={() => settings && onSaveSettings(settings)} 
+                isLoading={isSaving} 
+                className="w-full bg-neon-500/10 border border-neon-500/30 text-neon-500 hover:bg-neon-500 hover:text-dark-950"
+              >
+                Formular-Einstellungen speichern
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

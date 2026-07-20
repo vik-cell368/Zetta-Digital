@@ -1,6 +1,6 @@
 {
   "name": "Zetta Digital",
-  "description": "Premium AI-driven digital excellence for modern businesses.",
+  "description": "Premium KI-gestützte digitale Exzellenz. Wir entwickeln intelligente Web-Lösungen und KI-Agenten für moderne Unternehmen.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

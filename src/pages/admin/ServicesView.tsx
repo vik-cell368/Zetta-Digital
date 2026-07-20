@@ -28,7 +28,7 @@ const SUPPORTED_LANGS = [
 ];
 
 export default function ServicesView() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentLang = i18n.language.split('-')[0] || 'en';
 
   const [services, setServices] = useState<Service[]>([]);

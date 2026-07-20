@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from 'react';
 import PageTransition from "../PageTransition";
 import { motion, AnimatePresence } from 'motion/react';
+import CookieConsent from '../ui/CookieConsent';
 
 export default function PublicLayout() {
   const { t, i18n } = useTranslation();
@@ -205,6 +206,7 @@ export default function PublicLayout() {
           </div>
         </div>
       </footer>
+      <CookieConsent />
     </div>
   );
 }

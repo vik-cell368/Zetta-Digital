@@ -51,6 +51,10 @@ export type BusinessSettings = {
   slot_interval_minutes: number;
   booking_notice_hours: number;
   enabled_languages: string; // Comma-separated language codes, e.g., "en,de"
+  booking_phone_required: boolean;
+  booking_phone_visible: boolean;
+  booking_email_required: boolean;
+  booking_email_visible: boolean;
   created_at: string;
 };
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Service } from '@/lib/types';
+import { Service, BusinessSettings } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -40,6 +40,7 @@ export default function Booking() {
   const currentLang = i18n.language.split('-')[0] || 'en';
   const [step, setStep] = useState<Step>('service');
   const [services, setServices] = useState<Service[]>([]);
+  const [settings, setSettings] = useState<BusinessSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -54,14 +55,23 @@ export default function Booking() {
   useEffect(() => {
     async function fetchServices() {
       try {
-        const { data } = await supabase
-          .from('services')
-          .select('*')
-          .eq('is_active', true)
-          .order('price', { ascending: false });
+        const [{ data: sData }, { data: bSettings }] = await Promise.all([
+          supabase.from('services').select('*').eq('is_active', true).order('price', { ascending: false }),
+          supabase.from('business_settings').select('*').limit(1).single()
+        ]);
         
-        if (data && data.length > 0) {
-          setServices(data);
+        if (bSettings) {
+          setSettings({
+            ...bSettings,
+            booking_phone_required: bSettings.booking_phone_required ?? true,
+            booking_phone_visible: bSettings.booking_phone_visible ?? true,
+            booking_email_required: bSettings.booking_email_required ?? true,
+            booking_email_visible: bSettings.booking_email_visible ?? true
+          });
+        }
+
+        if (sData && sData.length > 0) {
+          setServices(sData);
         } else {
           // Fallback to local storage or defaults
           const localData = localStorage.getItem('zetta_services');
@@ -415,29 +425,33 @@ export default function Booking() {
                         />
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                        <div>
-                          <label className="block text-xs uppercase tracking-widest font-mono text-gray-400 mb-3">{t('booking.form_email')}</label>
-                          <Input 
-                            type="email"
-                            {...register('email', { 
-                              required: 'Email is required',
-                              pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' }
-                            })}
-                            placeholder="jane@example.com"
-                            error={errors.email?.message}
-                            className="bg-dark-950 border-white/10 text-white focus-visible:ring-neon-500/50 rounded-xl h-14"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs uppercase tracking-widest font-mono text-gray-400 mb-3">{t('booking.form_phone')}</label>
-                          <Input 
-                            type="tel"
-                            {...register('phone', { required: 'Phone is required' })}
-                            placeholder="+1 (555) 000-0000"
-                            error={errors.phone?.message}
-                            className="bg-dark-950 border-white/10 text-white focus-visible:ring-neon-500/50 rounded-xl h-14"
-                          />
-                        </div>
+                        {settings?.booking_email_visible !== false && (
+                          <div>
+                            <label className="block text-xs uppercase tracking-widest font-mono text-gray-400 mb-3">{t('booking.form_email')}</label>
+                            <Input 
+                              type="email"
+                              {...register('email', { 
+                                required: settings?.booking_email_required ? 'Email is required' : false,
+                                pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' }
+                              })}
+                              placeholder="jane@example.com"
+                              error={errors.email?.message}
+                              className="bg-dark-950 border-white/10 text-white focus-visible:ring-neon-500/50 rounded-xl h-14"
+                            />
+                          </div>
+                        )}
+                        {settings?.booking_phone_visible !== false && (
+                          <div>
+                            <label className="block text-xs uppercase tracking-widest font-mono text-gray-400 mb-3">{t('booking.form_phone')}</label>
+                            <Input 
+                              type="tel"
+                              {...register('phone', { required: settings?.booking_phone_required ? 'Phone is required' : false })}
+                              placeholder="+1 (555) 000-0000"
+                              error={errors.phone?.message}
+                              className="bg-dark-950 border-white/10 text-white focus-visible:ring-neon-500/50 rounded-xl h-14"
+                            />
+                          </div>
+                        )}
                       </div>
                       <div>
                         <label className="block text-xs uppercase tracking-widest font-mono text-gray-400 mb-3">{t('booking.form_notes')}</label>
