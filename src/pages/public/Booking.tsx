@@ -195,8 +195,9 @@ export default function Booking() {
           if (slotEnd > end) break;
 
           let isAvailable = true;
-          // Don't allow past times if today
-          if (isSameDay(date, new Date()) && !isAfter(slotStart, new Date())) {
+          // Don't allow past times or times within 3 hours if today
+          const threeHoursFromNow = new Date(new Date().getTime() + 3 * 60 * 60000);
+          if (isSameDay(date, new Date()) && !isAfter(slotStart, threeHoursFromNow)) {
             isAvailable = false;
           }
 

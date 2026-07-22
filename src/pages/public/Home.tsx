@@ -75,23 +75,17 @@ export default function Home() {
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <motion.div 
           animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [0.08, 0.12, 0.08],
-            x: [0, 100, 0],
-            y: [0, 50, 0]
+            opacity: [0.05, 0.1, 0.05],
           }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] bg-neon-500/15 blur-[140px] rounded-full" 
+          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] bg-neon-500/10 blur-[100px] rounded-full" 
         />
         <motion.div 
           animate={{ 
-            scale: [1, 1.1, 1],
-            opacity: [0.03, 0.06, 0.03],
-            x: [0, -80, 0],
-            y: [0, -30, 0]
+            opacity: [0.02, 0.05, 0.02],
           }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear", delay: 3 }}
-          className="absolute bottom-0 right-0 w-[70%] h-[70%] bg-white/5 blur-[120px] rounded-full" 
+          transition={{ duration: 15, repeat: Infinity, ease: "linear", delay: 2 }}
+          className="absolute bottom-0 right-0 w-[50%] h-[50%] bg-white/5 blur-[80px] rounded-full" 
         />
       </div>
 

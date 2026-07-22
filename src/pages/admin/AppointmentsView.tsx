@@ -31,12 +31,24 @@ export default function AppointmentsView() {
 
       const { data, error } = await query;
       if (error) throw error;
-      if (data) setAppointments(data);
+      
+      let finalData = data || [];
+      // Filter out test bookings by default
+      finalData = finalData.filter(apt => {
+        const email = apt.email?.toLowerCase() || '';
+        return !email.includes('test@') && !email.includes('example.com') && email !== 'test';
+      });
+
+      setAppointments(finalData);
     } catch (err) {
       console.warn("Supabase fetch failed, falling back to localStorage", err);
       const localData = localStorage.getItem('zetta_appointments');
       if (localData) {
         let apps = JSON.parse(localData) as Appointment[];
+        apps = apps.filter(apt => {
+          const email = apt.email?.toLowerCase() || '';
+          return !email.includes('test@') && !email.includes('example.com') && email !== 'test';
+        });
         if (filter !== 'all') {
           apps = apps.filter(a => a.status === filter);
         }
