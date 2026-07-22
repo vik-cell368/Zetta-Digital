@@ -3,19 +3,19 @@ import PublicLayout from './components/layout/PublicLayout';
 import AdminLayout from './components/layout/AdminLayout';
 import Home from './pages/public/Home';
 import Booking from './pages/public/Booking';
+import AIAutomation from './pages/public/AIAutomation';
 import Services from './pages/public/Services';
-import Pricing from './pages/public/Pricing';
-import Process from './pages/public/Process';
+import Configurator from './pages/public/Configurator';
 import Portfolio from './pages/public/Portfolio';
 import FAQ from './pages/public/FAQ';
 import About from './pages/public/About';
 import Legal from './pages/public/Legal';
 import Login from './pages/admin/Login';
-import Dashboard from './pages/admin/Dashboard';
-import AppointmentsView from './pages/admin/AppointmentsView';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import LeadManagement from './pages/admin/LeadManagement';
+import CMSView from './pages/admin/CMSView';
 import ServicesView from './pages/admin/ServicesView';
 import SettingsView from './pages/admin/SettingsView';
-import ContentView from './pages/admin/ContentView';
 import SmoothScroll from './components/SmoothScroll';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -31,8 +31,8 @@ export default function App() {
             <Route path="booking" element={<Booking />} />
             <Route path="services" element={<Services />} />
             <Route path="services/:slug" element={<Services />} />
-            <Route path="pricing" element={<Pricing />} />
-            <Route path="process" element={<Process />} />
+            <Route path="ai-automation" element={<AIAutomation />} />
+            <Route path="pricing" element={<Configurator />} />
             <Route path="portfolio" element={<Portfolio />} />
             <Route path="faq" element={<FAQ />} />
             <Route path="about" element={<About />} />
@@ -46,10 +46,10 @@ export default function App() {
           {/* Admin Protected Routes */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="appointments" element={<AppointmentsView />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="leads" element={<LeadManagement />} />
             <Route path="services" element={<ServicesView />} />
-            <Route path="content" element={<ContentView />} />
+            <Route path="cms" element={<CMSView />} />
             <Route path="settings" element={<SettingsView />} />
           </Route>
         </Routes>

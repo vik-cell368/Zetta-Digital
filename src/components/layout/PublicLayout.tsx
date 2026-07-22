@@ -1,5 +1,5 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Globe, Menu, X } from 'lucide-react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, ArrowRight, MessageSquare, Search as SearchIcon, Command, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from 'react';
 import PageTransition from "../PageTransition";
@@ -9,203 +9,352 @@ import CookieConsent from '../ui/CookieConsent';
 export default function PublicLayout() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const currentLang = i18n.language.split('-')[0] || 'de';
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
+    window.scrollTo(0, 0);
   }, [location.pathname]);
 
+  // Handle Cmd+K for search
   useEffect(() => {
-    const hasSetLanguage = localStorage.getItem('i18nextLng');
-    if (!hasSetLanguage) {
-      fetch('https://ipapi.co/json/')
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.languages) {
-            const primaryLang = data.languages.split(',')[0].split('-')[0];
-            const savedLangs = localStorage.getItem('zetta_enabled_languages');
-            const supported = savedLangs ? savedLangs.split(',') : ['en', 'de', 'fr', 'es', 'it', 'uk', 'ru'];
-            if (supported.includes(primaryLang)) {
-              i18n.changeLanguage(primaryLang);
-            }
-          }
-        })
-        .catch(err => console.log('IP language detection failed:', err));
-    }
-  }, [i18n]);
-
-  const changeLanguage = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    i18n.changeLanguage(e.target.value);
-  };
-
-  const currentLang = i18n.language.split('-')[0];
-
-  const [enabledLangs, setEnabledLangs] = React.useState<string[]>(['en', 'de', 'fr', 'es', 'it', 'uk', 'ru']);
-
-  useEffect(() => {
-    const savedLangs = localStorage.getItem('zetta_enabled_languages');
-    if (savedLangs) {
-      setEnabledLangs(savedLangs.split(','));
-    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const LanguageSelector = () => (
-    <div className="relative flex items-center">
-      
-      <select 
-        value={currentLang}
-        onChange={changeLanguage}
-        aria-label="Change language"
-        className="appearance-none bg-dark-900 border border-white/10/60 pl-8 pr-8 py-2 text-sm font-medium text-gray-300 hover:text-white hover:border-white/20 hover:shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-neon-500/20 focus:border-neon-500/50 rounded-2xl transition-all"
-      >
-        {enabledLangs.includes('en') && <option value="en">EN</option>}
-        {enabledLangs.includes('de') && <option value="de">DE</option>}
-        {enabledLangs.includes('fr') && <option value="fr">FR</option>}
-        {enabledLangs.includes('es') && <option value="es">ES</option>}
-        {enabledLangs.includes('it') && <option value="it">IT</option>}
-        {enabledLangs.includes('uk') && <option value="uk">UK</option>}
-        {enabledLangs.includes('ru') && <option value="ru">RU</option>}
-      </select>
-      <div className="absolute right-3 pointer-events-none">
-        <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-      </div>
-    </div>
+  const searchItems = [
+    { name: 'Home', path: '/', category: 'Seite' },
+    { name: 'Leistungen', path: '/services', category: 'Seite' },
+    { name: 'Webdesign', path: '/services/webdesign', category: 'Service' },
+    { name: 'KI Automation', path: '/services/ai-automation', category: 'Service' },
+    { name: 'KI Chatbots', path: '/services/ai-chatbots', category: 'Service' },
+    { name: 'Workflow Automation', path: '/services/workflow-automation', category: 'Service' },
+    { name: 'KI Automation Spezialseite', path: '/ai-automation', category: 'Seite' },
+    { name: 'Preise & Kalkulator', path: '/pricing', category: 'Tool' },
+    { name: 'Referenzen', path: '/portfolio', category: 'Seite' },
+    { name: 'Häufige Fragen (FAQ)', path: '/faq', category: 'Support' },
+    { name: 'Über uns', path: '/about', category: 'Agentur' },
+    { name: 'Anfrage starten', path: '/booking', category: 'Kontakt' },
+  ].filter(item => 
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    item.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const changeLanguage = (lang: string) => {
+    i18n.changeLanguage(lang);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-dark-950 text-gray-100 font-sans overflow-x-hidden relative">
+    <div className="min-h-screen flex flex-col bg-dark-950 text-gray-100 font-sans selection:bg-neon-500/30">
       
-      {/* Soft warm background gradients */}
-      <div className="fixed top-0 left-[-10%] w-[50%] h-[50%] bg-dark-900 blur-[120px] pointer-events-none z-[-1]" />
-      <div className="fixed bottom-0 right-[-10%] w-[50%] h-[50%] bg-dark-900 blur-[120px] pointer-events-none z-[-1]" />
-
-      <motion.header 
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-        className="sticky top-0 z-50 w-full border-b border-white/10 bg-dark-950/80 backdrop-blur-md"
+      {/* Navigation */}
+      <header 
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          isScrolled ? 'py-4' : 'py-8'
+        }`}
       >
-        <div className="container mx-auto px-6 h-24 flex items-center justify-between max-w-[1400px]">
-          <Link to="/" className="flex items-center gap-4 group">
-            <div className="flex flex-col">
-              <span className="font-display font-semibold text-2xl tracking-[0.2em] text-white leading-none">
-                ZETTA
+        <div className="container mx-auto px-6">
+          <div className={`mx-auto max-w-6xl rounded-full transition-all duration-500 flex items-center justify-between px-6 md:px-10 h-16 ${
+            isScrolled ? 'glass-card border-white/10 bg-dark-900/60' : 'bg-transparent border-transparent'
+          }`}>
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2 group">
+              <span className="font-display font-bold text-2xl tracking-tighter text-white">
+                ZETTA<span className="text-neon-500 group-hover:text-white transition-colors">.</span>
               </span>
-              <span className="text-[0.6rem] font-sans tracking-[0.4em] text-gray-500 mt-2 uppercase">
-                Digital
-              </span>
-            </div>
-          </Link>
-
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-medium" aria-label="Main Navigation">
-            <Link to="/services" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Services">{t('nav.services')}</Link>
-            <Link to="/pricing" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Pricing">Preise</Link>
-            <Link to="/portfolio" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="Portfolio">Referenzen</Link>
-            <Link to="/faq" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="FAQ">FAQ</Link>
-            <Link to="/about" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px]" aria-label="About">{t('nav.about')}</Link>
-            
-            <div className="ml-2">
-              <LanguageSelector />
-            </div>
-
-            <Link to="/booking" className="relative group overflow-hidden bg-neon-500 text-black px-6 py-3 hover:bg-neon-400 transition-all border border-neon-500 active:scale-95">
-              <span className="relative z-10 text-[10px] uppercase tracking-[0.2em] font-bold">{t('nav.book_consultation')}</span>
             </Link>
-          </nav>
 
-          {/* Mobile menu toggle */}
-          <div className="lg:hidden flex items-center gap-4">
-            <LanguageSelector />
-            <button 
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-white hover:text-neon-500 transition-colors"
-              aria-expanded={isMobileMenuOpen}
-              aria-label="Toggle navigation menu"
-            >
-              {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
-          </div>
-        </div>
+            {/* Desktop Nav */}
+            <nav className="hidden lg:flex items-center gap-8">
+              {[
+                { name: 'Leistungen', path: '/services' },
+                { name: 'Preise', path: '/pricing' },
+                { name: 'Projekte', path: '/portfolio' },
+                { name: 'Über Uns', path: '/about' },
+                { name: 'FAQ', path: '/faq' },
+              ].map((item) => (
+                <Link 
+                  key={item.path} 
+                  to={item.path}
+                  className={`text-xs uppercase tracking-widest font-bold transition-colors ${
+                    location.pathname === item.path ? 'text-neon-500' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </nav>
 
-        {/* Mobile menu drawer */}
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden border-t border-white/5 bg-dark-950 overflow-hidden"
-            >
-              <div className="container mx-auto px-6 py-8 flex flex-col gap-6">
-                <Link to="/services" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-xs py-2">{t('nav.services')}</Link>
-                <Link to="/pricing" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-xs py-2">Preise</Link>
-                <Link to="/portfolio" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-xs py-2">Referenzen</Link>
-                <Link to="/faq" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-xs py-2">FAQ</Link>
-                <Link to="/about" className="text-gray-400 hover:text-white transition-colors uppercase tracking-[0.2em] text-xs py-2">{t('nav.about')}</Link>
-                <Link to="/booking" className="bg-neon-500 text-black px-6 py-4 text-center rounded-lg uppercase tracking-[0.2em] text-xs font-bold active:scale-[0.98] transition-all">
-                  {t('nav.book_consultation')}
+            {/* Actions */}
+            <div className="flex items-center gap-4 md:gap-8">
+              <div className="hidden lg:flex items-center gap-6">
+                <button 
+                  onClick={() => setIsSearchOpen(true)}
+                  className="flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-all group"
+                >
+                  <SearchIcon size={14} />
+                  <span className="text-[10px] uppercase tracking-widest font-bold">Suchen</span>
+                  <span className="text-[9px] bg-white/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                    <Command size={10} /> K
+                  </span>
+                </button>
+
+                <div className="flex items-center gap-3">
+                  {['DE', 'EN'].map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => changeLanguage(lang.toLowerCase())}
+                      className={`text-[10px] font-bold tracking-widest transition-colors ${
+                        currentLang.toUpperCase() === lang ? 'text-neon-500' : 'text-gray-500 hover:text-white'
+                      }`}
+                    >
+                      {lang}
+                    </button>
+                  ))}
+                </div>
+                <Link to="/booking">
+                  <button className="h-10 px-6 rounded-full bg-white text-dark-950 text-[10px] uppercase tracking-widest font-bold hover:bg-neon-500 hover:scale-105 transition-all shadow-lg active:scale-95">
+                    Anfrage starten
+                  </button>
                 </Link>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.header>
 
-      <main className="flex-1 flex flex-col relative z-10">
+              {/* Mobile Actions */}
+              <div className="lg:hidden flex items-center gap-4">
+                <button onClick={() => setIsSearchOpen(true)} className="p-2 text-gray-400">
+                  <SearchIcon size={20} />
+                </button>
+                <button 
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className="p-2 text-white"
+                >
+                  {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Global Search / Finder Overlay */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSearchOpen(false)}
+              className="absolute inset-0 bg-dark-950/80 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -20 }}
+              className="relative w-full max-w-2xl glass-card rounded-[2.5rem] border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.5)] overflow-hidden"
+            >
+              <div className="p-6 border-b border-white/10 flex items-center gap-4">
+                <SearchIcon className="text-neon-500" size={24} />
+                <input 
+                  autoFocus
+                  type="text" 
+                  placeholder="Was suchen Sie?"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-transparent border-none focus:ring-0 text-xl font-display font-medium text-white placeholder:text-gray-600"
+                />
+                <button 
+                  onClick={() => setIsSearchOpen(false)}
+                  className="p-2 bg-white/5 rounded-xl text-gray-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest"
+                >
+                  Esc
+                </button>
+              </div>
+              <div className="max-h-[50vh] overflow-y-auto p-4 custom-scrollbar">
+                {searchItems.length > 0 ? (
+                  <div className="space-y-1">
+                    {searchItems.map((item, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          navigate(item.path);
+                          setIsSearchOpen(false);
+                        }}
+                        className="w-full text-left p-4 rounded-2xl hover:bg-white/5 transition-all flex items-center justify-between group"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-neon-500 transition-colors">
+                            <ArrowRight size={18} />
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-white group-hover:text-neon-500 transition-colors">{item.name}</div>
+                            <div className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">{item.category}</div>
+                          </div>
+                        </div>
+                        <ArrowRight className="text-gray-700 group-hover:text-neon-500 group-hover:translate-x-2 transition-all" size={16} />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-20 text-center space-y-4">
+                    <SearchIcon className="mx-auto text-gray-800" size={48} />
+                    <p className="text-gray-500 text-sm uppercase tracking-widest font-bold">Keine Ergebnisse für "{searchQuery}"</p>
+                  </div>
+                )}
+              </div>
+              <div className="p-4 bg-dark-950/50 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+                <div className="flex gap-4">
+                  <span><kbd className="bg-white/5 px-1.5 py-0.5 rounded border border-white/10 mr-1">↑↓</kbd> Navigieren</span>
+                  <span><kbd className="bg-white/5 px-1.5 py-0.5 rounded border border-white/10 mr-1">Enter</kbd> Auswählen</span>
+                </div>
+                <span>Zetta Finder v1.0</span>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-0 z-40 bg-dark-950 flex flex-col items-center justify-center p-6 lg:hidden"
+          >
+            <div className="flex flex-col items-center gap-8 text-center">
+              {[
+                { name: 'Leistungen', path: '/services' },
+                { name: 'Preise', path: '/pricing' },
+                { name: 'Projekte', path: '/portfolio' },
+                { name: 'Über Uns', path: '/about' },
+                { name: 'FAQ', path: '/faq' },
+              ].map((item) => (
+                <Link 
+                  key={item.path} 
+                  to={item.path}
+                  className="text-2xl font-display font-bold text-white hover:text-neon-500"
+                >
+                  {item.name}
+                </Link>
+              ))}
+              <div className="pt-8 flex flex-col gap-6 w-full max-w-xs">
+                <Link to="/booking" className="w-full">
+                  <button className="w-full h-16 rounded-2xl bg-neon-500 text-dark-950 font-bold uppercase tracking-widest">
+                    Anfrage starten
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <main className="flex-1 flex flex-col">
         <AnimatePresence mode="wait">
           <PageTransition><Outlet /></PageTransition>
         </AnimatePresence>
       </main>
 
-      <footer className="border-t border-white/10 bg-dark-900 mt-auto relative z-10">
-        <div className="container mx-auto px-6 py-20 max-w-[1400px]">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
-            <div className="col-span-1 md:col-span-2">
-              <Link to="/" className="flex items-center gap-3 mb-6">
-                <div className="font-display font-medium tracking-wider text-2xl text-white">
-                  ZETTA
-                </div>
+      {/* Footer */}
+      <footer className="bg-dark-950 border-t border-white/5 py-20">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-24 mb-20">
+            <div className="col-span-1 lg:col-span-1">
+              <Link to="/" className="inline-block mb-8">
+                <span className="font-display font-bold text-2xl tracking-tighter text-white">
+                  ZETTA<span className="text-neon-500">.</span>
+                </span>
               </Link>
-              <p className="text-gray-400 text-sm max-w-sm leading-relaxed font-mono uppercase tracking-widest">
-                {t('footer.description')}
+              <p className="text-gray-500 text-sm leading-relaxed mb-8">
+                Wir digitalisieren Unternehmen mit High-End Websites und intelligenten KI-Lösungen. Modern, transparent und ergebnisorientiert.
               </p>
+              <div className="flex items-center gap-4">
+                {/* Socials placeholder */}
+                {[1,2,3].map(i => (
+                  <div key={i} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-neon-500/20 transition-colors cursor-pointer" />
+                ))}
+              </div>
             </div>
-            
+
             <div>
-              <h4 className="font-sans font-semibold tracking-widest uppercase mb-6 text-xs text-white">{t('footer.services')}</h4>
-              <ul className="space-y-4 text-sm text-gray-400 font-light">
-                <li><Link to="/services/webdesign" className="hover:text-neon-400 transition-colors">Webdesign</Link></li>
-                <li><Link to="/services/ai-automation" className="hover:text-neon-400 transition-colors">KI Automatisierung</Link></li>
-                <li><Link to="/services/ai-chatbots" className="hover:text-neon-400 transition-colors">KI Chatbots</Link></li>
-                <li><Link to="/services/workflow-automation" className="hover:text-neon-400 transition-colors">Workflow Automation</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-sans font-semibold tracking-widest uppercase mb-6 text-xs text-white">{t('footer.company')}</h4>
-              <ul className="space-y-4 text-sm text-gray-400 font-light">
-                <li><Link to="/about" className="hover:text-neon-400 transition-colors">Über uns</Link></li>
-                <li><Link to="/process" className="hover:text-neon-400 transition-colors">Projektablauf</Link></li>
-                <li><Link to="/pricing" className="hover:text-neon-400 transition-colors">Preise</Link></li>
+              <h4 className="text-xs uppercase tracking-[0.2em] font-bold text-white mb-8">Leistungen</h4>
+              <ul className="space-y-4">
+                <li><Link to="/services/webdesign" className="text-sm text-gray-500 hover:text-white transition-colors">Website Entwicklung</Link></li>
+                <li><Link to="/services/ai-automation" className="text-sm text-gray-500 hover:text-white transition-colors">KI Automationen</Link></li>
+                <li><Link to="/services/ai-chatbots" className="text-sm text-gray-500 hover:text-white transition-colors">Chatbots</Link></li>
+                <li><Link to="/services/workflow-automation" className="text-sm text-gray-500 hover:text-white transition-colors">Workflow Automation</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-sans font-semibold tracking-widest uppercase mb-6 text-xs text-white">Rechtliches</h4>
-              <ul className="space-y-4 text-sm text-gray-400 font-light">
-                <li><Link to="/imprint" className="hover:text-neon-400 transition-colors">Impressum</Link></li>
-                <li><Link to="/privacy" className="hover:text-neon-400 transition-colors">Datenschutz</Link></li>
-                <li><Link to="/admin" className="hover:text-neon-400 transition-colors">Admin Login</Link></li>
+              <h4 className="text-xs uppercase tracking-[0.2em] font-bold text-white mb-8">Agentur</h4>
+              <ul className="space-y-4">
+                <li><Link to="/about" className="text-sm text-gray-500 hover:text-white transition-colors">Über Uns</Link></li>
+                <li><Link to="/portfolio" className="text-sm text-gray-500 hover:text-white transition-colors">Projekte</Link></li>
+                <li><Link to="/pricing" className="text-sm text-gray-500 hover:text-white transition-colors">Preise</Link></li>
+                <li><Link to="/faq" className="text-sm text-gray-500 hover:text-white transition-colors">FAQ</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-xs uppercase tracking-[0.2em] font-bold text-white mb-8">Kontakt</h4>
+              <ul className="space-y-4">
+                <li className="text-sm text-gray-500">info@zetta-digital.de</li>
+                <li className="text-sm text-gray-500">+49 123 4567890</li>
+                <li>
+                  <Link to="/booking" className="text-sm text-neon-500 font-bold hover:underline">
+                    Jetzt Termin vereinbaren
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
-          
-          <div className="border-t border-white/10 mt-20 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500 uppercase tracking-widest font-mono">
-            <p>&copy; {new Date().getFullYear()} ZETTA DIGITAL. {t('footer.rights')}</p>
-            <p className="mt-2 md:mt-0 font-mono uppercase tracking-widest text-sm">{t('footer.slogan', 'A tradition of excellence.')}</p>
+
+          <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-8">
+              <Link to="/imprint" className="text-[10px] uppercase tracking-widest text-gray-600 hover:text-white">Impressum</Link>
+              <Link to="/privacy" className="text-[10px] uppercase tracking-widest text-gray-600 hover:text-white">Datenschutz</Link>
+              <button className="text-[10px] uppercase tracking-widest text-gray-600 hover:text-white">Sitemap</button>
+            </div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-600 font-bold">
+              © {new Date().getFullYear()} ZETTA DIGITAL. ALL RIGHTS RESERVED.
+            </p>
           </div>
         </div>
       </footer>
+
+      {/* Sticky Mobile Consultation Button */}
+      <div className="fixed bottom-6 left-6 right-6 z-40 lg:hidden">
+        <Link to="/booking">
+          <button className="w-full h-16 rounded-2xl bg-white text-dark-950 font-bold shadow-2xl flex items-center justify-center gap-3">
+            <MessageSquare size={20} />
+            Kostenlose Beratung
+          </button>
+        </Link>
+      </div>
+
       <CookieConsent />
     </div>
   );

@@ -35,39 +35,77 @@ export default function SettingsView() {
   const [newBlockedReason, setNewBlockedReason] = useState('');
 
   const fetchData = async () => {
-    const [{ data: s }, { data: h }, { data: b }] = await Promise.all([
-      supabase.from('business_settings').select('*').limit(1).single(),
-      supabase.from('business_hours').select('*').order('weekday'),
-      supabase.from('blocked_dates').select('*').order('blocked_date', { ascending: true })
-    ]);
-    
-    if (s) {
-      // Ensure defaults for new fields
-      const settingsWithDefaults = {
-        ...s,
-        booking_phone_required: s.booking_phone_required ?? true,
-        booking_phone_visible: s.booking_phone_visible ?? true,
-        booking_email_required: s.booking_email_required ?? true,
-        booking_email_visible: s.booking_email_visible ?? true
-      };
-      setSettings(settingsWithDefaults);
-      resetSettings(settingsWithDefaults);
-      if (s.enabled_languages) {
-        setEnabledLangs(s.enabled_languages.split(','));
-        localStorage.setItem('zetta_enabled_languages', s.enabled_languages);
+    try {
+      const [{ data: s, error: sErr }, { data: h, error: hErr }, { data: b, error: bErr }] = await Promise.all([
+        supabase.from('business_settings').select('*').limit(1).single(),
+        supabase.from('business_hours').select('*').order('weekday'),
+        supabase.from('blocked_dates').select('*').order('blocked_date', { ascending: true })
+      ]);
+      
+      if (s) {
+        const settingsWithDefaults = {
+          ...s,
+          booking_phone_required: s.booking_phone_required ?? true,
+          booking_phone_visible: s.booking_phone_visible ?? true,
+          booking_email_required: s.booking_email_required ?? true,
+          booking_email_visible: s.booking_email_visible ?? true
+        };
+        setSettings(settingsWithDefaults);
+        resetSettings(settingsWithDefaults);
+        if (s.enabled_languages) {
+          setEnabledLangs(s.enabled_languages.split(','));
+          localStorage.setItem('zetta_enabled_languages', s.enabled_languages);
+        }
+        localStorage.setItem('zetta_business_settings', JSON.stringify(settingsWithDefaults));
+      } else {
+        const localSettings = localStorage.getItem('zetta_business_settings');
+        if (localSettings) {
+          const parsed = JSON.parse(localSettings);
+          setSettings(parsed);
+          resetSettings(parsed);
+        }
+      }
+      
+      if (h && h.length > 0) {
+        // Ensure all 7 days exist in local state
+        const allDays = Array.from({ length: 7 }, (_, i) => {
+          const dayShifts = h.filter(hd => hd.weekday === i);
+          return dayShifts.length > 0 ? dayShifts : [{ weekday: i, is_open: false, start_time: '09:00:00', end_time: '17:00:00', id: `temp-${i}` }];
+        }).flat();
+        setHours(allDays as BusinessHours[]);
+        localStorage.setItem('zetta_business_hours', JSON.stringify(allDays));
+      } else {
+        const localHours = localStorage.getItem('zetta_business_hours');
+        if (localHours) {
+          setHours(JSON.parse(localHours));
+        } else {
+          const defaultHours = Array.from({ length: 7 }, (_, i) => ({
+            weekday: i,
+            is_open: i > 0 && i < 6,
+            start_time: '09:00:00',
+            end_time: '17:00:00',
+            id: `temp-${i}`
+          }));
+          setHours(defaultHours as BusinessHours[]);
+        }
+      }
+      
+      if (b) setBlockedDates(b);
+    } catch (err) {
+      console.warn("Error fetching data from Supabase, checking local storage", err);
+      // Fallback logic for complete failure
+      const localSettings = localStorage.getItem('zetta_business_settings');
+      if (localSettings) {
+        const parsed = JSON.parse(localSettings);
+        setSettings(parsed);
+        resetSettings(parsed);
+      }
+      
+      const localHours = localStorage.getItem('zetta_business_hours');
+      if (localHours) {
+        setHours(JSON.parse(localHours));
       }
     }
-    
-    if (h) {
-      // Ensure all 7 days exist in local state
-      const allDays = Array.from({ length: 7 }, (_, i) => {
-        const existing = h.find(hd => hd.weekday === i);
-        return existing || { weekday: i, is_open: false, start_time: '09:00:00', end_time: '17:00:00', id: `temp-${i}` };
-      });
-      setHours(allDays as BusinessHours[]);
-    }
-    
-    if (b) setBlockedDates(b);
   };
 
   useEffect(() => {
@@ -89,6 +127,7 @@ export default function SettingsView() {
       enabled_languages: enabledLangs.join(',')
     };
     localStorage.setItem('zetta_enabled_languages', updatedData.enabled_languages);
+    localStorage.setItem('zetta_business_settings', JSON.stringify(updatedData));
     
     if (settings?.id) {
       await supabase.from('business_settings').update(updatedData).eq('id', settings.id);
@@ -96,7 +135,7 @@ export default function SettingsView() {
       await supabase.from('business_settings').insert(updatedData);
     }
     setIsSaving(false);
-    alert('Settings saved successfully');
+    alert('Einstellungen erfolgreich gespeichert');
     fetchData();
   };
 
@@ -109,8 +148,8 @@ export default function SettingsView() {
   const saveHours = async () => {
     setIsSaving(true);
     try {
-      // For simplicity in this demo, we'll replace all existing hours with current state
-      // In a real app, you'd do more surgical updates
+      localStorage.setItem('zetta_business_hours', JSON.stringify(hours));
+      
       const { data: existing } = await supabase.from('business_hours').select('id');
       if (existing && existing.length > 0) {
         await supabase.from('business_hours').delete().in('id', existing.map(e => e.id));
@@ -125,7 +164,9 @@ export default function SettingsView() {
       alert('Öffnungszeiten erfolgreich gespeichert');
       fetchData();
     } catch (err: any) {
-      alert('Fehler beim Speichern der Öffnungszeiten: ' + err.message);
+      console.warn("Hours save to Supabase failed, kept in local storage", err);
+      alert('Öffnungszeiten lokal gespeichert (Datenbank-Verbindung fehlgeschlagen)');
+      fetchData();
     } finally {
       setIsSaving(false);
     }
@@ -150,10 +191,21 @@ export default function SettingsView() {
     e.preventDefault();
     if (!newBlockedDate) return;
     
-    await supabase.from('blocked_dates').insert({
+    const newBlocked = {
       blocked_date: newBlockedDate,
       reason: newBlockedReason || null
-    });
+    };
+
+    const localBlocked = localStorage.getItem('zetta_blocked_dates');
+    const blocked = localBlocked ? JSON.parse(localBlocked) : [];
+    blocked.push({ ...newBlocked, id: crypto.randomUUID() });
+    localStorage.setItem('zetta_blocked_dates', JSON.stringify(blocked));
+    
+    try {
+      await supabase.from('blocked_dates').insert(newBlocked);
+    } catch (e) {
+      console.warn("Blocked date save to Supabase failed", e);
+    }
     
     setNewBlockedDate('');
     setNewBlockedReason('');
@@ -161,7 +213,17 @@ export default function SettingsView() {
   };
 
   const deleteBlockedDate = async (id: string) => {
-    await supabase.from('blocked_dates').delete().eq('id', id);
+    const localBlocked = localStorage.getItem('zetta_blocked_dates');
+    if (localBlocked) {
+      const blocked = JSON.parse(localBlocked).filter((b: any) => b.id !== id);
+      localStorage.setItem('zetta_blocked_dates', JSON.stringify(blocked));
+    }
+
+    try {
+      await supabase.from('blocked_dates').delete().eq('id', id);
+    } catch (e) {
+      console.warn("Blocked date delete from Supabase failed", e);
+    }
     fetchData();
   };
 

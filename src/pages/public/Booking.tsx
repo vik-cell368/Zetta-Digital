@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { Service, BusinessSettings } from '@/lib/types';
+import { Service, BusinessSettings, BusinessHours, BlockedDate } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Calendar as CalendarIcon, Clock, ArrowRight, ChevronRight, ChevronLeft, CheckCircle2, Loader2 } from 'lucide-react';
-import { format, parse, isAfter, startOfDay, addDays, isSameDay } from 'date-fns';
+import { format, parse, isAfter, startOfDay, addDays, isSameDay, parseISO } from 'date-fns';
 import { getDateLocale } from '@/lib/utils';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
@@ -37,10 +38,13 @@ const pageTransition = {
 
 export default function Booking() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const currentLang = i18n.language.split('-')[0] || 'en';
   const [step, setStep] = useState<Step>('service');
   const [services, setServices] = useState<Service[]>([]);
   const [settings, setSettings] = useState<BusinessSettings | null>(null);
+  const [businessHours, setBusinessHours] = useState<BusinessHours[]>([]);
+  const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -53,21 +57,60 @@ export default function Booking() {
   const { register, handleSubmit, formState: { errors } } = useForm<BookingFormData>();
 
   useEffect(() => {
-    async function fetchServices() {
+    async function fetchInitialData() {
       try {
-        const [{ data: sData }, { data: bSettings }] = await Promise.all([
+        const [
+          { data: sData }, 
+          { data: bSettings },
+          { data: bHours },
+          { data: bBlocked }
+        ] = await Promise.all([
           supabase.from('services').select('*').eq('is_active', true).order('price', { ascending: false }),
-          supabase.from('business_settings').select('*').limit(1).single()
+          supabase.from('business_settings').select('*').limit(1).single(),
+          supabase.from('business_hours').select('*').order('weekday'),
+          supabase.from('blocked_dates').select('*')
         ]);
         
         if (bSettings) {
-          setSettings({
+          const s = {
             ...bSettings,
             booking_phone_required: bSettings.booking_phone_required ?? true,
             booking_phone_visible: bSettings.booking_phone_visible ?? true,
             booking_email_required: bSettings.booking_email_required ?? true,
             booking_email_visible: bSettings.booking_email_visible ?? true
-          });
+          };
+          setSettings(s);
+          localStorage.setItem('zetta_business_settings', JSON.stringify(s));
+        } else {
+          const local = localStorage.getItem('zetta_business_settings');
+          if (local) setSettings(JSON.parse(local));
+        }
+
+        if (bHours && bHours.length > 0) {
+          setBusinessHours(bHours);
+          localStorage.setItem('zetta_business_hours', JSON.stringify(bHours));
+        } else {
+          const local = localStorage.getItem('zetta_business_hours');
+          if (local) setBusinessHours(JSON.parse(local));
+          else {
+            // Default hours if nothing exists
+            const defaults = Array.from({ length: 7 }, (_, i) => ({
+              weekday: i,
+              is_open: i > 0 && i < 6,
+              start_time: '09:00:00',
+              end_time: '17:00:00',
+              id: `temp-${i}`
+            }));
+            setBusinessHours(defaults as BusinessHours[]);
+          }
+        }
+
+        if (bBlocked) {
+          setBlockedDates(bBlocked);
+          localStorage.setItem('zetta_blocked_dates', JSON.stringify(bBlocked));
+        } else {
+          const local = localStorage.getItem('zetta_blocked_dates');
+          if (local) setBlockedDates(JSON.parse(local));
         }
 
         if (sData && sData.length > 0) {
@@ -99,12 +142,12 @@ export default function Booking() {
           }
         }
       } catch (e) {
-        console.warn("Booking services fetch failed", e);
+        console.warn("Booking data fetch failed", e);
       } finally {
         setIsLoading(false);
       }
     }
-    fetchServices();
+    fetchInitialData();
   }, []);
 
   const [isTimesLoading, setIsTimesLoading] = useState(false);
@@ -127,37 +170,47 @@ export default function Booking() {
         .gte('start_time', startOfDay(date).toISOString())
         .lt('start_time', addDays(startOfDay(date), 1).toISOString());
 
-      const times = [];
-      const startHour = 9;
-      const endHour = 17;
+      const times: string[] = [];
+      const weekday = date.getDay();
+      const dayShifts = businessHours.filter(h => h.weekday === weekday && h.is_open);
+      const interval = settings?.slot_interval_minutes || 30;
       
-      for (let h = startHour; h < endHour; h++) {
-        for (let m = 0; m < 60; m += 30) {
-          const timeString = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:00`;
-          const slotStart = parse(`${format(date, 'yyyy-MM-dd')} ${timeString}`, 'yyyy-MM-dd HH:mm:ss', new Date());
-          
+      for (const shift of dayShifts) {
+        const [sH, sM] = shift.start_time.split(':').map(Number);
+        const [eH, eM] = shift.end_time.split(':').map(Number);
+        
+        let current = new Date(date);
+        current.setHours(sH, sM, 0, 0);
+        
+        const end = new Date(date);
+        end.setHours(eH, eM, 0, 0);
+
+        while (current < end) {
+          const timeString = format(current, 'HH:mm:ss');
+          const slotStart = current;
+          const serviceDuration = selectedService.duration_minutes;
+          const slotEnd = new Date(slotStart.getTime() + serviceDuration * 60000);
+
+          // Check if slot stays within shift
+          if (slotEnd > end) break;
+
           let isAvailable = true;
           // Don't allow past times if today
           if (isSameDay(date, new Date()) && !isAfter(slotStart, new Date())) {
             isAvailable = false;
           }
 
-          if (isAvailable) {
-            const serviceDuration = selectedService.duration_minutes;
-            const slotEnd = new Date(slotStart.getTime() + serviceDuration * 60000);
-
-            if (appointments && appointments.length > 0) {
-              for (const appt of appointments) {
-                const apptStart = new Date(appt.start_time);
-                const apptEnd = new Date(appt.end_time);
-                if (
-                  (slotStart >= apptStart && slotStart < apptEnd) ||
-                  (slotEnd > apptStart && slotEnd <= apptEnd) ||
-                  (slotStart <= apptStart && slotEnd >= apptEnd)
-                ) {
-                  isAvailable = false;
-                  break;
-                }
+          if (isAvailable && appointments) {
+            for (const appt of appointments) {
+              const apptStart = new Date(appt.start_time);
+              const apptEnd = new Date(appt.end_time);
+              if (
+                (slotStart >= apptStart && slotStart < apptEnd) ||
+                (slotEnd > apptStart && slotEnd <= apptEnd) ||
+                (slotStart <= apptStart && slotEnd >= apptEnd)
+              ) {
+                isAvailable = false;
+                break;
               }
             }
           }
@@ -165,6 +218,8 @@ export default function Booking() {
           if (isAvailable) {
             times.push(timeString);
           }
+          
+          current = new Date(current.getTime() + interval * 60000);
         }
       }
       setAvailableTimes(times);
@@ -330,7 +385,14 @@ export default function Booking() {
                   mode="single"
                   selected={selectedDate}
                   onSelect={handleDateSelect}
-                  disabled={[{ before: new Date() }, { dayOfWeek: [0, 6] }]}
+                  disabled={[
+                    { before: new Date() },
+                    ...blockedDates.map(b => parseISO(b.blocked_date)),
+                    (date) => {
+                      const day = businessHours.find(h => h.weekday === date.getDay());
+                      return !day?.is_open;
+                    }
+                  ]}
                   className="text-white mx-auto"
                 />
               </div>
@@ -525,7 +587,7 @@ export default function Booking() {
                 <p className="text-gray-400 max-w-lg mx-auto mb-16 text-xl font-light leading-relaxed">
                   {t('booking.success_desc')}
                 </p>
-                <Button onClick={() => window.location.href = '/'} className="bg-neon-500 text-dark-950 hover:bg-neon-400 px-12 h-16 rounded-full font-semibold uppercase tracking-widest text-xs transition-transform active:scale-95">
+                <Button onClick={() => navigate('/')} className="bg-neon-500 text-dark-950 hover:bg-neon-400 px-12 h-16 rounded-full font-semibold uppercase tracking-widest text-xs transition-transform active:scale-95">
                   {t('booking.return_home')}
                 </Button>
               </div>

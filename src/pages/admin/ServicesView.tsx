@@ -74,29 +74,24 @@ export default function ServicesView() {
   };
 
   const seedFromDefaults = () => {
-    let defaultServices = t('services.list', { returnObjects: true });
-    
-    // Handle if i18next returns an object instead of array
-    if (defaultServices && !Array.isArray(defaultServices) && typeof defaultServices === 'object') {
-      defaultServices = Object.values(defaultServices);
-    }
+    // Hardcoded defaults to avoid dependency on complex translation structures during seed
+    const defaultServices = [
+      { id: '1', title: 'Web Development', desc: 'Custom Next.js applications.' },
+      { id: '2', title: 'AI Automation', desc: 'Intelligent workflow automation.' },
+      { id: '3', title: 'KI Chatbots', desc: 'Smart 24/7 customer support.' }
+    ];
 
-    if (Array.isArray(defaultServices) && defaultServices.length > 0) {
-      const seeded = defaultServices.map((s: any) => ({
-        id: s.id || crypto.randomUUID(),
-        name: JSON.stringify({ de: s.title || '', en: s.title || '' }),
-        description: JSON.stringify({ de: s.desc || '', en: s.desc || '' }),
-        price: 0,
-        duration_minutes: 60,
-        is_active: true,
-        created_at: new Date().toISOString()
-      })) as Service[];
-      saveToLocal(seeded);
-      setStatusMessage("Standard-Leistungen erfolgreich geladen");
-    } else {
-      console.warn("No default services found in translation files");
-      setStatusMessage("Keine Standard-Leistungen in Übersetzungen gefunden");
-    }
+    const seeded = defaultServices.map((s: any) => ({
+      id: crypto.randomUUID(),
+      name: JSON.stringify({ de: s.title, en: s.title }),
+      description: JSON.stringify({ de: s.desc, en: s.desc }),
+      price: 0,
+      duration_minutes: 60,
+      is_active: true,
+      created_at: new Date().toISOString()
+    })) as Service[];
+    saveToLocal(seeded);
+    setStatusMessage("Standard-Leistungen geladen");
   };
 
   const saveToLocal = (newServices: Service[]) => {

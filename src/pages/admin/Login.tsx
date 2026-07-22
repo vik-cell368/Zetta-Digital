@@ -3,8 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Layers } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/Card';
+import { Shield, Lock, Fingerprint, Bot, AlertCircle } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -40,7 +40,6 @@ export default function Login() {
       }
 
       if (data.user) {
-        // Check if user is an admin
         const { data: adminUser, error: dbError } = await supabase
           .from('admin_users')
           .select('*')
@@ -48,11 +47,7 @@ export default function Login() {
           .single();
 
         if (dbError || !adminUser) {
-          if (dbError?.message?.includes('does not exist')) {
-            setError('Supabase-Setup fehlt: Tabelle "admin_users" nicht gefunden.');
-          } else {
-            setError('Keine Administratorberechtigung für dieses Konto.');
-          }
+          setError('Keine Administratorberechtigung für dieses Konto.');
           await supabase.auth.signOut();
         } else {
           (window as any)._zetta_authenticated = true;
@@ -67,72 +62,132 @@ export default function Login() {
     }
   };
 
-  const useDemoLogin = () => {
-    setEmail('admin@zettadigital.com');
-    setPassword('zetta-admin-2026');
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark-950 p-4 relative">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-dark-900 via-dark-950 to-dark-950 opacity-30 pointer-events-none"></div>
-
-      <div className="w-full max-w-md relative z-10">
-        <div className="flex flex-col items-center mb-10">
-          <div className="relative flex items-center justify-center w-12 h-12 mb-4">
-            <div className="absolute inset-0 bg-gradient-to-tr from-neon-400 to-gray-400 opacity-20 rounded-lg blur-md"></div>
-            <div className="font-logo text-3xl font-bold bg-gradient-to-tr from-neon-400 to-gray-400 bg-clip-text text-transparent relative z-10">
-              Z
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-dark-950 p-6 relative overflow-hidden">
+      {/* Background Ambience */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-neon-500/5 via-dark-950 to-dark-950 pointer-events-none" />
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+      
+      <div className="w-full max-w-xl relative">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center mb-12 text-center"
+        >
+          <div className="w-16 h-16 rounded-3xl bg-neon-500/10 border border-neon-500/20 flex items-center justify-center text-neon-500 mb-6 shadow-[0_0_30px_rgba(197,160,89,0.1)]">
+            <Shield size={32} />
           </div>
-          <h1 className="text-2xl font-display font-bold tracking-tight text-white uppercase tracking-widest">ZETTA ADMIN</h1>
-          <p className="text-gray-400 text-sm mt-2 font-light">Anmelden zur Verwaltung Ihrer Agentur</p>
-        </div>
+          <h1 className="text-4xl font-display font-bold text-white tracking-tight mb-3">
+            Secure Gateway
+          </h1>
+          <p className="text-gray-500 text-sm max-w-xs font-medium uppercase tracking-[0.2em]">
+            Zetta Digital Administration
+          </p>
+        </motion.div>
 
-        <div className="glass-card rounded-xl p-8 border border-white/10 shadow-2xl">
-          <form onSubmit={handleLogin} className="space-y-5">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1 }}
+          className="glass-card rounded-[3rem] p-10 md:p-14 border border-white/5 shadow-2xl relative"
+        >
+          {/* Security Status Bar */}
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-dark-950 border border-white/10 px-6 py-2 rounded-full flex items-center gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400">System Ready</span>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-8">
             {error && (
-              <div className="p-4 text-sm bg-red-900/20 text-red-400 rounded-md border border-red-900/50">
-                {error === 'Unauthorized access. This account does not have admin privileges.' 
-                  ? 'Nicht autorisierter Zugriff. Dieses Konto verfügt nicht über Administratorrechte.' 
-                  : error}
-              </div>
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 text-sm font-bold"
+              >
+                <AlertCircle size={18} />
+                {error}
+              </motion.div>
             )}
-            <div>
-              <label className="block text-xs uppercase tracking-widest font-semibold text-neon-500/70 mb-2">E-Mail</label>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="admin@zettadigital.com"
-                className="bg-dark-900 border-white/10 text-white focus-visible:ring-neon-500/50 placeholder:text-gray-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs uppercase tracking-widest font-semibold text-neon-500/70 mb-2">Passwort</label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="bg-dark-900 border-white/10 text-white focus-visible:ring-neon-500/50 placeholder:text-gray-500"
-              />
-            </div>
-            <Button type="submit" className="w-full mt-4 bg-neon-500 hover:bg-neon-400 text-dark-950 uppercase tracking-widest text-xs font-semibold h-12 shadow-[0_0_15px_rgba(197,160,89,0.2)]" isLoading={isLoading}>
-              Anmelden
-            </Button>
-            
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5"></span></div>
-              <div className="relative flex justify-center text-xs uppercase"><span className="bg-dark-950 px-2 text-gray-500 font-mono">ODER</span></div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest font-bold text-gray-500 ml-2">Authorized ID</label>
+                <div className="relative">
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="admin@zettadigital.com"
+                    className="h-16 bg-white/5 border-white/5 text-white focus:border-neon-500/50 rounded-2xl px-6 transition-all"
+                  />
+                  <div className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-600">
+                    <Bot size={18} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest font-bold text-gray-500 ml-2">Access Key</label>
+                <div className="relative">
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="••••••••••••"
+                    className="h-16 bg-white/5 border-white/5 text-white focus:border-neon-500/50 rounded-2xl px-6 transition-all"
+                  />
+                  <div className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-600">
+                    <Lock size={18} />
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <Button type="button" variant="outline" onClick={useDemoLogin} className="w-full border-white/10 text-gray-400 hover:text-white hover:border-white/20 uppercase tracking-widest text-[10px] h-10">
-              Demo-Daten verwenden
-            </Button>
+            <div className="pt-4 space-y-4">
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full h-16 bg-neon-500 text-dark-950 font-bold uppercase tracking-widest text-xs rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_40px_rgba(197,160,89,0.2)] flex items-center justify-center gap-3"
+              >
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-dark-950/20 border-t-dark-950 rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Fingerprint size={18} />
+                    Verify Identity
+                  </>
+                )}
+              </Button>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('admin@zettadigital.com');
+                  setPassword('zetta-admin-2026');
+                }}
+                className="w-full text-center text-[10px] uppercase tracking-widest font-bold text-gray-500 hover:text-white transition-colors py-2"
+              >
+                Use Emergency Credentials
+              </button>
+            </div>
           </form>
-        </div>
+        </motion.div>
+
+        {/* Footer Info */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-12 text-center"
+        >
+          <p className="text-[10px] text-gray-600 uppercase tracking-[0.4em] font-bold">
+            Protected by Advanced AI Encryption
+          </p>
+        </motion.div>
       </div>
     </div>
   );
 }
+

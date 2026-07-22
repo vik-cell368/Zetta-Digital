@@ -307,8 +307,12 @@ export default function Services() {
                   viewport={{ once: true }}
                 >
                   <Link to={`/services/${service.id}`} className="group block h-full">
-                    <div className="bg-dark-900/40 backdrop-blur-md border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 sm:p-10 h-full hover:border-neon-500/30 transition-all flex flex-col">
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/5 flex items-center justify-center text-neon-500 mb-6 sm:mb-8 group-hover:scale-110 transition-transform">
+                    <motion.div 
+                      whileHover={{ scale: 1.02, y: -5 }}
+                      className="bg-dark-900/40 backdrop-blur-md border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 sm:p-10 h-full hover:border-neon-500/30 transition-all flex flex-col group relative overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-neon-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/5 flex items-center justify-center text-neon-500 mb-6 sm:mb-8 group-hover:bg-neon-500 group-hover:text-dark-950 transition-all duration-500">
                         <Icon className="w-6 h-6 sm:w-8 sm:h-8" />
                       </div>
                       <h3 className="text-2xl sm:text-3xl font-serif text-white mb-4 italic group-hover:text-neon-400 transition-colors">
@@ -317,11 +321,11 @@ export default function Services() {
                       <p className="text-sm sm:text-gray-400 font-light leading-relaxed mb-8 flex-grow">
                         {service.description}
                       </p>
-                      <div className="flex items-center text-neon-500 font-mono text-xs uppercase tracking-[0.2em]">
+                      <div className="flex items-center text-neon-500 font-mono text-xs uppercase tracking-[0.2em] transform translate-x-0 group-hover:translate-x-2 transition-transform">
                         {t('home.view_services')}
-                        <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-2 transition-transform" />
+                        <ArrowRight className="ml-2 w-4 h-4" />
                       </div>
-                    </div>
+                    </motion.div>
                   </Link>
                 </motion.div>
               );
