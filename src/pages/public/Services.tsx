@@ -17,6 +17,8 @@ import {
   LineChart 
 } from 'lucide-react';
 
+import PriceConfigurator from '@/components/pricing/PriceConfigurator';
+
 export default function Services() {
   const { slug } = useParams();
   const { t, i18n } = useTranslation();
@@ -36,7 +38,7 @@ export default function Services() {
         if (data) setDbServices(data);
       } catch (err) {
         console.warn("Failed to fetch services from Supabase, checking localStorage:", err);
-        const localData = localStorage.getItem('zetta_services');
+        const localData = localStorage.getItem('viktor_labs_services');
         if (localData) {
           const parsed = JSON.parse(localData);
           setDbServices(parsed.filter((s: any) => s.is_active));
@@ -167,7 +169,7 @@ export default function Services() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-dark-950">
-        <div className="w-12 h-12 border-4 border-neon-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -178,33 +180,33 @@ export default function Services() {
       const Icon = service.icon;
 
       return (
-        <div className="min-h-screen pt-32 pb-20 px-6">
-          <div className="max-w-4xl mx-auto">
+        <div className="min-h-screen pt-40 pb-20 px-6 bg-dark-950">
+          <div className="max-w-7xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="inline-flex items-center space-x-2 text-neon-500 mb-6">
-                <Icon className="w-6 h-6" />
-                <span className="text-xs font-mono uppercase tracking-[0.3em] font-medium">Service Detail</span>
+              <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/[0.03] border border-white/10 text-cyan-500 text-[10px] uppercase tracking-[0.3em] font-black mb-12 backdrop-blur-md">
+                <Icon className="w-4 h-4" />
+                Service Details
               </div>
               
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-serif text-white mb-8 tracking-tight italic">
+              <h1 className="text-5xl md:text-8xl lg:text-9xl font-display font-medium text-white mb-12 tracking-tight leading-[0.9]">
                 {service.title}
               </h1>
               
-              <p className="text-lg sm:text-xl text-gray-400 font-light leading-relaxed mb-12 sm:mb-16 max-w-2xl">
+              <p className="text-xl md:text-3xl text-slate-400 font-light leading-relaxed mb-24 max-w-4xl">
                 {service.description}
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 sm:gap-16 mb-16 sm:mb-20">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 mb-48">
                 <div>
-                  <h3 className="text-lg sm:text-xl font-medium text-white mb-6 sm:mb-8 border-b border-white/10 pb-4">Hauptvorteile</h3>
-                  <ul className="space-y-4">
+                  <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-12">Vorteile</div>
+                  <ul className="space-y-8">
                     {service.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center text-sm sm:text-base text-gray-400">
-                        <CheckCircle2 className="w-5 h-5 text-neon-500 mr-3 shrink-0" />
+                      <li key={idx} className="flex items-start text-xl text-slate-300 font-light leading-relaxed">
+                        <CheckCircle2 className="w-7 h-7 text-cyan-500 mr-6 shrink-0 mt-0.5" />
                         <span>{feature}</span>
                       </li>
                     ))}
@@ -212,90 +214,89 @@ export default function Services() {
                 </div>
                 
                 <div>
-                  <h3 className="text-lg sm:text-xl font-medium text-white mb-6 sm:mb-8 border-b border-white/10 pb-4">Der Ablauf</h3>
-                  <div className="space-y-6">
+                  <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-12">Prozess</div>
+                  <div className="space-y-10">
                     {service.process.map((step, index) => (
                       <div key={index} className="flex items-center group">
-                        <span className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-white/10 flex items-center justify-center text-[10px] sm:text-xs font-mono text-neon-500 mr-4 group-hover:border-neon-500/50 transition-colors">
-                          0{index + 1}
+                        <span className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-[10px] font-black text-cyan-500 mr-8 group-hover:border-cyan-500 transition-all duration-500">
+                          {index + 1}
                         </span>
-                        <span className="text-sm sm:text-base text-gray-300 font-light">{step}</span>
+                        <span className="text-xl text-slate-300 font-light">{step}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="bg-dark-900/50 backdrop-blur-md border border-white/5 rounded-2xl sm:rounded-3xl p-6 sm:p-12 mb-16 sm:mb-20">
-                <h3 className="text-xl sm:text-2xl font-serif text-white mb-8 italic">Technologien</h3>
-                <div className="flex flex-wrap gap-3 sm:gap-4">
+              <div className="bg-white/[0.02] border border-white/5 rounded-[4rem] p-12 md:p-20 mb-48">
+                <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-12">Technologie-Stack</div>
+                <div className="flex flex-wrap gap-4">
                   {service.tech.map((t, idx) => (
-                    <span key={idx} className="px-4 sm:px-6 py-2 rounded-full border border-white/10 bg-white/5 text-gray-300 text-xs sm:text-sm font-mono">
+                    <span key={idx} className="px-10 py-4 rounded-full border border-white/5 bg-white/[0.03] text-slate-400 text-xs font-black uppercase tracking-[0.2em] hover:text-white hover:border-white/20 transition-all duration-500 cursor-default">
                       {t}
                     </span>
                   ))}
                 </div>
               </div>
 
-              <div className="mb-16 sm:mb-20">
-                <h3 className="text-2xl sm:text-3xl font-serif text-white mb-8 sm:mb-12 italic tracking-tight">Häufige Fragen</h3>
-                <div className="space-y-8">
-                  {service.faq.map((item, i) => (
-                    <div key={i} className="border-b border-white/5 pb-6 sm:pb-8">
-                      <h4 className="text-base sm:text-lg text-white mb-3 font-medium">{item.q}</h4>
-                      <p className="text-sm sm:text-base text-gray-400 font-light leading-relaxed">{item.a}</p>
-                    </div>
-                  ))}
+              {service.faq && service.faq.length > 0 && (
+                <div className="mb-48">
+                  <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-16">Häufig gestellte Fragen</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    {service.faq.map((item, i) => (
+                      <div key={i} className="bg-white/[0.02] border border-white/5 p-12 rounded-[3rem] hover:border-white/10 transition-colors">
+                        <h4 className="text-2xl text-white mb-6 font-display font-medium tracking-tight">{item.q}</h4>
+                        <p className="text-lg text-slate-400 font-light leading-relaxed">{item.a}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="flex flex-col sm:flex-row items-center justify-between p-8 sm:p-12 bg-neon-500 rounded-2xl sm:rounded-3xl text-dark-950">
-                <div className="mb-8 sm:mb-0 text-center sm:text-left">
-                  <h3 className="text-2xl sm:text-3xl font-serif font-bold mb-2 italic leading-tight">
-                    {t('services.cta_title', { service: service.title })}
-                  </h3>
-                  <p className="text-dark-950/70 font-medium text-sm sm:text-base">{t('services.cta_subtitle')}</p>
-                </div>
-                <Link 
-                  to="/booking"
-                  className="w-full sm:w-auto px-10 py-5 bg-dark-950 text-white rounded-full font-medium flex items-center justify-center group hover:scale-105 transition-transform"
-                >
-                  {t('services.cta_btn')}
-                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
+              <div className="bg-cyan-600 rounded-[5rem] p-16 md:p-32 text-center space-y-12 relative overflow-hidden group">
+                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(255,255,255,0.2),transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                 <h2 className="text-5xl md:text-8xl font-display font-medium text-dark-950 relative z-10 leading-[0.9] tracking-tighter uppercase">STARTEN WIR <br /> GEMEINSAM?</h2>
+                 <p className="text-dark-950/70 text-xl md:text-2xl font-medium max-w-2xl mx-auto relative z-10">{t('services.cta_subtitle')}</p>
+                 <div className="pt-8 relative z-10">
+                    <Link to="/booking">
+                      <button className="h-24 px-16 rounded-full bg-dark-950 text-white font-black uppercase tracking-[0.3em] text-xs hover:scale-105 active:scale-95 transition-all flex items-center gap-4 mx-auto shadow-2xl group/btn">
+                        Projekt anfragen
+                        <ArrowRight size={24} className="group-hover/btn:translate-x-1 transition-transform" />
+                      </button>
+                    </Link>
+                 </div>
               </div>
             </motion.div>
           </div>
-        </div>
-      );
-    } else {
-      // If slug exists but service not found yet, show loading instead of falling through to list
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-dark-950">
-          <div className="w-12 h-12 border-4 border-neon-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       );
     }
   }
 
   return (
-    <div className="min-h-screen pt-32 pb-20 px-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen pt-40 pb-20 bg-dark-950 relative overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[20%] right-[-10%] w-[60%] h-[60%] bg-cyan-600/5 blur-[150px] rounded-full" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-[50%] h-[50%] bg-cyan-900/10 blur-[120px] rounded-full" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.8 }}
         >
-          <div className="text-center mb-20">
-            <h1 className="text-4xl sm:text-6xl md:text-8xl font-serif text-white mb-8 tracking-tight italic">
-              {t('services.title')}
+          <div className="max-w-5xl mb-32 space-y-8">
+            <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px]">Unsere Expertise</div>
+            <h1 className="text-6xl md:text-8xl lg:text-9xl font-display font-medium text-white tracking-tighter leading-[0.85]">
+              LÖSUNGEN FÜR <br /> <span className="text-slate-600 italic">EINE DIGITALE</span> <br /> <span className="text-white">ZUKUNFT.</span>
             </h1>
-            <p className="text-lg sm:text-xl text-gray-400 font-light max-w-2xl mx-auto leading-relaxed">
-              {t('services.subtitle')}
+            <p className="text-xl md:text-3xl text-slate-400 font-light leading-relaxed max-w-4xl">
+              Wir begleiten Sie von der ersten Idee bis zur technischen Umsetzung. Ehrlich, transparent und mit höchstem Anspruch an Design und Code.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-48">
             {displayServices.map((service, index) => {
               const Icon = service.icon;
               return (
@@ -307,29 +308,33 @@ export default function Services() {
                   viewport={{ once: true }}
                 >
                   <Link to={`/services/${service.id}`} className="group block h-full">
-                    <motion.div 
-                      whileHover={{ scale: 1.02, y: -5 }}
-                      className="bg-dark-900/40 backdrop-blur-md border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 sm:p-10 h-full hover:border-neon-500/30 transition-all flex flex-col group relative overflow-hidden"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-neon-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/5 flex items-center justify-center text-neon-500 mb-6 sm:mb-8 group-hover:bg-neon-500 group-hover:text-dark-950 transition-all duration-500">
-                        <Icon className="w-6 h-6 sm:w-8 sm:h-8" />
+                    <div className="bg-white/[0.02] border border-white/5 rounded-[4rem] p-12 md:p-16 h-full hover:border-cyan-500/30 transition-all duration-700 flex flex-col relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                      
+                      <div className="w-20 h-20 rounded-[1.5rem] bg-cyan-500/10 flex items-center justify-center text-cyan-500 mb-12 group-hover:scale-110 group-hover:bg-cyan-500 group-hover:text-white transition-all duration-700 shadow-lg">
+                        <Icon size={32} />
                       </div>
-                      <h3 className="text-2xl sm:text-3xl font-serif text-white mb-4 italic group-hover:text-neon-400 transition-colors">
+                      
+                      <h3 className="text-4xl font-display font-medium text-white mb-6 leading-tight tracking-tight">
                         {service.title}
                       </h3>
-                      <p className="text-sm sm:text-gray-400 font-light leading-relaxed mb-8 flex-grow">
+                      
+                      <p className="text-xl text-slate-400 font-light leading-relaxed mb-12 flex-grow">
                         {service.description}
                       </p>
-                      <div className="flex items-center text-neon-500 font-mono text-xs uppercase tracking-[0.2em] transform translate-x-0 group-hover:translate-x-2 transition-transform">
-                        {t('home.view_services')}
-                        <ArrowRight className="ml-2 w-4 h-4" />
+                      
+                      <div className="flex items-center gap-3 text-cyan-500 font-black uppercase tracking-[0.3em] text-[10px] transform translate-x-0 group-hover:translate-x-3 transition-transform duration-500">
+                        Details <ArrowRight size={14} />
                       </div>
-                    </motion.div>
+                    </div>
                   </Link>
                 </motion.div>
               );
             })}
+          </div>
+
+          <div className="border-t border-white/5 pt-48">
+             <PriceConfigurator />
           </div>
         </motion.div>
       </div>

@@ -80,17 +80,17 @@ export default function Booking() {
             booking_email_visible: bSettings.booking_email_visible ?? true
           };
           setSettings(s);
-          localStorage.setItem('zetta_business_settings', JSON.stringify(s));
+          localStorage.setItem('viktor_labs_business_settings', JSON.stringify(s));
         } else {
-          const local = localStorage.getItem('zetta_business_settings');
+          const local = localStorage.getItem('viktor_labs_business_settings');
           if (local) setSettings(JSON.parse(local));
         }
 
         if (bHours && bHours.length > 0) {
           setBusinessHours(bHours);
-          localStorage.setItem('zetta_business_hours', JSON.stringify(bHours));
+          localStorage.setItem('viktor_labs_business_hours', JSON.stringify(bHours));
         } else {
-          const local = localStorage.getItem('zetta_business_hours');
+          const local = localStorage.getItem('viktor_labs_business_hours');
           if (local) setBusinessHours(JSON.parse(local));
           else {
             // Default hours if nothing exists
@@ -107,9 +107,9 @@ export default function Booking() {
 
         if (bBlocked) {
           setBlockedDates(bBlocked);
-          localStorage.setItem('zetta_blocked_dates', JSON.stringify(bBlocked));
+          localStorage.setItem('viktor_labs_blocked_dates', JSON.stringify(bBlocked));
         } else {
-          const local = localStorage.getItem('zetta_blocked_dates');
+          const local = localStorage.getItem('viktor_labs_blocked_dates');
           if (local) setBlockedDates(JSON.parse(local));
         }
 
@@ -117,7 +117,7 @@ export default function Booking() {
           setServices(sData);
         } else {
           // Fallback to local storage or defaults
-          const localData = localStorage.getItem('zetta_services');
+          const localData = localStorage.getItem('viktor_labs_services');
           if (localData) {
             setServices(JSON.parse(localData).filter((s: any) => s.is_active));
           } else {
@@ -267,10 +267,10 @@ export default function Booking() {
       setStep('success');
     } catch (err) {
       console.warn("Supabase booking failed, saving to localStorage", err);
-      const localApps = localStorage.getItem('zetta_appointments');
+      const localApps = localStorage.getItem('viktor_labs_appointments');
       const apps = localApps ? JSON.parse(localApps) : [];
       apps.push({ ...payload, id: crypto.randomUUID(), created_at: new Date().toISOString() });
-      localStorage.setItem('zetta_appointments', JSON.stringify(apps));
+      localStorage.setItem('viktor_labs_appointments', JSON.stringify(apps));
       setStep('success');
     } finally {
       setIsSubmitting(false);
@@ -281,40 +281,50 @@ export default function Booking() {
     <div className="flex-1 bg-dark-950 py-12 md:py-24 relative overflow-hidden">
       
       {/* Background Ambience */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(197,160,89,0.05)_0%,transparent_50%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(6,182,212,0.05)_0%,transparent_50%)] pointer-events-none" />
       
       <div className="container mx-auto px-6 max-w-4xl relative z-10">
         
         {/* Header */}
-        <div className="mb-16 text-center">
-          <span className="font-mono text-xs uppercase tracking-[0.3em] text-neon-500 block mb-4">Consultation</span>
-          <h1 className="text-4xl md:text-6xl font-serif font-medium text-white tracking-tight mb-4">{t('booking.title')}</h1>
-          <p className="text-gray-400 font-light max-w-lg mx-auto">Schedule an executive discussion to outline your technological trajectory.</p>
+        <div className="mb-24 text-center space-y-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/[0.03] border border-white/10 text-cyan-500 text-[10px] uppercase tracking-[0.3em] font-black backdrop-blur-md"
+          >
+            Consultation
+          </motion.div>
+          <h1 className="text-5xl md:text-8xl font-display font-medium text-white tracking-tight leading-[0.9]">{t('booking.title')}</h1>
+          <p className="text-slate-400 text-xl md:text-2xl font-light max-w-2xl mx-auto leading-relaxed">Schedule an executive discussion to outline your technological trajectory.</p>
         </div>
 
-          <div className="flex justify-center mb-16 px-2 overflow-hidden">
-            <div className="flex items-center gap-2 md:gap-4 font-mono text-[10px] md:text-xs uppercase tracking-widest overflow-x-auto pb-4 scrollbar-hide w-full max-w-2xl no-scrollbar">
-              {['service', 'date', 'time', 'details'].map((s, i, arr) => (
-                <div key={s} className="flex items-center whitespace-nowrap flex-shrink-0">
-                  <span className={cn(
-                    "w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center border transition-colors text-[10px]",
-                    step === s ? "bg-neon-500 border-neon-500 text-dark-950 font-bold" : 
-                    arr.indexOf(step) > i ? "bg-white/10 border-transparent text-white" : "border-white/20 text-gray-500"
-                  )}>
-                    {i + 1}
-                  </span>
-                  <span className={cn(
-                    "ml-2 md:ml-3 tracking-[0.2em] transition-colors hidden sm:block",
-                    step === s ? "text-neon-500" : 
-                    arr.indexOf(step) > i ? "text-white" : "text-gray-500"
-                  )}>
-                    {t(`booking.step_${s}`)}
-                  </span>
-                  {i < arr.length - 1 && (
-                    <div className="w-4 md:w-16 h-px bg-white/10 mx-2 md:mx-4" />
-                  )}
-                </div>
-              ))}
+          <div className="flex justify-center mb-16 px-2">
+            <div className="flex items-center justify-between font-mono text-[9px] md:text-xs uppercase tracking-widest w-full max-w-2xl">
+              {['service', 'date', 'time', 'details'].map((s, i, arr) => {
+                const isActive = step === s;
+                const isCompleted = arr.indexOf(step) > i;
+                
+                return (
+                  <div key={s} className="flex flex-col items-center gap-2 relative">
+                    <span className={cn(
+                      "w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center border transition-all duration-500 text-[10px]",
+                      isActive ? "bg-cyan-500 border-cyan-500 text-dark-950 font-bold scale-110 shadow-[0_0_15px_rgba(6,182,212,0.3)]" : 
+                      isCompleted ? "bg-white/10 border-transparent text-white" : "border-white/20 text-gray-500"
+                    )}>
+                      {isCompleted ? <CheckCircle2 size={14} /> : i + 1}
+                    </span>
+                    <span className={cn(
+                      "tracking-[0.15em] transition-colors text-center absolute -bottom-6 left-1/2 -translate-x-1/2 w-20",
+                      isActive ? "text-cyan-500" : isCompleted ? "text-white" : "text-gray-500"
+                    )}>
+                      {t(`booking.step_${s}`)}
+                    </span>
+                    {i < arr.length - 1 && (
+                      <div className="absolute top-3.5 md:top-4 left-full w-[calc(200%-3rem)] h-px bg-white/10 -z-10" />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -324,33 +334,33 @@ export default function Booking() {
             <motion.div 
               key="service"
               initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}
-              className="space-y-6"
+              className="space-y-4 md:space-y-6"
             >
               {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   {[1, 2, 3, 4].map(i => <div key={i} className="animate-pulse bg-white/5 h-40 rounded-2xl"></div>)}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   {services.map(service => (
                     <div 
                       key={service.id}
                       onClick={() => { setSelectedService(service); setStep('date'); }}
                       className={cn(
-                        "group p-8 rounded-2xl cursor-pointer transition-all duration-500 border backdrop-blur-md relative overflow-hidden",
+                        "group p-6 md:p-8 rounded-2xl cursor-pointer transition-all duration-500 border backdrop-blur-md relative overflow-hidden",
                         selectedService?.id === service.id 
-                          ? "bg-dark-900 border-neon-500/50 shadow-[0_0_30px_rgba(197,160,89,0.1)]" 
-                          : "bg-dark-900/40 border-white/5 hover:border-neon-500/30 hover:bg-dark-900/80"
+                          ? "bg-dark-900 border-cyan-500/50 shadow-[0_0_30px_rgba(6,182,212,0.1)]" 
+                          : "bg-dark-900/40 border-white/5 hover:border-cyan-500/30 hover:bg-dark-900/80"
                       )}
                     >
                       <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-4">
-                          <h3 className="font-serif text-2xl text-white group-hover:text-neon-400 transition-colors">{getTranslatedText(service.name, currentLang)}</h3>
-                          <span className="font-sans font-light text-white">{formatCurrency(service.price)}</span>
+                        <div className="flex justify-between items-start mb-3 md:mb-4">
+                          <h3 className="font-display text-xl md:text-2xl text-slate-50 group-hover:text-cyan-400 transition-colors">{getTranslatedText(service.name, currentLang)}</h3>
+                          <span className="font-sans font-light text-slate-50 text-sm md:text-base">{formatCurrency(service.price)}</span>
                         </div>
-                        <p className="text-sm text-gray-400 mb-8 font-light leading-relaxed line-clamp-2">{getTranslatedText(service.description, currentLang)}</p>
-                        <div className="flex items-center text-xs font-mono uppercase tracking-widest text-gray-500">
-                          <Clock className="w-4 h-4 mr-2" />
+                        <p className="text-xs md:text-sm text-slate-400 mb-6 md:mb-8 font-light leading-relaxed line-clamp-2">{getTranslatedText(service.description, currentLang)}</p>
+                        <div className="flex items-center text-[10px] md:text-xs font-mono uppercase tracking-widest text-slate-500">
+                          <Clock className="w-3 h-3 md:w-4 md:h-4 mr-2" />
                           {service.duration_minutes} min
                         </div>
                       </div>
@@ -373,7 +383,7 @@ export default function Booking() {
               </Button>
               <div className="bg-dark-900/50 backdrop-blur-md rounded-2xl p-4 md:p-8 border border-white/5 flex justify-center overflow-hidden">
                 <style>{`
-                  .rdp { --rdp-cell-size: 40px; --rdp-accent-color: var(--color-neon-500); --rdp-background-color: var(--color-dark-800); margin: 0; }
+                  .rdp { --rdp-cell-size: 40px; --rdp-accent-color: var(--color-cyan-500); --rdp-background-color: var(--color-dark-800); margin: 0; }
                   @media (min-width: 768px) { .rdp { --rdp-cell-size: 46px; } }
                   .rdp-day_selected { font-weight: bold; color: var(--color-dark-950); }
                   .rdp-button:hover:not([disabled]):not(.rdp-day_selected) { background-color: var(--color-dark-800); }
@@ -418,11 +428,11 @@ export default function Booking() {
                 
                 {isTimesLoading ? (
                   <div className="flex justify-center py-20" aria-live="polite">
-                    <Loader2 className="w-10 h-10 text-neon-500 animate-spin" />
+                    <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
                     <span className="sr-only">Lade verfügbare Zeiten...</span>
                   </div>
                 ) : availableTimes.length === 0 ? (
-                  <p className="text-gray-400 font-light">{t('booking.no_slots')}</p>
+                  <p className="text-slate-400 font-light">{t('booking.no_slots')}</p>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
                     {availableTimes.map(time => {
@@ -436,8 +446,8 @@ export default function Booking() {
                           className={cn(
                             "py-5 rounded-xl font-mono text-base transition-all duration-300 border active:scale-95 touch-manipulation",
                             isSelected 
-                              ? "bg-neon-500 border-neon-500 text-dark-950 font-bold shadow-[0_0_20px_rgba(197,160,89,0.2)]" 
-                              : "bg-dark-950 border-white/5 hover:border-neon-500/30 hover:bg-dark-900 text-gray-300"
+                              ? "bg-cyan-500 border-cyan-500 text-dark-950 font-bold shadow-[0_0_20px_rgba(6,182,212,0.2)]" 
+                              : "bg-dark-950 border-white/5 hover:border-cyan-500/30 hover:bg-dark-900 text-slate-300"
                           )}
                         >
                           {timeDisplay}
@@ -453,7 +463,7 @@ export default function Booking() {
                   size="lg" 
                   disabled={!selectedTime} 
                   onClick={() => setStep('details')}
-                  className="bg-neon-500 hover:bg-neon-400 text-dark-950 font-semibold uppercase tracking-widest text-xs px-10 h-14 rounded-full transition-transform active:scale-95 disabled:opacity-50"
+                  className="bg-cyan-500 hover:bg-cyan-400 text-dark-950 font-semibold uppercase tracking-widest text-xs px-10 h-14 rounded-full transition-transform active:scale-95 disabled:opacity-50"
                 >
                   {t('booking.btn_continue')} <ArrowRight className="ml-3 w-4 h-4" />
                 </Button>
@@ -475,22 +485,22 @@ export default function Booking() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                 <div className="md:col-span-2">
                   <div className="bg-dark-900/50 backdrop-blur-md rounded-2xl p-10 border border-white/5">
-                    <h2 className="text-3xl font-serif text-white mb-10">{t('booking.your_details')}</h2>
+                    <h2 className="text-3xl font-display text-slate-50 mb-10">{t('booking.your_details')}</h2>
                     
                     <form id="booking-form" onSubmit={handleSubmit(onSubmitDetails)} className="space-y-8">
                       <div>
-                        <label className="block text-xs uppercase tracking-widest font-mono text-gray-400 mb-3">{t('booking.form_name')}</label>
+                        <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">{t('booking.form_name')}</label>
                         <Input 
                           {...register('full_name', { required: 'Name is required' })}
                           placeholder="Jane Doe"
                           error={errors.full_name?.message}
-                          className="bg-dark-950 border-white/10 text-white focus-visible:ring-neon-500/50 rounded-xl h-14"
+                          className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
                         />
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                         {settings?.booking_email_visible !== false && (
                           <div>
-                            <label className="block text-xs uppercase tracking-widest font-mono text-gray-400 mb-3">{t('booking.form_email')}</label>
+                            <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">{t('booking.form_email')}</label>
                             <Input 
                               type="email"
                               {...register('email', { 
@@ -499,19 +509,19 @@ export default function Booking() {
                               })}
                               placeholder="jane@example.com"
                               error={errors.email?.message}
-                              className="bg-dark-950 border-white/10 text-white focus-visible:ring-neon-500/50 rounded-xl h-14"
+                              className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
                             />
                           </div>
                         )}
                         {settings?.booking_phone_visible !== false && (
                           <div>
-                            <label className="block text-xs uppercase tracking-widest font-mono text-gray-400 mb-3">{t('booking.form_phone')}</label>
+                            <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">{t('booking.form_phone')}</label>
                             <Input 
                               type="tel"
                               {...register('phone', { required: settings?.booking_phone_required ? 'Phone is required' : false })}
                               placeholder="+1 (555) 000-0000"
                               error={errors.phone?.message}
-                              className="bg-dark-950 border-white/10 text-white focus-visible:ring-neon-500/50 rounded-xl h-14"
+                              className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
                             />
                           </div>
                         )}
@@ -521,7 +531,7 @@ export default function Booking() {
                         <Textarea 
                           {...register('notes')}
                           placeholder={t('booking.form_notes_ph')}
-                          className="bg-dark-950 border-white/10 text-white focus-visible:ring-neon-500/50 rounded-xl min-h-[120px]"
+                          className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl min-h-[120px]"
                         />
                       </div>
                     </form>
@@ -551,7 +561,7 @@ export default function Booking() {
                       <div className="pt-8 border-t border-white/10">
                         <div className="flex justify-between items-end">
                           <span className="text-xs uppercase tracking-widest font-mono text-gray-500">{t('booking.sum_total')}</span>
-                          <span className="text-3xl font-serif text-neon-400">{selectedService && formatCurrency(selectedService.price)}</span>
+                          <span className="text-3xl font-serif text-cyan-400">{selectedService && formatCurrency(selectedService.price)}</span>
                         </div>
                       </div>
                     </div>
@@ -561,7 +571,7 @@ export default function Booking() {
                     type="submit" 
                     form="booking-form" 
                     size="lg" 
-                    className="w-full mt-8 bg-neon-500 hover:bg-neon-400 text-dark-950 font-semibold uppercase tracking-widest text-xs h-16 rounded-full transition-transform active:scale-95 shadow-[0_0_30px_rgba(197,160,89,0.1)] hover:shadow-[0_0_50px_rgba(197,160,89,0.2)]"
+                    className="w-full mt-8 bg-cyan-500 hover:bg-cyan-400 text-dark-950 font-semibold uppercase tracking-widest text-xs h-16 rounded-full transition-transform active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.1)] hover:shadow-[0_0_50px_rgba(6,182,212,0.2)]"
                     isLoading={isSubmitting}
                   >
                     {t('booking.confirm_btn')}
@@ -581,14 +591,14 @@ export default function Booking() {
               className="bg-dark-900/50 backdrop-blur-md border border-white/5 rounded-3xl overflow-hidden"
             >
               <div className="py-32 px-8 text-center flex flex-col items-center">
-                <div className="w-32 h-32 bg-dark-950 border border-white/5 rounded-full flex items-center justify-center mb-12 shadow-[0_0_50px_rgba(197,160,89,0.1)]">
-                  <CheckCircle2 className="w-16 h-16 text-neon-500" />
+                <div className="w-32 h-32 bg-dark-950 border border-white/5 rounded-full flex items-center justify-center mb-12 shadow-[0_0_50px_rgba(6,182,212,0.1)]">
+                  <CheckCircle2 className="w-16 h-16 text-cyan-500" />
                 </div>
-                <h2 className="text-5xl md:text-6xl font-serif text-white mb-6">{t('booking.success_title')}</h2>
-                <p className="text-gray-400 max-w-lg mx-auto mb-16 text-xl font-light leading-relaxed">
+                <h2 className="text-5xl md:text-6xl font-display text-slate-50 mb-6">{t('booking.success_title')}</h2>
+                <p className="text-slate-400 max-w-lg mx-auto mb-16 text-xl font-light leading-relaxed">
                   {t('booking.success_desc')}
                 </p>
-                <Button onClick={() => navigate('/')} className="bg-neon-500 text-dark-950 hover:bg-neon-400 px-12 h-16 rounded-full font-semibold uppercase tracking-widest text-xs transition-transform active:scale-95">
+                <Button onClick={() => navigate('/')} className="bg-cyan-500 text-dark-950 hover:bg-cyan-400 px-12 h-16 rounded-full font-semibold uppercase tracking-widest text-xs transition-transform active:scale-95">
                   {t('booking.return_home')}
                 </Button>
               </div>

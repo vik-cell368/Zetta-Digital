@@ -18,7 +18,7 @@ export default function ROICalculator() {
       
       <div className="relative z-10 space-y-8">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-neon-500/10 flex items-center justify-center text-neon-500">
+          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-500">
             <TrendingUp size={20} />
           </div>
           <h3 className="text-2xl font-display font-bold text-white">ROI Rechner</h3>
@@ -33,7 +33,7 @@ export default function ROICalculator() {
             <input 
               type="range" min="1" max="100" value={employees}
               onChange={(e) => setEmployees(parseInt(e.target.value))}
-              className="w-full accent-neon-500 bg-white/5 h-1 rounded-full appearance-none"
+              className="w-full accent-cyan-500 bg-white/5 h-1 rounded-full appearance-none"
             />
           </div>
 
@@ -45,7 +45,7 @@ export default function ROICalculator() {
             <input 
               type="range" min="20" max="200" value={hourlyRate}
               onChange={(e) => setHourlyRate(parseInt(e.target.value))}
-              className="w-full accent-neon-500 bg-white/5 h-1 rounded-full appearance-none"
+              className="w-full accent-cyan-500 bg-white/5 h-1 rounded-full appearance-none"
             />
           </div>
 
@@ -57,7 +57,7 @@ export default function ROICalculator() {
             <input 
               type="range" min="1" max="40" value={manualHours}
               onChange={(e) => setManualHours(parseInt(e.target.value))}
-              className="w-full accent-neon-500 bg-white/5 h-1 rounded-full appearance-none"
+              className="w-full accent-cyan-500 bg-white/5 h-1 rounded-full appearance-none"
             />
           </div>
         </div>
@@ -69,7 +69,7 @@ export default function ROICalculator() {
               key={yearlySavings}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-5xl font-display font-bold text-neon-500"
+              className="text-5xl font-display font-bold text-cyan-500"
             >
               {yearlySavings.toLocaleString('de-DE')} €
             </motion.div>

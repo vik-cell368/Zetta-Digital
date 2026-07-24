@@ -34,7 +34,7 @@
     "srv_title": "Unsere Leistungen",
     "srv_desc": "Maßgeschneiderte digitale Lösungen für professionelle Dienstleister, Einzelhändler und moderne Unternehmen.",
     "srv_book": "Service buchen",
-    "trust_title": "Warum Zetta Digital?",
+    "trust_title": "Warum Viktor Labs?",
     "trust_q_title": "Kompromisslose Qualität",
     "trust_q_desc": "Entwickelt nach den höchsten technischen Standards.",
     "trust_r_title": "Schnelle Umsetzung",
@@ -45,7 +45,7 @@
     "trust_l_desc": "Wir sind Ihr engagierter digitaler Partner.",
     "about_title": "Engineering",
     "about_subtitle": "Ohne Kompromisse",
-    "about_p1": "Bei Zetta sind wir auf die Entwicklung intelligenter, skalierbarer und hochleistungsfähiger digitaler Produkte spezialisiert. Wir betrachten Code als Handwerk und Design als Strategie.",
+    "about_p1": "Bei Viktor Labs sind wir auf die Entwicklung intelligenter, skalierbarer und hochleistungsfähiger digitaler Produkte spezialisiert. Wir betrachten Code als Handwerk und Design als Strategie.",
     "about_p2": "Von komplexen Enterprise-Architekturen bis hin zu eleganten Endbenutzer-Oberflächen widmet sich unser Team der Entwicklung von Software, die äußerst wirkungsvoll und von Grund auf sicher ist.",
     "stat1_val": "99.9%",
     "stat1_lbl": "Systemverfügbarkeit",
@@ -66,7 +66,7 @@
   },
   "booking": {
     "title": "Beratung buchen",
-    "subtitle": "Sichern Sie sich Ihren Termin mit den Experten von Zetta Digital.",
+    "subtitle": "Sichern Sie sich Ihren Termin mit den Experten von Viktor Labs.",
     "step_service": "Leistung",
     "step_date": "Datum",
     "step_time": "Uhrzeit",
@@ -90,7 +90,7 @@
     "sum_total": "Gesamt",
     "confirm_btn": "Buchung bestätigen",
     "success_title": "Buchung bestätigt",
-    "success_desc": "Vielen Dank für Ihre Buchung bei Zetta Digital. Wir haben Ihre Anfrage erhalten und werden in Kürze eine Bestätigungs-E-Mail senden.",
+    "success_desc": "Vielen Dank für Ihre Buchung bei Viktor Labs. Wir haben Ihre Anfrage erhalten und werden in Kürze eine Bestätigungs-E-Mail senden.",
     "return_home": "Zurück zur Startseite",
     "min": "Min."
   },
@@ -196,7 +196,7 @@
             "a": "Ein einfaches Webdesign-Projekt dauert in der Regel 2-4 Wochen. Komplexe KI-Automatisierungen können 4-8 Wochen in Anspruch nehmen, je nach Umfang und Integrationstiefe."
           },
           {
-            "q": "Arbeitet Zetta Digital international?",
+            "q": "Arbeitet Viktor Labs international?",
             "a": "Ja, wir arbeiten mit Kunden aus der ganzen Welt zusammen. Dank digitaler Tools ist die Distanz kein Hindernis für erstklassige Ergebnisse."
           }
         ]
@@ -251,13 +251,13 @@
     ]
   },
   "about": {
-    "title": "Wir sind Zetta Digital.",
+    "title": "Wir sind Viktor Labs.",
     "subtitle": "Eine Boutique-Agentur an der Schnittstelle von Design, Technologie und künstlicher Intelligenz. Wir helfen zukunftsorientierten Unternehmen, digitale Barrieren zu überwinden.",
     "mission_title": "Unsere Mission",
     "mission_desc": "Unsere Mission ist es, komplexe Technologien wie KI zugänglich und nutzbar zu machen. Wir bauen nicht nur Websites oder Bots; wir schaffen digitale Erlebnisse und automatisierte Systeme, die echtes Wachstum ermöglichen und Zeit für das Wesentliche schaffen.",
     "vision_title": "Unsere Vision",
-    "vision_desc": "Wir sehen eine Welt, in der Technologie nahtlos im Hintergrund arbeitet und menschliches Potenzial verstärkt. Zetta Digital strebt danach, der führende Partner für Unternehmen zu sein, die nicht nur mithalten, sondern den digitalen Wandel aktiv gestalten wollen.",
-    "why_title": "Warum Zetta Digital?"
+    "vision_desc": "Wir sehen eine Welt, in der Technologie nahtlos im Hintergrund arbeitet und menschliches Potenzial verstärkt. Viktor Labs strebt danach, der führende Partner für Unternehmen zu sein, die nicht nur mithalten, sondern den digitalen Wandel aktiv gestalten wollen.",
+    "why_title": "Warum Viktor Labs?"
   },
   "contact": {
     "title": "Kontakt",

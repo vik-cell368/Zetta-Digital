@@ -49,10 +49,10 @@ export default function ServicesView() {
       if (error) throw error;
       if (data && data.length > 0) {
         setServices(data);
-        localStorage.setItem('zetta_services', JSON.stringify(data));
+        localStorage.setItem('viktor_labs_services', JSON.stringify(data));
       } else {
         // If Supabase is empty, check localStorage
-        const localData = localStorage.getItem('zetta_services');
+        const localData = localStorage.getItem('viktor_labs_services');
         if (localData) {
           setServices(JSON.parse(localData));
         } else {
@@ -61,7 +61,7 @@ export default function ServicesView() {
       }
     } catch (err) {
       console.warn("Supabase fetch failed, falling back to localStorage", err);
-      const localData = localStorage.getItem('zetta_services');
+      const localData = localStorage.getItem('viktor_labs_services');
       if (localData) {
         setServices(JSON.parse(localData));
       } else {
@@ -95,7 +95,7 @@ export default function ServicesView() {
   };
 
   const saveToLocal = (newServices: Service[]) => {
-    localStorage.setItem('zetta_services', JSON.stringify(newServices));
+    localStorage.setItem('viktor_labs_services', JSON.stringify(newServices));
     setServices(newServices);
   };
 
@@ -284,12 +284,12 @@ export default function ServicesView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Leistungen</h2>
-          <p className="text-gray-400">Verwalten Sie Ihre Angebote und Preise.</p>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-50">Leistungen</h2>
+          <p className="text-slate-400">Verwalten Sie Ihre Angebote und Preise.</p>
         </div>
         <div className="flex items-center gap-4">
           {statusMessage && (
-            <span className="text-xs font-mono text-neon-400 animate-pulse">{statusMessage}</span>
+            <span className="text-xs font-mono text-cyan-400 animate-pulse">{statusMessage}</span>
           )}
           {!isAdding && !isEditing && (
             <Button onClick={() => { 
@@ -316,7 +316,7 @@ export default function ServicesView() {
       </div>
 
       {(isAdding || isEditing) && (
-        <Card className="border-neon-400">
+        <Card className="border-cyan-400">
           <CardHeader>
             <CardTitle>{isEditing ? 'Leistung bearbeiten' : 'Neue Leistung hinzufügen'}</CardTitle>
           </CardHeader>
@@ -332,8 +332,8 @@ export default function ServicesView() {
                       onClick={() => setActiveLangTab(lang.code)}
                       className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                         activeLangTab === lang.code 
-                          ? 'border-neon-400 text-white' 
-                          : 'border-transparent text-gray-400 hover:text-gray-100'
+                          ? 'border-cyan-400 text-slate-50' 
+                          : 'border-transparent text-slate-400 hover:text-slate-100'
                       }`}
                     >
                       {lang.label}
@@ -401,16 +401,16 @@ export default function ServicesView() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-white/10">
                 <div>
-                  <label className="block text-sm font-medium text-gray-100 mb-1">Preis (EUR)</label>
+                  <label className="block text-sm font-medium text-slate-100 mb-1">Preis (EUR)</label>
                   <Input type="number" {...register('price', { required: true, valueAsNumber: true })} placeholder="z.B. 5000" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-100 mb-1">Dauer (Minuten)</label>
+                  <label className="block text-sm font-medium text-slate-100 mb-1">Dauer (Minuten)</label>
                   <Input type="number" {...register('duration_minutes', { required: true, valueAsNumber: true })} placeholder="z.B. 60" />
                 </div>
                 <div className="flex items-center space-x-2 mt-6">
-                  <input type="checkbox" id="is_active" {...register('is_active')} className="rounded border-white/20 text-white focus:ring-neon-500/50" />
-                  <label htmlFor="is_active" className="text-sm font-medium text-gray-100">Aktiv (Sichtbar für Kunden)</label>
+                  <input type="checkbox" id="is_active" {...register('is_active')} className="rounded border-white/20 text-white focus:ring-cyan-500/50" />
+                  <label htmlFor="is_active" className="text-sm font-medium text-slate-100">Aktiv (Sichtbar für Kunden)</label>
                 </div>
               </div>
               <div className="flex justify-end space-x-2 pt-4">

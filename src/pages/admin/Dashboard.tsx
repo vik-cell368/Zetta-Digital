@@ -49,10 +49,10 @@ export default function Dashboard() {
         if (hData) setHours(hData);
       } catch (err) {
         console.warn("Supabase dashboard fetch failed, using localStorage", err);
-        const localApps = localStorage.getItem('zetta_appointments');
+        const localApps = localStorage.getItem('viktor_labs_appointments');
         if (localApps) appointments = JSON.parse(localApps);
         
-        const localSvcs = localStorage.getItem('zetta_services');
+        const localSvcs = localStorage.getItem('viktor_labs_services');
         if (localSvcs) servicesCount = JSON.parse(localSvcs).length;
       }
 
@@ -193,7 +193,7 @@ export default function Dashboard() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
-                <Clock className="w-4 h-4 text-neon-500" />
+                <Clock className="w-4 h-4 text-cyan-500" />
                 Heutige Öffnungszeiten
               </CardTitle>
             </CardHeader>
@@ -204,7 +204,7 @@ export default function Dashboard() {
                   const isTodayDay = new Date().getDay() === idx;
                   
                   return (
-                    <div key={day} className={`flex items-center justify-between text-xs py-1 ${isTodayDay ? 'text-neon-500 font-bold' : 'text-gray-400'}`}>
+                    <div key={day} className={`flex items-center justify-between text-xs py-1 ${isTodayDay ? 'text-cyan-500 font-bold' : 'text-gray-400'}`}>
                       <span>{day}</span>
                       <div className="text-right">
                         {dayShifts.length === 0 ? (

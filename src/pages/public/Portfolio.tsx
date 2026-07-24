@@ -40,44 +40,43 @@ const PROJECTS = [
 
 export default function Portfolio() {
   return (
-    <div className="bg-dark-950 min-h-screen pt-32 pb-20">
+    <div className="bg-dark-950 min-h-screen pt-40 pb-20">
       <div className="container mx-auto px-6 max-w-7xl">
         
         {/* Header */}
-        <div className="mb-24 space-y-6">
+        <div className="mb-32 space-y-8 max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-500/10 border border-neon-500/20 text-neon-500 text-[10px] uppercase tracking-widest font-bold"
+            className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/[0.03] border border-white/10 text-cyan-500 text-[10px] uppercase tracking-[0.3em] font-black backdrop-blur-md"
           >
-            <Sparkles className="w-3 h-3" />
             Selected Works
           </motion.div>
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-7xl font-display font-bold text-white tracking-tight"
+            className="text-5xl md:text-8xl font-display font-medium text-white tracking-tight leading-[0.9]"
           >
-            Digitale <span className="text-neon-500">Erfolgsgeschichten</span>.
+            DIGITALE <br /> <span className="text-slate-600">ERFOLGS-</span> <br /> <span className="text-white">GESCHICHTEN.</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-gray-400 text-xl max-w-2xl leading-relaxed"
+            className="text-slate-400 text-xl md:text-2xl font-light leading-relaxed max-w-3xl"
           >
-            Wir bauen keine Webseiten, wir bauen digitale Wertschöpfungsketten. Entdecken Sie eine Auswahl unserer neuesten Projekte.
+            Wir bauen keine Webseiten, wir bauen digitale Wertschöpfungsketten. Entdecken Sie eine Auswahl unserer neuesten Projekte, bei denen Effizienz auf Ästhetik trifft.
           </motion.p>
         </div>
 
-        {/* Filter / Categories Placeholder */}
-        <div className="flex flex-wrap gap-4 mb-16">
+        {/* Filter */}
+        <div className="flex flex-wrap gap-4 mb-24">
           {['Alle', 'Webdesign', 'KI Automation', 'Chatbots'].map((cat, i) => (
             <button 
               key={cat}
-              className={`px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest border transition-all ${
-                i === 0 ? 'bg-white text-dark-950 border-white' : 'bg-transparent text-gray-500 border-white/10 hover:border-white/20'
+              className={`px-8 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border transition-all duration-500 ${
+                i === 0 ? 'bg-white text-dark-950 border-white shadow-xl' : 'bg-transparent text-slate-500 border-white/10 hover:border-white/20'
               }`}
             >
               {cat}
@@ -86,72 +85,76 @@ export default function Portfolio() {
         </div>
 
         {/* Projects Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {PROJECTS.map((project, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="group cursor-pointer"
-            >
-              <div className="relative aspect-[16/10] overflow-hidden rounded-[2.5rem] bg-dark-900 border border-white/5 mb-8">
-                <img 
-                  src={project.image} 
-                  alt={project.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 group-hover:opacity-60"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-dark-950/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-10">
-                  <div className="flex items-center gap-4 text-white font-bold uppercase tracking-widest text-xs">
-                    View Case Study <ArrowRight className="w-4 h-4" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+          {PROJECTS.map((project, i) => {
+            const Icon = project.title.includes('AI') || project.title.includes('MedTech') ? Bot : project.title.includes('Commerce') ? Globe : Layout;
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="group cursor-pointer"
+              >
+                <div className="relative aspect-[16/10] overflow-hidden rounded-[4rem] bg-dark-900/40 border border-white/[0.03] mb-10 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-1000" />
+                  
+                  {/* Abstract Schematic Icon */}
+                  <div className="relative z-10 w-32 h-32 rounded-[2rem] bg-white/[0.02] border border-white/5 flex items-center justify-center text-slate-700 group-hover:text-cyan-500 group-hover:scale-110 group-hover:bg-cyan-500/5 transition-all duration-700">
+                    <Icon size={64} strokeWidth={1} />
+                  </div>
+                  
+                  <div className="absolute inset-0 flex items-end p-12 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                    <div className="flex items-center gap-4 text-white font-black uppercase tracking-[0.3em] text-[10px]">
+                      Case Study ansehen <ArrowRight className="w-4 h-4 translate-x-0 group-hover:translate-x-2 transition-transform" />
+                    </div>
+                  </div>
+                  
+                  {/* Floating Stat */}
+                  <div className="absolute top-8 right-8 bg-dark-950/80 backdrop-blur-xl px-8 py-4 rounded-[2rem] border border-white/10 shadow-2xl">
+                     <div className="text-cyan-500 font-display font-medium text-2xl tracking-tighter">{project.stat}</div>
                   </div>
                 </div>
                 
-                {/* Floating Stat */}
-                <div className="absolute top-6 right-6 glass-card p-4 rounded-2xl border-white/10 shadow-2xl">
-                   <div className="text-neon-500 font-display font-bold text-lg">{project.stat}</div>
+                <div className="space-y-6 px-4">
+                  <div className="flex items-center gap-4 text-cyan-500 text-[10px] font-black uppercase tracking-[0.4em]">
+                     {project.category}
+                  </div>
+                  <h3 className="text-4xl font-display font-medium text-white group-hover:text-cyan-500 transition-colors tracking-tight">
+                    {project.title}
+                  </h3>
+                  <p className="text-slate-400 text-lg md:text-xl font-light leading-relaxed max-w-xl">
+                    {project.desc}
+                  </p>
+                  <div className="flex flex-wrap gap-3 pt-4">
+                    {project.tags.map(tag => (
+                      <span key={tag} className="px-6 py-2 bg-white/[0.03] rounded-full text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] border border-white/5 group-hover:border-white/10 transition-colors">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              
-              <div className="space-y-4 px-4">
-                <div className="flex items-center gap-3 text-neon-500 text-[10px] uppercase tracking-widest font-bold">
-                   {project.category}
-                </div>
-                <h3 className="text-3xl font-display font-bold text-white group-hover:text-neon-500 transition-colors">
-                  {project.title}
-                </h3>
-                <p className="text-gray-400 leading-relaxed max-w-lg">
-                  {project.desc}
-                </p>
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {project.tags.map(tag => (
-                    <span key={tag} className="px-3 py-1 bg-white/5 rounded-full text-[10px] text-gray-500 font-mono uppercase tracking-widest border border-white/5">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Contact CTA */}
-        <div className="mt-40 bg-dark-900 rounded-[4rem] p-12 md:p-24 border border-white/5 text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,rgba(197,160,89,0.1),transparent_50%)]" />
-          <div className="relative z-10 max-w-3xl mx-auto space-y-8">
-            <h2 className="text-4xl md:text-6xl font-display font-bold text-white leading-tight">Wann starten wir Ihr <span className="text-neon-500">Projekt?</span></h2>
-            <p className="text-gray-400 text-lg">Haben Sie eine Vision? Wir haben die Technologie und die Strategie, um sie zur Realität zu machen.</p>
-            <div className="flex flex-wrap justify-center gap-6 pt-4">
+        <div className="mt-48 bg-white/[0.02] rounded-[5rem] p-16 md:p-32 border border-white/5 text-center relative overflow-hidden group">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(197,160,89,0.05),transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+          <div className="relative z-10 max-w-4xl mx-auto space-y-12">
+            <h2 className="text-5xl md:text-8xl font-display font-medium text-white leading-[0.9] tracking-tighter">WANN STARTEN <br /> <span className="text-slate-600">WIR IHR</span> <br /> <span className="text-white">PROJEKT?</span></h2>
+            <p className="text-slate-400 text-xl md:text-2xl font-light max-w-2xl mx-auto leading-relaxed">Haben Sie eine Vision? Wir haben die Technologie und die Strategie, um sie zur Realität zu machen.</p>
+            <div className="flex flex-col sm:flex-row justify-center gap-8 pt-6">
               <Link to="/booking">
-                <button className="h-16 px-10 rounded-2xl bg-neon-500 text-dark-950 font-bold hover:scale-105 transition-all flex items-center gap-3">
+                <button className="w-full sm:w-auto h-20 px-12 rounded-full bg-cyan-600 text-white font-black uppercase tracking-[0.2em] text-xs hover:scale-105 active:scale-95 transition-all shadow-2xl flex items-center justify-center gap-4 group">
                   Projekt anfragen
-                  <ArrowRight size={20} />
+                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </Link>
               <Link to="/pricing">
-                <button className="h-16 px-10 rounded-2xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-all">
+                <button className="w-full sm:w-auto h-20 px-12 rounded-full bg-white/[0.03] border border-white/10 text-white font-black uppercase tracking-[0.2em] text-xs hover:bg-white/[0.08] transition-all flex items-center justify-center">
                   Preise kalkulieren
                 </button>
               </Link>

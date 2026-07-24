@@ -24,7 +24,7 @@ export default function ContentView() {
   const [enabledLangs, setEnabledLangs] = useState<string[]>(['en', 'de']);
 
   useEffect(() => {
-    const savedEnabledLangs = localStorage.getItem('zetta_enabled_languages');
+    const savedEnabledLangs = localStorage.getItem('viktor_labs_enabled_languages');
     if (savedEnabledLangs) {
       setEnabledLangs(savedEnabledLangs.split(','));
     }
@@ -57,7 +57,7 @@ export default function ContentView() {
             onClick={() => setActiveTab(section.id)}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
               activeTab === section.id 
-                ? 'bg-neon-500 text-dark-950' 
+                ? 'bg-cyan-500 text-dark-950' 
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
             }`}
           >
@@ -100,9 +100,9 @@ function RawContentEditor() {
   }, []);
 
   useEffect(() => {
-    const savedOverrides = localStorage.getItem('zetta_content_overrides');
+    const savedOverrides = localStorage.getItem('viktor_labs_content_overrides');
     if (savedOverrides) setOverrides(JSON.parse(savedOverrides));
-    const savedEnabledLangs = localStorage.getItem('zetta_enabled_languages');
+    const savedEnabledLangs = localStorage.getItem('viktor_labs_enabled_languages');
     if (savedEnabledLangs) setEnabledLangs(savedEnabledLangs.split(','));
   }, []);
 
@@ -139,7 +139,7 @@ function RawContentEditor() {
               key={lang.code}
               onClick={() => setSelectedLang(lang.code)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                selectedLang === lang.code ? 'bg-neon-500/20 text-neon-500 border border-neon-500/30' : 'text-gray-400 hover:text-white'
+                selectedLang === lang.code ? 'bg-cyan-500/20 text-cyan-500 border border-cyan-500/30' : 'text-gray-400 hover:text-white'
               }`}
             >
               {lang.name}
@@ -176,7 +176,7 @@ function RawContentEditor() {
 function PricingEditor() {
   return <ListEditor 
     title="Preispakete" 
-    storageKey="zetta_pricing"
+    storageKey="viktor_labs_pricing"
     fields={[
       { id: 'name', label: 'Name', type: 'text' },
       { id: 'price', label: 'Preis', type: 'text' },
@@ -189,7 +189,7 @@ function PricingEditor() {
 function PortfolioEditor() {
   return <ListEditor 
     title="Referenzen" 
-    storageKey="zetta_portfolio"
+    storageKey="viktor_labs_portfolio"
     fields={[
       { id: 'title', label: 'Titel', type: 'text' },
       { id: 'category', label: 'Kategorie', type: 'text' },
@@ -204,7 +204,7 @@ function PortfolioEditor() {
 function FAQEditor() {
   return <ListEditor 
     title="FAQ" 
-    storageKey="zetta_faq"
+    storageKey="viktor_labs_faq"
     fields={[
       { id: 'question', label: 'Frage', type: 'text' },
       { id: 'answer', label: 'Antwort', type: 'textarea' },
@@ -227,7 +227,7 @@ function ListEditor({ title, storageKey, fields }: { title: string, storageKey: 
     } else {
       // Load defaults if none or empty
       const defaultResources = getDefaultResources();
-      const prefix = storageKey.replace('zetta_', '');
+      const prefix = storageKey.replace('viktor_labs_', '');
       let defaults = (defaultResources.de.translation as any)[prefix];
       
       // Handle nested structures
@@ -286,8 +286,8 @@ function ListEditor({ title, storageKey, fields }: { title: string, storageKey: 
       </div>
 
       {(editingIndex !== null) && (
-        <div className="mb-12 p-6 bg-dark-950 rounded-2xl border border-neon-500/30 space-y-4">
-          <h4 className="text-sm font-mono text-neon-500 uppercase tracking-widest mb-4">
+        <div className="mb-12 p-6 bg-dark-950 rounded-2xl border border-cyan-500/30 space-y-4">
+          <h4 className="text-sm font-mono text-cyan-500 uppercase tracking-widest mb-4">
             {editingIndex === -1 ? 'Neues Element' : 'Bearbeiten'}
           </h4>
           <div className="grid grid-cols-1 gap-4">
@@ -346,7 +346,7 @@ function AboutEditor() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('zetta_content_overrides');
+    const saved = localStorage.getItem('viktor_labs_content_overrides');
     if (saved) setOverrides(JSON.parse(saved));
   }, []);
 
@@ -419,7 +419,7 @@ function SectionEditor({ title, prefix }: { title: string, prefix: string }) {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('zetta_content_overrides');
+    const saved = localStorage.getItem('viktor_labs_content_overrides');
     if (saved) setOverrides(JSON.parse(saved));
   }, []);
 

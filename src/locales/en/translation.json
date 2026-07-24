@@ -34,7 +34,7 @@
     "srv_title": "Our Services",
     "srv_desc": "Tailored digital solutions designed for professional service providers, retail businesses, and modern enterprises.",
     "srv_book": "Book a Service",
-    "trust_title": "Why partner with Zetta Digital?",
+    "trust_title": "Why partner with Viktor Labs?",
     "trust_q_title": "Uncompromising Quality",
     "trust_q_desc": "Built to the highest technical standards.",
     "trust_r_title": "Rapid Execution",
@@ -45,7 +45,7 @@
     "trust_l_desc": "We're your dedicated digital partner.",
     "about_title": "Engineering",
     "about_subtitle": "Without Compromise",
-    "about_p1": "At Zetta, we specialize in building intelligent, scalable, and high-performance digital products. We treat code as craft and design as strategy.",
+    "about_p1": "At Viktor Labs, we specialize in building intelligent, scalable, and high-performance digital products. We treat code as craft and design as strategy.",
     "about_p2": "From complex enterprise architectures to sleek consumer interfaces, our team is dedicated to crafting software that is deeply impactful and secure by design.",
     "stat1_val": "99.9%",
     "stat1_lbl": "System Uptime",
@@ -66,7 +66,7 @@
   },
   "booking": {
     "title": "Book a Consultation",
-    "subtitle": "Secure your spot with Zetta Digital experts.",
+    "subtitle": "Secure your spot with Viktor Labs experts.",
     "step_service": "Service",
     "step_date": "Date",
     "step_time": "Time",
@@ -90,7 +90,7 @@
     "sum_total": "Total",
     "confirm_btn": "Confirm Booking",
     "success_title": "Booking Confirmed",
-    "success_desc": "Thank you for booking with Zetta Digital. We've received your request and will send a confirmation email shortly.",
+    "success_desc": "Thank you for booking with Viktor Labs. We've received your request and will send a confirmation email shortly.",
     "return_home": "Return to Home",
     "min": "min"
   },
@@ -196,7 +196,7 @@
             "a": "A simple web design project usually takes 2-4 weeks. Complex AI automations can take 4-8 weeks, depending on scope and integration depth."
           },
           {
-            "q": "Does Zetta Digital work internationally?",
+            "q": "Does Viktor Labs work internationally?",
             "a": "Yes, we work with clients from all over the world. Digital tools make distance no obstacle to premium results."
           }
         ]
@@ -251,13 +251,13 @@
     ]
   },
   "about": {
-    "title": "We are Zetta Digital.",
+    "title": "We are Viktor Labs.",
     "subtitle": "A boutique agency at the intersection of design, technology, and artificial intelligence. We help forward-thinking companies overcome digital barriers.",
     "mission_title": "Our Mission",
     "mission_desc": "Our mission is to make complex technologies like AI accessible and usable. We don't just build websites or bots; we create digital experiences and automated systems that enable real growth and create time for what matters most.",
     "vision_title": "Our Vision",
-    "vision_desc": "We see a world where technology works seamlessly in the background, amplifying human potential. Zetta Digital strives to be the leading partner for companies that want to not only keep up but actively shape the digital change.",
-    "why_title": "Why Zetta Digital?"
+    "vision_desc": "We see a world where technology works seamlessly in the background, amplifying human potential. Viktor Labs strives to be the leading partner for companies that want to not only keep up but actively shape the digital change.",
+    "why_title": "Why Viktor Labs?"
   },
   "contact": {
     "title": "Contact",

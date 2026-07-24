@@ -242,7 +242,7 @@ export default function Configurator() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-500/10 border border-neon-500/20 text-neon-500 text-[10px] uppercase tracking-widest font-bold mb-6"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-500 text-[10px] uppercase tracking-widest font-bold mb-6"
           >
             <Sparkles className="w-3 h-3" />
             Live Preisrechner
@@ -251,9 +251,9 @@ export default function Configurator() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-4xl md:text-6xl font-display font-bold text-white mb-6 tracking-tight"
+            className="text-4xl md:text-6xl font-display font-bold text-slate-50 mb-6 tracking-tight"
           >
-            Konfigurieren Sie Ihr <span className="text-neon-500 text-glow">Projekt</span>
+            Konfigurieren Sie Ihr <span className="text-cyan-500 text-glow">Projekt</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -281,10 +281,10 @@ export default function Configurator() {
                   {CONFIG_DATA.map((category) => (
                     <section key={category.id} className="space-y-6">
                       <div className="flex items-center gap-4 mb-8">
-                        <div className="w-12 h-12 rounded-2xl bg-neon-500/10 flex items-center justify-center text-neon-500 shadow-[0_0_20px_rgba(197,160,89,0.1)]">
+                        <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.1)]">
                           {category.icon}
                         </div>
-                        <h2 className="text-2xl font-display font-bold text-white">{category.name}</h2>
+                        <h2 className="text-2xl font-display font-bold text-slate-50">{category.name}</h2>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -296,25 +296,25 @@ export default function Configurator() {
                               onClick={() => toggleOption(category.id, option.id, category.multiple)}
                               className={`text-left p-6 rounded-[2rem] border transition-all relative group h-full flex flex-col ${
                                 isSelected 
-                                  ? 'bg-neon-500/10 border-neon-500 shadow-[0_0_30px_rgba(197,160,89,0.1)]' 
+                                  ? 'bg-cyan-500/10 border-cyan-500 shadow-[0_0_30px_rgba(6,182,212,0.1)]' 
                                   : 'bg-dark-900 border-white/5 hover:border-white/10'
                               }`}
                             >
                               <div className="flex justify-between items-start mb-2">
-                                <span className={`text-lg font-bold ${isSelected ? 'text-neon-500' : 'text-white'}`}>
+                                <span className={`text-lg font-bold ${isSelected ? 'text-cyan-500' : 'text-slate-50'}`}>
                                   {option.name}
                                 </span>
                                 {isSelected && (
-                                  <div className="w-6 h-6 rounded-full bg-neon-500 flex items-center justify-center">
+                                  <div className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
                                     <Check className="w-4 h-4 text-dark-950" />
                                   </div>
                                 )}
                               </div>
-                              <p className="text-gray-500 text-xs mb-6 flex-1">{option.desc || (category.multiple ? 'Optional' : '')}</p>
+                              <p className="text-slate-500 text-xs mb-6 flex-1">{option.desc || (category.multiple ? 'Optional' : '')}</p>
                               <div className="flex justify-end items-center mt-auto">
-                                <span className="text-xl font-display font-bold text-white">
+                                <span className="text-xl font-display font-bold text-slate-50">
                                   {option.price === 0 ? 'inkl.' : `${option.price}€`}
-                                  {option.monthly && <span className="text-xs text-gray-500 ml-1">/ Mo.</span>}
+                                  {option.monthly && <span className="text-xs text-slate-500 ml-1">/ Mo.</span>}
                                 </span>
                               </div>
                             </button>
@@ -341,14 +341,14 @@ export default function Configurator() {
 
                   <div className="bg-dark-900 border border-white/10 rounded-[3rem] p-10 md:p-16 shadow-2xl">
                     <div className="mb-12">
-                      <h2 className="text-3xl font-display font-bold text-white mb-4">Fast geschafft.</h2>
-                      <p className="text-gray-400">Geben Sie uns noch ein paar Informationen, damit wir Ihr individuelles Angebot finalisieren können.</p>
+                      <h2 className="text-3xl font-display font-bold text-slate-50 mb-4">Fast geschafft.</h2>
+                      <p className="text-slate-400">Geben Sie uns noch ein paar Informationen, damit wir Ihr individuelles Angebot finalisieren können.</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-8">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-4">
-                          <label className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                          <label className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                             <Building2 className="w-3 h-3" /> Branche
                           </label>
                           <Input 
@@ -360,7 +360,7 @@ export default function Configurator() {
                           />
                         </div>
                         <div className="space-y-4">
-                          <label className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                          <label className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                             <Building2 className="w-3 h-3" /> Unternehmen
                           </label>
                           <Input 
@@ -375,7 +375,7 @@ export default function Configurator() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-4">
-                          <label className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                          <label className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                             <Globe className="w-3 h-3" /> Unternehmensgröße
                           </label>
                           <Input 
@@ -387,7 +387,7 @@ export default function Configurator() {
                           />
                         </div>
                         <div className="space-y-4">
-                          <label className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                          <label className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                             <Calendar className="w-3 h-3" /> Gewünschter Start
                           </label>
                           <Input 
@@ -433,7 +433,7 @@ export default function Configurator() {
                         />
                       </div>
 
-                      <Button type="submit" className="w-full h-20 bg-neon-500 text-dark-950 font-bold text-xl rounded-3xl shadow-[0_0_50px_rgba(197,160,89,0.2)] group">
+                      <Button type="submit" className="w-full h-20 bg-cyan-500 text-dark-950 font-bold text-xl rounded-3xl shadow-[0_0_50px_rgba(212,175,55,0.2)] group hover:bg-gold-400">
                         Individuelles Angebot erstellen
                         <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
                       </Button>
@@ -449,28 +449,28 @@ export default function Configurator() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="max-w-4xl mx-auto"
                 >
-                  <div className="bg-neon-500/5 border border-neon-500/20 rounded-[3rem] p-12 text-center mb-12">
-                    <div className="w-20 h-20 bg-neon-500 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-[0_0_40px_rgba(197,160,89,0.3)]">
+                  <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-[3rem] p-12 text-center mb-12">
+                    <div className="w-20 h-20 bg-cyan-500 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-[0_0_40px_rgba(6,182,212,0.3)]">
                       <Check className="w-12 h-12 text-dark-950" />
                     </div>
-                    <h2 className="text-4xl font-display font-bold text-white mb-4">Anfrage erfolgreich!</h2>
-                    <p className="text-gray-400 text-lg">Vielen Dank für Ihr Vertrauen. Hier ist Ihr vorläufiges Projekt-Angebot.</p>
+                    <h2 className="text-4xl font-display font-bold text-slate-50 mb-4">Anfrage erfolgreich!</h2>
+                    <p className="text-slate-400 text-lg">Vielen Dank für Ihr Vertrauen. Hier ist Ihr vorläufiges Projekt-Angebot.</p>
                   </div>
 
                   <div className="bg-white text-dark-950 rounded-[3rem] overflow-hidden shadow-2xl relative">
                     {/* Visual Watermark / Logo */}
                     <div className="absolute top-10 right-10 opacity-10 pointer-events-none select-none">
-                      <span className="font-display font-bold text-6xl tracking-tighter">ZETTA</span>
+                      <span className="font-display font-bold text-6xl tracking-tighter uppercase text-slate-900">Viktor Labs</span>
                     </div>
 
                     <div className="bg-dark-950 p-8 flex justify-between items-center">
                       <div className="text-white">
-                        <span className="text-[10px] uppercase tracking-widest font-bold text-neon-500">Projekt ID</span>
-                        <div className="text-sm font-mono">ZETTA-OFFER-{Math.random().toString(36).substr(2, 6).toUpperCase()}</div>
+                        <span className="text-[10px] uppercase tracking-widest font-bold text-cyan-500">Projekt ID</span>
+                        <div className="text-sm font-mono text-cyan-500/80 uppercase">VIKTOR-OFFER-{Math.random().toString(36).substr(2, 6).toUpperCase()}</div>
                       </div>
                       <div className="text-right text-white">
-                        <span className="text-[10px] uppercase tracking-widest font-bold text-neon-500">Datum</span>
-                        <div className="text-sm font-mono">{new Date().toLocaleDateString('de-DE')}</div>
+                        <span className="text-[10px] uppercase tracking-widest font-bold text-cyan-500">Datum</span>
+                        <div className="text-sm font-mono text-cyan-500/80">{new Date().toLocaleDateString('de-DE')}</div>
                       </div>
                     </div>
 
@@ -483,7 +483,7 @@ export default function Configurator() {
                               {selectedOptions.map(opt => (
                                 <li key={opt.id} className="flex justify-between items-center group">
                                   <span className="text-dark-950 font-bold flex items-center gap-3">
-                                    <div className="w-2 h-2 rounded-full bg-neon-500" />
+                                    <div className="w-2 h-2 rounded-full bg-cyan-500" />
                                     {opt.name}
                                   </span>
                                   <span className="text-gray-500 font-mono text-sm">{opt.price} €{opt.monthly ? '*' : ''}</span>
@@ -494,7 +494,7 @@ export default function Configurator() {
                           <div className="p-8 bg-gray-50 rounded-3xl border border-gray-100">
                             <h4 className="text-xs uppercase font-bold text-gray-400 tracking-widest mb-4">Zeitplan</h4>
                             <div className="flex items-center gap-3 text-dark-950 font-bold">
-                              <Clock className="w-5 h-5 text-neon-500" />
+                              <Clock className="w-5 h-5 text-cyan-500" />
                               2–3 Wochen bis Launch
                             </div>
                           </div>
@@ -503,16 +503,16 @@ export default function Configurator() {
                         <div className="space-y-8">
                           <div className="bg-dark-950 p-10 rounded-[2.5rem] text-white space-y-8 shadow-xl">
                             <div>
-                              <span className="text-[10px] uppercase text-neon-500 tracking-widest font-bold block mb-2">Einmalige Investition</span>
+                              <span className="text-[10px] uppercase text-cyan-500 tracking-widest font-bold block mb-2">Einmalige Investition</span>
                               <div className="text-5xl font-display font-bold">{totals.oneTime} €</div>
                             </div>
                             <div>
-                              <span className="text-[10px] uppercase text-gray-500 tracking-widest font-bold block mb-2">Monatliche Gebühr</span>
-                              <div className="text-3xl font-display font-bold text-gray-300">{totals.monthly} €</div>
+                              <span className="text-[10px] uppercase text-slate-500 tracking-widest font-bold block mb-2">Monatliche Gebühr</span>
+                              <div className="text-3xl font-display font-bold text-slate-300">{totals.monthly} €</div>
                             </div>
                             <div className="pt-8 border-t border-white/5">
-                              <span className="text-[10px] uppercase text-gray-500 tracking-widest font-bold block mb-2">Nächster Schritt</span>
-                              <div className="text-neon-500 font-bold flex items-center gap-2">
+                              <span className="text-[10px] uppercase text-slate-500 tracking-widest font-bold block mb-2">Nächster Schritt</span>
+                              <div className="text-cyan-500 font-bold flex items-center gap-2">
                                 Kostenloses Beratungsgespräch <ArrowRight className="w-4 h-4" />
                               </div>
                             </div>
@@ -547,19 +547,19 @@ export default function Configurator() {
           {step === 'config' && (
             <div className="lg:w-[420px] w-full lg:sticky lg:top-32">
               <div className="bg-dark-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-2xl">
-                <h3 className="text-xl font-display font-bold text-white mb-8 flex items-center gap-3">
-                  <BarChart3 className="w-6 h-6 text-neon-500" />
+                <h3 className="text-xl font-display font-bold text-slate-50 mb-8 flex items-center gap-3">
+                  <BarChart3 className="w-6 h-6 text-cyan-500" />
                   Konfiguration
                 </h3>
                 
                 <div className="space-y-6 mb-10 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                   {selectedOptions.length === 0 ? (
-                    <p className="text-gray-500 text-center py-10 italic">Noch keine Optionen gewählt.</p>
+                    <p className="text-slate-500 text-center py-10 italic">Noch keine Optionen gewählt.</p>
                   ) : (
                     selectedOptions.map(opt => (
                       <div key={opt.id} className="flex justify-between items-start gap-4">
-                        <div className="text-sm text-gray-400 font-medium">{opt.name}</div>
-                        <div className="text-white font-mono text-sm whitespace-nowrap">{opt.price} €</div>
+                        <div className="text-sm text-slate-400 font-medium">{opt.name}</div>
+                        <div className="text-slate-50 font-mono text-sm whitespace-nowrap">{opt.price} €</div>
                       </div>
                     ))
                   )}
@@ -568,12 +568,12 @@ export default function Configurator() {
                 <div className="space-y-6 pt-8 border-t border-white/10">
                   <div className="flex justify-between items-end">
                     <div>
-                      <span className="text-[10px] uppercase text-gray-500 tracking-widest font-bold block mb-1">Einmalig</span>
-                      <div className="text-4xl font-display font-bold text-neon-500">{totals.oneTime} €</div>
+                      <span className="text-[10px] uppercase text-slate-500 tracking-widest font-bold block mb-1">Einmalig</span>
+                      <div className="text-4xl font-display font-bold text-cyan-500">{totals.oneTime} €</div>
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] uppercase text-gray-500 tracking-widest font-bold block mb-1">Monatlich</span>
-                      <div className="text-2xl font-display font-bold text-white">{totals.monthly} €</div>
+                      <span className="text-[10px] uppercase text-slate-500 tracking-widest font-bold block mb-1">Monatlich</span>
+                      <div className="text-2xl font-display font-bold text-slate-50">{totals.monthly} €</div>
                     </div>
                   </div>
                 </div>
@@ -581,7 +581,7 @@ export default function Configurator() {
                 <Button 
                   onClick={handleNext}
                   disabled={selectedOptions.length === 0}
-                  className="w-full h-20 mt-10 bg-white text-dark-950 font-bold rounded-3xl text-xl shadow-[0_0_30px_rgba(255,255,255,0.1)] group hover:bg-neon-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-20 mt-10 bg-white text-dark-950 font-bold rounded-3xl text-xl shadow-[0_0_30px_rgba(255,255,255,0.1)] group hover:bg-cyan-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Jetzt Angebot erhalten
                   <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />

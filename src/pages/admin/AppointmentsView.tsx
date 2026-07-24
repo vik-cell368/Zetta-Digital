@@ -42,7 +42,7 @@ export default function AppointmentsView() {
       setAppointments(finalData);
     } catch (err) {
       console.warn("Supabase fetch failed, falling back to localStorage", err);
-      const localData = localStorage.getItem('zetta_appointments');
+      const localData = localStorage.getItem('viktor_labs_appointments');
       if (localData) {
         let apps = JSON.parse(localData) as Appointment[];
         apps = apps.filter(apt => {
@@ -60,7 +60,7 @@ export default function AppointmentsView() {
   };
 
   const saveToLocal = (newApps: Appointment[]) => {
-    localStorage.setItem('zetta_appointments', JSON.stringify(newApps));
+    localStorage.setItem('viktor_labs_appointments', JSON.stringify(newApps));
     setAppointments(newApps);
   };
 
@@ -75,11 +75,11 @@ export default function AppointmentsView() {
       fetchAppointments();
     } catch (err) {
       console.warn("Supabase status update failed, updating localStorage", err);
-      const localData = localStorage.getItem('zetta_appointments');
+      const localData = localStorage.getItem('viktor_labs_appointments');
       if (localData) {
         const apps = JSON.parse(localData) as Appointment[];
         const updated = apps.map(app => app.id === id ? { ...app, status } : app);
-        localStorage.setItem('zetta_appointments', JSON.stringify(updated));
+        localStorage.setItem('viktor_labs_appointments', JSON.stringify(updated));
         
         // Update view state with filter
         let filtered = [...updated];

@@ -18,10 +18,10 @@ export default function Login() {
     setIsLoading(true);
     setError('');
 
-    const isDemo = email === 'admin@zettadigital.com' && password === 'zetta-admin-2026';
+    const isDemo = email === 'admin@viktorlabs.ai' && password === 'viktor-admin-2026';
 
     if (isDemo) {
-      (window as any)._zetta_authenticated = true;
+      sessionStorage.setItem('_viktor_authenticated', 'true');
       navigate('/admin/dashboard');
       setIsLoading(false);
       return;
@@ -50,7 +50,7 @@ export default function Login() {
           setError('Keine Administratorberechtigung für dieses Konto.');
           await supabase.auth.signOut();
         } else {
-          (window as any)._zetta_authenticated = true;
+          sessionStorage.setItem('_viktor_authenticated', 'true');
           navigate('/admin/dashboard');
         }
       }
@@ -65,7 +65,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-dark-950 p-6 relative overflow-hidden">
       {/* Background Ambience */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-neon-500/5 via-dark-950 to-dark-950 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-cyan-500/5 via-dark-950 to-dark-950 pointer-events-none" />
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       
       <div className="w-full max-w-xl relative">
@@ -74,14 +74,14 @@ export default function Login() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center mb-12 text-center"
         >
-          <div className="w-16 h-16 rounded-3xl bg-neon-500/10 border border-neon-500/20 flex items-center justify-center text-neon-500 mb-6 shadow-[0_0_30px_rgba(197,160,89,0.1)]">
+          <div className="w-16 h-16 rounded-3xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-500 mb-6 shadow-[0_0_30px_rgba(6,182,212,0.1)]">
             <Shield size={32} />
           </div>
-          <h1 className="text-4xl font-display font-bold text-white tracking-tight mb-3">
+          <h1 className="text-4xl font-display font-bold text-slate-50 tracking-tight mb-3">
             Secure Gateway
           </h1>
-          <p className="text-gray-500 text-sm max-w-xs font-medium uppercase tracking-[0.2em]">
-            Zetta Digital Administration
+          <p className="text-slate-500 text-sm max-w-xs font-medium uppercase tracking-[0.2em]">
+            Viktor Labs Administration
           </p>
         </motion.div>
 
@@ -118,8 +118,8 @@ export default function Login() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    placeholder="admin@zettadigital.com"
-                    className="h-16 bg-white/5 border-white/5 text-white focus:border-neon-500/50 rounded-2xl px-6 transition-all"
+                    placeholder="admin@viktorlabs.ai"
+                    className="h-16 bg-white/5 border-white/5 text-white focus:border-cyan-500/50 rounded-2xl px-6 transition-all"
                   />
                   <div className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-600">
                     <Bot size={18} />
@@ -136,7 +136,7 @@ export default function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="••••••••••••"
-                    className="h-16 bg-white/5 border-white/5 text-white focus:border-neon-500/50 rounded-2xl px-6 transition-all"
+                    className="h-16 bg-white/5 border-white/5 text-white focus:border-cyan-500/50 rounded-2xl px-6 transition-all"
                   />
                   <div className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-600">
                     <Lock size={18} />
@@ -149,7 +149,7 @@ export default function Login() {
               <Button 
                 type="submit" 
                 disabled={isLoading}
-                className="w-full h-16 bg-neon-500 text-dark-950 font-bold uppercase tracking-widest text-xs rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_40px_rgba(197,160,89,0.2)] flex items-center justify-center gap-3"
+                className="w-full h-16 bg-cyan-500 text-dark-950 font-bold uppercase tracking-widest text-xs rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_40px_rgba(6,182,212,0.2)] flex items-center justify-center gap-3"
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-dark-950/20 border-t-dark-950 rounded-full animate-spin" />
@@ -164,10 +164,10 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => {
-                  setEmail('admin@zettadigital.com');
-                  setPassword('zetta-admin-2026');
+                  setEmail('admin@viktorlabs.ai');
+                  setPassword('viktor-admin-2026');
                 }}
-                className="w-full text-center text-[10px] uppercase tracking-widest font-bold text-gray-500 hover:text-white transition-colors py-2"
+                className="w-full text-center text-[10px] uppercase tracking-widest font-bold text-slate-500 hover:text-slate-50 transition-colors py-2"
               >
                 Use Emergency Credentials
               </button>

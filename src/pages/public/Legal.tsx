@@ -22,19 +22,19 @@ export default function Legal() {
             {isImprint ? (
               <>
                 <section>
-                  <h3 className="text-2xl font-serif text-white italic mb-4">Angaben gemäß § 5 TMG</h3>
+                  <h3 className="text-2xl font-serif text-slate-50 italic mb-4">Angaben gemäß § 5 TMG</h3>
                   <p>
-                    Zetta Digital Agency<br />
+                    Viktor Labs<br />
                     Musterstraße 123<br />
                     10115 Berlin
                   </p>
                 </section>
 
                 <section>
-                  <h3 className="text-2xl font-serif text-white italic mb-4">Kontakt</h3>
+                  <h3 className="text-2xl font-serif text-slate-50 italic mb-4">Kontakt</h3>
                   <p>
                     Telefon: +49 (0) 123 456 789 0<br />
-                    E-Mail: hello@zettadigital.com
+                    E-Mail: hello@viktor-labs.ai
                   </p>
                 </section>
 

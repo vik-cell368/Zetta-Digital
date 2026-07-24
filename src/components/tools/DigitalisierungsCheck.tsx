@@ -36,7 +36,7 @@ export default function DigitalisierungsCheck() {
     <div className="glass-card p-10 rounded-[3rem] border-white/10 shadow-2xl h-full flex flex-col justify-between">
       <div className="space-y-8">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-neon-500/10 flex items-center justify-center text-neon-500">
+          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-500">
             <ClipboardCheck size={20} />
           </div>
           <h3 className="text-2xl font-display font-bold text-white">Digital-Check</h3>
@@ -57,7 +57,7 @@ export default function DigitalisierungsCheck() {
               <div className="grid grid-cols-2 gap-4">
                 <button 
                   onClick={() => handleAnswer(true)}
-                  className="h-14 rounded-2xl bg-white/5 border border-white/10 hover:border-neon-500 transition-all font-bold text-sm"
+                  className="h-14 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500 transition-all font-bold text-sm"
                 >
                   Ja
                 </button>
@@ -81,7 +81,7 @@ export default function DigitalisierungsCheck() {
                     <circle cx="64" cy="64" r="60" stroke="currentColor" strokeWidth="8" fill="transparent" 
                       strokeDasharray={377}
                       strokeDashoffset={377 - (377 * score) / 100}
-                      className="text-neon-500 transition-all duration-1000" 
+                      className="text-cyan-500 transition-all duration-1000" 
                     />
                  </svg>
                  <div className="absolute inset-0 flex items-center justify-center text-3xl font-display font-bold text-white">
@@ -94,7 +94,7 @@ export default function DigitalisierungsCheck() {
               </p>
               <button 
                 onClick={() => { setStep(0); setShowResult(false); setAnswers({}); }}
-                className="text-xs uppercase tracking-widest font-bold text-neon-500 hover:underline"
+                className="text-xs uppercase tracking-widest font-bold text-cyan-500 hover:underline"
               >
                 Test wiederholen
               </button>
@@ -104,7 +104,7 @@ export default function DigitalisierungsCheck() {
       </div>
 
       <div className="pt-8 mt-8 border-t border-white/5">
-        <button className="w-full h-14 bg-neon-500 text-dark-950 rounded-2xl text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-3 active:scale-95 transition-all">
+        <button className="w-full h-14 bg-cyan-500 text-dark-950 rounded-2xl text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-3 active:scale-95 transition-all">
           Gratis Strategie-Call
           <ArrowRight size={14} />
         </button>

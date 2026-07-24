@@ -25,11 +25,19 @@ async function startServer() {
         return res.status(400).json({ error: "Missing text or targetLanguages" });
       }
 
-      if (!process.env.GEMINI_API_KEY) {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
         return res.status(500).json({ error: "GEMINI_API_KEY is missing" });
       }
 
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ 
+        apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
       
       const prompt = `Translate the following text into these languages: ${targetLanguages.join(", ")}. 
 Return ONLY a valid JSON object where keys are the language codes and values are the translated strings. Do not include markdown formatting or backticks.
@@ -39,7 +47,7 @@ Text to translate:
 "${text}"`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.1-pro",
+        model: "gemini-3.6-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -47,14 +55,16 @@ Text to translate:
       });
 
       const translatedText = response.text;
-      let result;
+      
+      let parsedResult;
       try {
-        result = JSON.parse(translatedText || "{}");
+        parsedResult = JSON.parse(translatedText || "{}");
       } catch (e) {
+        console.error("Parse error:", e, translatedText);
         return res.status(500).json({ error: "Failed to parse translation response" });
       }
 
-      res.json(result);
+      res.json(parsedResult);
     } catch (error) {
       console.error("Translation error:", error);
       res.status(500).json({ error: "Failed to translate text" });

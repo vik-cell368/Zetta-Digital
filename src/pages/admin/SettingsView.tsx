@@ -54,11 +54,11 @@ export default function SettingsView() {
         resetSettings(settingsWithDefaults);
         if (s.enabled_languages) {
           setEnabledLangs(s.enabled_languages.split(','));
-          localStorage.setItem('zetta_enabled_languages', s.enabled_languages);
+          localStorage.setItem('viktor_labs_enabled_languages', s.enabled_languages);
         }
-        localStorage.setItem('zetta_business_settings', JSON.stringify(settingsWithDefaults));
+        localStorage.setItem('viktor_labs_business_settings', JSON.stringify(settingsWithDefaults));
       } else {
-        const localSettings = localStorage.getItem('zetta_business_settings');
+        const localSettings = localStorage.getItem('viktor_labs_business_settings');
         if (localSettings) {
           const parsed = JSON.parse(localSettings);
           setSettings(parsed);
@@ -73,9 +73,9 @@ export default function SettingsView() {
           return dayShifts.length > 0 ? dayShifts : [{ weekday: i, is_open: false, start_time: '09:00:00', end_time: '17:00:00', id: `temp-${i}` }];
         }).flat();
         setHours(allDays as BusinessHours[]);
-        localStorage.setItem('zetta_business_hours', JSON.stringify(allDays));
+        localStorage.setItem('viktor_labs_business_hours', JSON.stringify(allDays));
       } else {
-        const localHours = localStorage.getItem('zetta_business_hours');
+        const localHours = localStorage.getItem('viktor_labs_business_hours');
         if (localHours) {
           setHours(JSON.parse(localHours));
         } else {
@@ -94,14 +94,14 @@ export default function SettingsView() {
     } catch (err) {
       console.warn("Error fetching data from Supabase, checking local storage", err);
       // Fallback logic for complete failure
-      const localSettings = localStorage.getItem('zetta_business_settings');
+      const localSettings = localStorage.getItem('viktor_labs_business_settings');
       if (localSettings) {
         const parsed = JSON.parse(localSettings);
         setSettings(parsed);
         resetSettings(parsed);
       }
       
-      const localHours = localStorage.getItem('zetta_business_hours');
+      const localHours = localStorage.getItem('viktor_labs_business_hours');
       if (localHours) {
         setHours(JSON.parse(localHours));
       }
@@ -126,8 +126,8 @@ export default function SettingsView() {
       ...data,
       enabled_languages: enabledLangs.join(',')
     };
-    localStorage.setItem('zetta_enabled_languages', updatedData.enabled_languages);
-    localStorage.setItem('zetta_business_settings', JSON.stringify(updatedData));
+    localStorage.setItem('viktor_labs_enabled_languages', updatedData.enabled_languages);
+    localStorage.setItem('viktor_labs_business_settings', JSON.stringify(updatedData));
     
     if (settings?.id) {
       await supabase.from('business_settings').update(updatedData).eq('id', settings.id);
@@ -148,7 +148,7 @@ export default function SettingsView() {
   const saveHours = async () => {
     setIsSaving(true);
     try {
-      localStorage.setItem('zetta_business_hours', JSON.stringify(hours));
+      localStorage.setItem('viktor_labs_business_hours', JSON.stringify(hours));
       
       const { data: existing } = await supabase.from('business_hours').select('id');
       if (existing && existing.length > 0) {
@@ -196,10 +196,10 @@ export default function SettingsView() {
       reason: newBlockedReason || null
     };
 
-    const localBlocked = localStorage.getItem('zetta_blocked_dates');
+    const localBlocked = localStorage.getItem('viktor_labs_blocked_dates');
     const blocked = localBlocked ? JSON.parse(localBlocked) : [];
     blocked.push({ ...newBlocked, id: crypto.randomUUID() });
-    localStorage.setItem('zetta_blocked_dates', JSON.stringify(blocked));
+    localStorage.setItem('viktor_labs_blocked_dates', JSON.stringify(blocked));
     
     try {
       await supabase.from('blocked_dates').insert(newBlocked);
@@ -213,10 +213,10 @@ export default function SettingsView() {
   };
 
   const deleteBlockedDate = async (id: string) => {
-    const localBlocked = localStorage.getItem('zetta_blocked_dates');
+    const localBlocked = localStorage.getItem('viktor_labs_blocked_dates');
     if (localBlocked) {
       const blocked = JSON.parse(localBlocked).filter((b: any) => b.id !== id);
-      localStorage.setItem('zetta_blocked_dates', JSON.stringify(blocked));
+      localStorage.setItem('viktor_labs_blocked_dates', JSON.stringify(blocked));
     }
 
     try {
@@ -261,21 +261,21 @@ export default function SettingsView() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Einstellungen</h2>
-        <p className="text-gray-400">Verwalten Sie Ihr Unternehmensprofil und Ihre Verfügbarkeit.</p>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-50">Einstellungen</h2>
+        <p className="text-slate-400">Verwalten Sie Ihr Unternehmensprofil und Ihre Verfügbarkeit.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-8">
         
         {/* Business Hours - Made Full Width and More Interactive */}
-        <Card className="border-neon-500/20 shadow-[0_0_20px_rgba(197,160,89,0.05)]">
+        <Card className="border-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.05)]">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-xl">Öffnungszeiten & Verfügbarkeit</CardTitle>
-              <CardDescription>Verwalten Sie Ihre wöchentlichen Arbeitszeiten und Pausen.</CardDescription>
+              <CardTitle className="text-xl text-slate-50">Öffnungszeiten & Verfügbarkeit</CardTitle>
+              <CardDescription className="text-slate-500">Verwalten Sie Ihre wöchentlichen Arbeitszeiten und Pausen.</CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button onClick={saveHours} isLoading={isSaving} className="bg-neon-500 text-dark-950 font-bold">
+              <Button onClick={saveHours} isLoading={isSaving} className="bg-cyan-500 text-dark-950 font-bold">
                 Alle Änderungen speichern
               </Button>
             </div>
@@ -287,12 +287,12 @@ export default function SettingsView() {
                 return (
                   <div key={dayName} className="p-4 bg-dark-900/50 rounded-2xl border border-white/5 space-y-3">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-bold text-white uppercase tracking-widest text-xs">{dayName}</h4>
+                      <h4 className="font-bold text-slate-50 uppercase tracking-widest text-xs">{dayName}</h4>
                       <Button 
                         variant="ghost" 
                         size="sm" 
                         onClick={() => addHourShift(weekdayIndex)}
-                        className="h-7 px-2 text-[10px] text-neon-500 hover:text-neon-400 hover:bg-neon-500/10"
+                        className="h-7 px-2 text-[10px] text-cyan-500 hover:text-cyan-400 hover:bg-cyan-500/10"
                       >
                         + Schicht
                       </Button>
@@ -347,8 +347,8 @@ export default function SettingsView() {
           <CardContent>
             <form onSubmit={handleSettingsSubmit(onSaveSettings)} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-100 mb-1">Unternehmensname</label>
-                <Input {...registerSettings('business_name')} placeholder="Zetta Digital" />
+                <label className="block text-sm font-medium text-slate-100 mb-1">Unternehmensname</label>
+                <Input {...registerSettings('business_name')} placeholder="Viktor Labs" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-100 mb-1">E-Mail Adresse</label>
@@ -389,26 +389,26 @@ export default function SettingsView() {
             <div className="space-y-6">
               <div className="flex items-center justify-between p-4 bg-dark-900/50 rounded-2xl border border-white/5">
                 <div>
-                  <h4 className="text-sm font-medium text-white">E-Mail Adresse</h4>
-                  <p className="text-xs text-gray-500">Muss der Kunde eine E-Mail angeben?</p>
+                  <h4 className="text-sm font-medium text-slate-50">E-Mail Adresse</h4>
+                  <p className="text-xs text-slate-500">Muss der Kunde eine E-Mail angeben?</p>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-gray-500 uppercase tracking-widest">Sichtbar</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-widest">Sichtbar</span>
                     <input 
                       type="checkbox" 
                       checked={settings?.booking_email_visible}
                       onChange={(e) => setSettings(prev => prev ? { ...prev, booking_email_visible: e.target.checked } : null)}
-                      className="rounded border-white/20 text-neon-500 focus:ring-neon-500/50"
+                      className="rounded border-white/20 text-cyan-500 focus:ring-cyan-500/50"
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-gray-500 uppercase tracking-widest">Pflicht</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-widest">Pflicht</span>
                     <input 
                       type="checkbox" 
                       checked={settings?.booking_email_required}
                       onChange={(e) => setSettings(prev => prev ? { ...prev, booking_email_required: e.target.checked } : null)}
-                      className="rounded border-white/20 text-neon-500 focus:ring-neon-500/50"
+                      className="rounded border-white/20 text-cyan-500 focus:ring-cyan-500/50"
                     />
                   </div>
                 </div>
@@ -416,26 +416,26 @@ export default function SettingsView() {
 
               <div className="flex items-center justify-between p-4 bg-dark-900/50 rounded-2xl border border-white/5">
                 <div>
-                  <h4 className="text-sm font-medium text-white">Telefonnummer</h4>
-                  <p className="text-xs text-gray-500">Muss der Kunde eine Telefonnummer angeben?</p>
+                  <h4 className="text-sm font-medium text-slate-50">Telefonnummer</h4>
+                  <p className="text-xs text-slate-500">Muss der Kunde eine Telefonnummer angeben?</p>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-gray-500 uppercase tracking-widest">Sichtbar</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-widest">Sichtbar</span>
                     <input 
                       type="checkbox" 
                       checked={settings?.booking_phone_visible}
                       onChange={(e) => setSettings(prev => prev ? { ...prev, booking_phone_visible: e.target.checked } : null)}
-                      className="rounded border-white/20 text-neon-500 focus:ring-neon-500/50"
+                      className="rounded border-white/20 text-cyan-500 focus:ring-cyan-500/50"
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-gray-500 uppercase tracking-widest">Pflicht</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-widest">Pflicht</span>
                     <input 
                       type="checkbox" 
                       checked={settings?.booking_phone_required}
                       onChange={(e) => setSettings(prev => prev ? { ...prev, booking_phone_required: e.target.checked } : null)}
-                      className="rounded border-white/20 text-neon-500 focus:ring-neon-500/50"
+                      className="rounded border-white/20 text-cyan-500 focus:ring-cyan-500/50"
                     />
                   </div>
                 </div>
@@ -444,7 +444,7 @@ export default function SettingsView() {
               <Button 
                 onClick={() => settings && onSaveSettings(settings)} 
                 isLoading={isSaving} 
-                className="w-full bg-neon-500/10 border border-neon-500/30 text-neon-500 hover:bg-neon-500 hover:text-dark-950"
+                className="w-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-500 hover:bg-cyan-500 hover:text-dark-950"
               >
                 Formular-Einstellungen speichern
               </Button>
@@ -466,13 +466,13 @@ export default function SettingsView() {
                   onClick={() => toggleLanguage(lang.code)}
                   className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
                     enabledLangs.includes(lang.code)
-                      ? 'bg-neon-500/10 border-neon-500/50 text-white'
-                      : 'bg-dark-900/50 border-white/5 text-gray-500 hover:border-white/20'
+                      ? 'bg-cyan-500/10 border-cyan-500/50 text-slate-50'
+                      : 'bg-dark-900/50 border-white/5 text-slate-500 hover:border-white/20'
                   }`}
                 >
                   <span className="text-sm font-medium">{lang.name}</span>
                   <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                    enabledLangs.includes(lang.code) ? 'border-neon-500 bg-neon-500' : 'border-white/20'
+                    enabledLangs.includes(lang.code) ? 'border-cyan-500 bg-cyan-500' : 'border-white/20'
                   }`}>
                     {enabledLangs.includes(lang.code) && <div className="w-1.5 h-1.5 rounded-full bg-dark-950" />}
                   </div>

@@ -23,7 +23,7 @@ const defaultResources = {
 // Load overrides from localStorage (CMS Feature)
 const loadOverrides = () => {
   try {
-    const overrides = localStorage.getItem('zetta_content_overrides');
+    const overrides = localStorage.getItem('viktor_labs_content_overrides');
     if (overrides) {
       return JSON.parse(overrides);
     }
@@ -62,7 +62,7 @@ i18n
 
 // Expose a method to dynamically update translations from CMS
 export const updateTranslations = (overrides: any) => {
-  localStorage.setItem('zetta_content_overrides', JSON.stringify(overrides));
+  localStorage.setItem('viktor_labs_content_overrides', JSON.stringify(overrides));
   const newResources = applyOverrides(defaultResources, overrides);
   for (const lang in newResources) {
     i18n.addResourceBundle(lang, 'translation', newResources[lang].translation, true, true);

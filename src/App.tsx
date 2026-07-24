@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import PublicLayout from './components/layout/PublicLayout';
 import AdminLayout from './components/layout/AdminLayout';
@@ -10,6 +11,8 @@ import Portfolio from './pages/public/Portfolio';
 import FAQ from './pages/public/FAQ';
 import About from './pages/public/About';
 import Legal from './pages/public/Legal';
+import Contact from './pages/public/Contact';
+import Process from './pages/public/Process';
 import Login from './pages/admin/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import LeadManagement from './pages/admin/LeadManagement';
@@ -18,8 +21,13 @@ import ServicesView from './pages/admin/ServicesView';
 import SettingsView from './pages/admin/SettingsView';
 import SmoothScroll from './components/SmoothScroll';
 import ScrollToTop from './components/ScrollToTop';
+import { migrateLocalStorage } from './lib/migration';
 
 export default function App() {
+  useEffect(() => {
+    migrateLocalStorage();
+  }, []);
+
   return (
     <Router>
       <SmoothScroll>
@@ -36,6 +44,8 @@ export default function App() {
             <Route path="portfolio" element={<Portfolio />} />
             <Route path="faq" element={<FAQ />} />
             <Route path="about" element={<About />} />
+            <Route path="process" element={<Process />} />
+            <Route path="contact" element={<Contact />} />
             <Route path="imprint" element={<Legal />} />
             <Route path="privacy" element={<Legal />} />
           </Route>
