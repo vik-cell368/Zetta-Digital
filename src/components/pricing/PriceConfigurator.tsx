@@ -41,8 +41,8 @@ const OPTIONS: Option[] = [
   {
     id: 'base_std',
     category: 'Basis',
-    title: 'Website Standard',
-    simpleDesc: 'Moderner Schwarz-Weiß Look für einen zeitlosen, professionellen Auftritt.',
+    title: 'High-End Webdesign (Basis S/W)',
+    simpleDesc: 'Minimalistisches, hochperformantes Design für einen zeitlosen, professionellen Auftritt.',
     technicalDesc: 'Minimalist Design & SEO Setup',
     price: 550,
     icon: Layout,
@@ -62,7 +62,7 @@ const OPTIONS: Option[] = [
   {
     id: 'anim_2d',
     category: 'Design',
-    title: '2D Animationen',
+    title: 'Animation 2D (Basis)',
     simpleDesc: 'Flüssige Bewegungen für interaktive Web-Elemente.',
     technicalDesc: 'UI/UX Micro-Interactions',
     price: 80,
@@ -72,7 +72,7 @@ const OPTIONS: Option[] = [
   {
     id: 'anim_2d_custom',
     category: 'Design',
-    title: 'Pers. 2D-Objekte',
+    title: 'Personalisierte 2D Animation',
     simpleDesc: 'Speziell für Sie erstellte 2D-Illustrationen und Icons.',
     technicalDesc: 'Custom SVG/Lottie Creation',
     price: 200,
@@ -80,99 +80,68 @@ const OPTIONS: Option[] = [
     benefit: '100% Einzigartig'
   },
   {
-    id: 'anim_3d',
-    category: 'Design',
-    title: '3D Animationen',
-    simpleDesc: 'Beeindruckende 3D-Effekte für moderne Web-Erlebnisse.',
-    technicalDesc: 'WebGL & Three.js Integration',
-    price: 180,
-    icon: Box,
-    benefit: 'Next-Gen Auftritt'
-  },
-  {
     id: 'anim_3d_custom',
     category: 'Design',
-    title: 'Pers. 3D-Objekte',
-    simpleDesc: 'Einzigartige 3D-Modelle Ihrer Produkte oder Visionen.',
-    technicalDesc: 'Custom 3D Modeling & Rendering',
+    title: 'Personalisierte 3D Animation',
+    simpleDesc: 'Beeindruckende 3D-Effekte und Modelle Ihrer Produkte oder Visionen.',
+    technicalDesc: 'WebGL & Three.js Integration',
     price: 299,
     icon: Box,
-    benefit: 'Digitaler Zwilling'
-  },
-  {
-    id: 'sound_fx',
-    category: 'Design',
-    title: 'Soundeffekte',
-    simpleDesc: 'Akustisches Feedback für eine immersive Nutzererfahrung.',
-    technicalDesc: 'UX Audio Implementation',
-    price: 79,
-    icon: Volume2,
-    benefit: 'Immersives Erlebnis'
+    benefit: 'Next-Gen Auftritt'
   },
   // Verwaltung
   {
     id: 'mgmt_std',
     category: 'Verwaltung',
-    title: 'Verwaltung Standard',
-    simpleDesc: 'Termin- & Arbeitszeitenpflege sowie allgemeine Infoupdates.',
-    technicalDesc: 'Basic Content & Scheduling Mgmt',
+    title: 'Standard-Verwaltung',
+    simpleDesc: 'Dauerhafte Betreuung, Performance-Optimierung und höchste Sicherheit.',
+    technicalDesc: 'Managed Hosting & Support',
     price: 0,
     monthlyPrice: 59.99,
     icon: Settings,
-    benefit: 'Immer aktuell bleiben'
+    benefit: 'Sorglose Freiheit'
   },
   {
     id: 'mgmt_full',
     category: 'Verwaltung',
-    title: 'Komplette Verwaltung',
-    simpleDesc: 'Vollständige Inhaltsbearbeitung und prioritärer Support.',
-    technicalDesc: 'Full CMS & Content Operations',
+    title: 'Voll-Verwaltung',
+    simpleDesc: 'Blitzschnelle Ladezeiten und Inhaltsaktualisierungen durch unsere Experten.',
+    technicalDesc: 'Full Managed Services',
     price: 0,
     monthlyPrice: 99.99,
     icon: ShieldCheck,
-    benefit: 'Rundum sorglos'
+    benefit: 'Maximaler Komfort'
   },
-  // Dienstleistungen
+  // Dienstleistung / Automatisierung
   {
-    id: 'booking_sys',
+    id: 'addon_booking',
     category: 'Dienstleistung',
     title: 'Terminvereinbarung',
-    simpleDesc: 'Integriertes Buchungssystem für Ihre Kunden.',
-    technicalDesc: 'Advanced Scheduling API',
+    simpleDesc: 'Intelligente Prozesse für nahtlose Terminbuchungen direkt auf Ihrer Website.',
+    technicalDesc: 'Booking System Integration',
     price: 74.99,
     icon: Calendar,
-    benefit: 'Automatische Buchungen'
+    benefit: 'Automatisierter Vertrieb'
   },
   {
-    id: 'social_conn',
+    id: 'addon_social',
     category: 'Dienstleistung',
-    title: 'Social Connection',
-    simpleDesc: 'Anbindung Ihrer Social Media Kanäle an die Website.',
-    technicalDesc: 'API Integration & Sync',
+    title: 'Social Media Connection',
+    simpleDesc: 'Verknüpfung Ihrer Kanäle für eine konsistente digitale Präsenz.',
+    technicalDesc: 'Social API Integration',
     price: 79,
-    monthlyPrice: 50,
     icon: Share2,
-    benefit: 'Cross-Channel Reichweite'
+    benefit: 'Höhere Reichweite'
   },
   {
-    id: 'social_page',
-    category: 'Dienstleistung',
-    title: 'Nachrichten-Page',
-    simpleDesc: 'Social Media Feed direkt auf Ihrer Website eingebettet.',
-    technicalDesc: 'Custom Social Feed Component',
-    price: 170,
-    icon: MessageSquare,
-    benefit: 'Live Content Integration'
-  },
-  {
-    id: 'google_reviews',
+    id: 'addon_maps',
     category: 'Dienstleistung',
     title: 'Google Maps Bewertungen',
-    simpleDesc: 'Präsentation Ihrer Google-Bewertungen für maximales Vertrauen.',
-    technicalDesc: 'Google Places API Integration',
+    simpleDesc: 'Review-Widget zur Stärkung des Markenvertrauens und SEO-Boost.',
+    technicalDesc: 'Maps & Review Integration',
     price: 99,
-    icon: Star,
-    benefit: 'Social Proof stärken'
+    icon: MessageSquare,
+    benefit: 'Vertrauens-Boost'
   }
 ];
 
@@ -223,13 +192,13 @@ export default function PriceConfigurator() {
           whileInView={{ opacity: 1, scale: 1 }}
           className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/[0.03] border border-white/10 text-cyan-500 text-[10px] uppercase tracking-[0.3em] font-black mb-8 backdrop-blur-md"
         >
-          Kalkulator & Planung
+          Live Preisrechner
         </motion.div>
         <h2 className="text-5xl md:text-8xl font-display font-medium text-white mb-8 tracking-tight leading-tight">
-          IHRE DIGITALE <br /> <span className="text-slate-600">INVESTITION</span> <br /> <span className="text-white">PLANEN.</span>
+          KONFIGURIEREN SIE <br /> <span className="text-slate-600">IHR</span> <br /> <span className="text-white">PROJEKT.</span>
         </h2>
         <p className="text-slate-400 text-lg md:text-xl max-w-3xl mx-auto font-light leading-relaxed">
-          Stellen Sie Ihre Website modular zusammen. Transparent, ehrlich und auf Ihre Bedürfnisse zugeschnitten.
+          Wählen Sie Ihre gewünschten Leistungen aus und erhalten Sie sofort eine transparente Übersicht Ihrer Investition.
         </p>
       </div>
 

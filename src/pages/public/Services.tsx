@@ -61,7 +61,7 @@ export default function Services() {
       {
         id: 'webdesign',
         title: 'High-End Webdesign',
-        description: 'Fokus auf Conversion-Optimierung und zielgenaues Targeting. Keine Templates – maßgeschneiderte Unikate für Ihren Erfolg.',
+        description: 'Von minimalistischem Schwarz-Weiß bis hin zu lebendigen, interaktiven Markenwelten. Maßgeschneidert auf Ihre Zielgruppe.',
         features: [
           'Standard (Schwarz-Weiß) ab 550 €',
           'Buntes Design ab 250 € Zusatz',
@@ -75,7 +75,7 @@ export default function Services() {
       {
         id: 'animation',
         title: 'Motion & 3D',
-        description: 'Produkte dreidimensional greifbar machen und Verweildauern maximieren. Immersive Erlebnisse ohne Performance-Verlust.',
+        description: 'Hochwertige Animationen, die Ihre Produkte greifbar machen und die Verweildauer drastisch erhöhen.',
         features: [
           'Animation 2D ab 80 €',
           'Personalisierte 2D-Animation ab 200 €',
@@ -89,7 +89,7 @@ export default function Services() {
       {
         id: 'management',
         title: 'Rundum-Sorglos-Verwaltung',
-        description: 'Dauerhafte Betreuung, höchste Sicherheit und blitzschnelle Ladezeiten. Wir sind Ihr unermüdlicher technischer Partner.',
+        description: 'Laufende Pflege, Performance-Optimierung und Aktualisierung. Ihre Website bleibt schnell und sicher.',
         features: [
           'Standard-Verwaltung ab 59,99 € / Monat',
           'Voll-Verwaltung ab 99,99 € / Monat',
@@ -263,7 +263,7 @@ export default function Services() {
                       </p>
                       
                       <div className="flex items-center gap-3 text-cyan-500 font-black uppercase tracking-[0.3em] text-[10px] transform translate-x-0 group-hover:translate-x-3 transition-transform duration-500">
-                        Details <ArrowRight size={14} />
+                        Detailansicht <ArrowRight size={14} />
                       </div>
                     </div>
                   </Link>

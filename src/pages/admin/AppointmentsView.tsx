@@ -4,7 +4,7 @@ import { Appointment } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { format, parseISO } from 'date-fns';
-import { getDateLocale } from '@/lib/utils';
+import { de } from 'date-fns/locale';
 import { Check, X, Calendar, Clock, User, Mail, Phone, FileText } from 'lucide-react';
 import { getTranslatedText } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -121,11 +121,11 @@ export default function AppointmentsView() {
                   {/* Left Column: Date & Status */}
                   <div className="flex items-start lg:w-1/4">
                     <div className="bg-dark-900 p-3 rounded-xl mr-4 text-center min-w-[70px]">
-                      <div className="text-xs font-bold text-gray-400 uppercase">{format(parseISO(apt.start_time), 'MMM', { locale: getDateLocale(i18n.language) })}</div>
+                      <div className="text-xs font-bold text-gray-400 uppercase">{format(parseISO(apt.start_time), 'MMM', { locale: de })}</div>
                       <div className="text-2xl font-black text-white">{format(parseISO(apt.start_time), 'd')}</div>
                     </div>
                     <div>
-                      <div className="font-medium text-white">{format(parseISO(apt.start_time), 'EEEE', { locale: getDateLocale(i18n.language) })}</div>
+                      <div className="font-medium text-white">{format(parseISO(apt.start_time), 'EEEE', { locale: de })}</div>
                       <div className="flex items-center text-gray-400 text-sm mt-1">
                         <Clock className="w-3.5 h-3.5 mr-1" />
                         {format(parseISO(apt.start_time), 'HH:mm')} - {format(parseISO(apt.end_time), 'HH:mm')}

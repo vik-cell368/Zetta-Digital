@@ -18,7 +18,7 @@ import {
   X
 } from 'lucide-react';
 import { format, parse, isAfter, startOfDay, addDays, isSameDay, parseISO } from 'date-fns';
-import { getDateLocale } from '@/lib/utils';
+import { de } from 'date-fns/locale';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { cn, formatCurrency, getTranslatedText } from '@/lib/utils';
@@ -134,26 +134,17 @@ export default function Booking() {
           if (local) setBlockedDates(JSON.parse(local));
         }
 
-        if (sData && sData.length > 0) {
-          setServices(sData);
-        } else {
-          // Fallback to local storage or defaults
-          const localData = localStorage.getItem('viktor_labs_services');
-          if (localData) {
-            setServices(JSON.parse(localData).filter((s: any) => s.is_active));
-          } else {
-            setServices([
-              {
-                id: '1',
-                name: JSON.stringify({ en: 'Website Strategy Session', de: 'Website Beratung' }),
-                description: JSON.stringify({ en: 'Executive discussion to outline your technological trajectory and digital presence.', de: 'Kostenlose Erstberatung für moderne Unternehmenswebsites, Landingpages und digitale Lösungen.' }),
-                price: 0,
-                duration_minutes: 45,
-                is_active: true
-              }
-            ] as Service[]);
+        // As requested: Only show Website Beratung
+        setServices([
+          {
+            id: '1',
+            name: JSON.stringify({ en: 'Website Strategy Session', de: 'Website Beratung' }),
+            description: JSON.stringify({ en: 'Executive discussion to outline your technological trajectory and digital presence.', de: 'Kostenlose Erstberatung für moderne Unternehmenswebsites, Landingpages und digitale Lösungen.' }),
+            price: 0,
+            duration_minutes: 45,
+            is_active: true
           }
-        }
+        ] as Service[]);
       } catch (e) {
         console.warn("Booking data fetch failed", e);
       } finally {
@@ -179,7 +170,7 @@ export default function Booking() {
       const { data: appointments } = await supabase
         .from('appointments')
         .select('start_time, end_time')
-        .eq('status', 'confirmed')
+        .in('status', ['confirmed', 'pending'])
         .gte('start_time', startOfDay(date).toISOString())
         .lt('start_time', addDays(startOfDay(date), 1).toISOString());
 
@@ -270,7 +261,7 @@ export default function Booking() {
       phone: data.phone,
       start_time: startDateTime.toISOString(),
       end_time: endDateTime.toISOString(),
-      status: 'pending',
+      status: 'confirmed',
       notes: data.notes
     };
 
@@ -392,7 +383,7 @@ export default function Booking() {
               className="max-w-md mx-auto px-2"
             >
               <Button variant="ghost" onClick={() => setStep('service')} className="mb-6 -ml-4 text-gray-400 hover:text-white uppercase tracking-widest text-[10px] md:text-xs font-mono">
-                <ChevronLeft className="w-4 h-4 mr-2" /> Back
+                <ChevronLeft className="w-4 h-4 mr-2" /> Zurück
               </Button>
               <div className="bg-dark-900/50 backdrop-blur-md rounded-2xl p-4 md:p-8 border border-white/5 flex justify-center overflow-hidden">
                 <style>{`
@@ -409,6 +400,7 @@ export default function Booking() {
                   mode="single"
                   selected={selectedDate}
                   onSelect={handleDateSelect}
+                  locale={de}
                   disabled={[
                     { before: new Date() },
                     ...blockedDates.map(b => parseISO(b.blocked_date)),
@@ -431,12 +423,12 @@ export default function Booking() {
               className="max-w-2xl mx-auto px-2"
             >
               <Button variant="ghost" onClick={() => setStep('date')} className="mb-6 -ml-4 text-gray-400 hover:text-white uppercase tracking-widest text-xs font-mono">
-                <ChevronLeft className="w-4 h-4 mr-2" /> Back
+                <ChevronLeft className="w-4 h-4 mr-2" /> Zurück
               </Button>
               
               <div className="bg-dark-900/50 backdrop-blur-md rounded-2xl p-6 md:p-10 border border-white/5">
                 <h3 className="font-serif text-xl md:text-2xl text-white mb-8">
-                  {selectedDate && format(selectedDate, 'EEEE, d. MMMM', { locale: getDateLocale(i18n.language) })}
+                  {selectedDate && format(selectedDate, 'EEEE, d. MMMM', { locale: de })}
                 </h3>
                 
                 {isTimesLoading ? (
@@ -492,7 +484,7 @@ export default function Booking() {
               className="space-y-6"
             >
               <Button variant="ghost" onClick={() => setStep('time')} className="mb-6 -ml-4 text-gray-400 hover:text-white uppercase tracking-widest text-xs font-mono">
-                <ChevronLeft className="w-4 h-4 mr-2" /> Back
+                <ChevronLeft className="w-4 h-4 mr-2" /> Zurück
               </Button>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -621,7 +613,7 @@ export default function Booking() {
                       <div>
                         <div className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-2">{t('booking.step_date_time')}</div>
                         <div className="font-sans font-light text-white">
-                          {selectedDate && format(selectedDate, 'd. MMMM yyyy', { locale: getDateLocale(i18n.language) })}<br/>
+                          {selectedDate && format(selectedDate, 'd. MMMM yyyy', { locale: de })}<br/>
                           {selectedTime && format(parse(selectedTime, 'HH:mm:ss', new Date()), 'HH:mm')}
                         </div>
                       </div>

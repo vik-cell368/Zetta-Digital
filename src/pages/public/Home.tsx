@@ -227,19 +227,19 @@ export default function Home() {
               icon={Globe} 
               title="High-End Webdesign" 
               description="Von minimalistischem Schwarz-Weiß bis hin zu lebendigen, interaktiven Markenwelten. Maßgeschneidert auf Ihre Zielgruppe."
-              to="/services"
+              to="/services/webdesign"
             />
             <FeatureCard 
               icon={Sparkles} 
               title="Motion & 3D" 
               description="Hochwertige Animationen, die Ihre Produkte greifbar machen und die Verweildauer drastisch erhöhen."
-              to="/services"
+              to="/services/animation"
             />
             <FeatureCard 
               icon={Layout} 
               title="Rundum-Sorglos-Verwaltung" 
               description="Laufende Pflege, Performance-Optimierung und Aktualisierung. Ihre Website bleibt schnell und sicher."
-              to="/services"
+              to="/services/management"
             />
           </div>
         </div>

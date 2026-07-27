@@ -22,43 +22,43 @@ export default function Pricing() {
     } else {
       setTiers([
         {
-          name: 'Basis Paket',
+          name: 'Basis-Website',
           price: '550',
-          description: 'Der perfekte Einstieg für einen professionellen, minimalistischen Auftritt.',
+          description: 'Hochwertiger, minimalistischer Schwarz-Weiß Look für Ihren digitalen Vorsprung.',
           features: [
-            'Website Standard (Schwarz-Weiß)',
-            'Responsive Design',
-            'Grundlegende SEO Optimierung',
-            'Schnelle Ladezeiten',
-            'Kontakt-Formular'
+            'Website Standard (S/W)',
+            'High-End Webdesign',
+            'Sorglose Performance',
+            'SEO-Optimierung inklusive',
+            'German Engineering Standard'
           ],
           cta: 'Projekt starten',
           popular: false
         },
         {
-          name: 'Business Plus',
+          name: 'Premium-Motion',
           price: '1.250',
-          description: 'Maximale Wirkung durch Farbe, Animationen und professionelle Verwaltung.',
+          description: 'Maximale Markenkraft durch Farbe, 2D/3D Animationen und technische Verwaltung.',
           features: [
             'Design Upgrade (Bunt)',
-            '2D/3D Animationen inklusive',
-            'Terminvereinbarung System',
-            'Monatliche Verwaltung Standard',
-            'Google Maps Bewertungen Integration'
+            'Animation 2D/3D Paket',
+            'Standard-Verwaltung inkl.',
+            'Terminbuchung Integration',
+            'Blitzschnelle Ladezeiten'
           ],
           cta: 'Jetzt wachsen',
           popular: true
         },
         {
-          name: 'Enterprise',
+          name: 'High-End 3D',
           price: 'Anfrage',
-          description: 'Maßgeschneiderte Lösungen mit High-End 3D-Modellen und Vollverwaltung.',
+          description: 'Maßgeschneiderte Architektur mit personalisierten 3D-Modellen und Voll-Verwaltung.',
           features: [
-            'Personalisierte 3D-Objekte',
-            'Komplette Full-Service Verwaltung',
-            'Social Media News-Page',
-            'Sound-Effekte & Immersive UX',
-            'Priorisierter 24/7 Support'
+            'Personalisierte 3D-Modelle',
+            'Voll-Verwaltung & Support',
+            'Individuelle Automationen',
+            'Immersive UX-Erlebnisse',
+            'Höchste Sicherheitsstandards'
           ],
           cta: 'Individuelle Beratung',
           popular: false
