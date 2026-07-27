@@ -1,21 +1,41 @@
 <!doctype html>
-<html lang="en">
+<html lang="de" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Zetta Digital - Premium KI-gestützte digitale Exzellenz. Wir entwickeln intelligente Web-Lösungen, KI-Agenten und moderne Architekturen für Ihr Unternehmen." />
-    <meta name="keywords" content="Zetta Digital, KI Lösungen, Webentwicklung, KI Agenten, Digitale Transformation, Software Architektur" />
-    <meta property="og:title" content="Zetta Digital | Premium KI-Lösungen" />
-    <meta property="og:description" content="Intelligente Web-Lösungen und KI-Agenten für moderne Unternehmen." />
+    <meta name="theme-color" content="#020617" />
+    <meta name="description" content="Viktor Labs - Digital Architecture & Motion. Wir entwickeln High-End-Websites mit immersiven 3D-Animationen und kompromissloser Performance. Erleben Sie digitale Exzellenz." />
+    <meta name="keywords" content="Viktor Labs, Webdesign, 3D Animation, Motion Design, High-End Websites, Performance Optimierung, Digitale Architektur" />
+    
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://viktor-labs.de/" />
+    <meta property="og:title" content="Viktor Labs | Digital Architecture & Motion" />
+    <meta property="og:description" content="Digitale Erlebnisse, die im Gedächtnis bleiben. High-End-Websites mit immersiven 3D-Animationen." />
+    <meta property="og:image" content="/og-image.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="Viktor Labs | Digital Architecture & Motion" />
+    <meta property="twitter:description" content="High-End-Websites mit immersiven 3D-Animationen und kompromissloser Performance." />
+
     <link rel="manifest" href="/manifest.json" />
-    <title>Zetta Digital | Premium KI-Lösungen & Webentwicklung</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Viktor Labs | Digital Architecture & Motion</title>
+
+    <!-- Preconnect & Preload -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="/src/main.tsx" as="script" crossorigin>
   </head>
-  <body>
+  <body class="bg-dark-950 text-slate-200 antialiased selection:bg-cyan-500/30 selection:text-white overflow-x-hidden">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <noscript>
+      <div style="padding: 2rem; text-align: center;">
+        Bitte aktivieren Sie JavaScript, um Viktor Labs in vollem Umfang zu erleben.
+      </div>
+    </noscript>
   </body>
 </html>
 

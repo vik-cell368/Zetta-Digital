@@ -1,40 +1,40 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ExternalLink, ArrowRight, Sparkles, Globe, Layout, Bot } from 'lucide-react';
+import { ExternalLink, ArrowRight, Sparkles, Globe, Layout } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const PROJECTS = [
   {
-    title: "E-Commerce Revolution",
+    title: "E-Commerce Premium",
     category: "Webdesign & Conversion",
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800",
-    desc: "Komplette Neugestaltung und Optimierung eines Onlineshops mit Fokus auf User Experience.",
-    tags: ["Next.js", "Tailwind", "Shopify"],
+    desc: "Exklusives Design mit Fokus auf flüssige Übergänge und maximale Conversion-Rate.",
+    tags: ["React", "Tailwind", "Animation"],
     stat: "+145% Umsatz"
   },
   {
-    title: "AI Logistics Suite",
-    category: "KI Automation",
+    title: "3D Product Showcase",
+    category: "3D Animation",
     image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=800",
-    desc: "KI-gestützte Routenplanung und automatische Lagerverwaltung für ein Logistikunternehmen.",
-    tags: ["OpenAI", "Python", "Dashboard"],
-    stat: "60h Zeitersparnis/Wo."
+    desc: "Interaktive 3D-Visualisierung für ein High-End Technologieprodukt.",
+    tags: ["Three.js", "WebGL", "3D Modeling"],
+    stat: "High Engagement"
   },
   {
-    title: "Real Estate Premium",
+    title: "Real Estate Luxury",
     category: "Webdesign",
     image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
-    desc: "Exklusive Plattform für Luxusimmobilien mit interaktiven 3D-Rundgängen.",
-    tags: ["Framer Motion", "React", "3D"],
+    desc: "Exklusive Plattform für Luxusimmobilien mit flüssigen 2D-Animationen.",
+    tags: ["Framer Motion", "React", "Design"],
     stat: "3x mehr Anfragen"
   },
   {
-    title: "MedTech Assistant",
-    category: "KI Chatbot",
+    title: "Service Management Portal",
+    category: "Website Verwaltung",
     image: "https://images.unsplash.com/photo-1576091160550-2173bdb999ef?auto=format&fit=crop&q=80&w=800",
-    desc: "Patienten-Onboarding und Terminbuchung via intelligentem KI-Assistenten.",
-    tags: ["Chatbot", "NLP", "Security"],
-    stat: "90% Automation"
+    desc: "Zentrale Verwaltung von Inhalten und Terminen für einen Dienstleister.",
+    tags: ["CMS", "Dashboard", "Management"],
+    stat: "Effiziente Pflege"
   }
 ];
 
@@ -72,7 +72,7 @@ export default function Portfolio() {
 
         {/* Filter */}
         <div className="flex flex-wrap gap-4 mb-24">
-          {['Alle', 'Webdesign', 'KI Automation', 'Chatbots'].map((cat, i) => (
+          {['Alle', 'Webdesign', 'Animationen', 'Verwaltung'].map((cat, i) => (
             <button 
               key={cat}
               className={`px-8 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border transition-all duration-500 ${
@@ -87,7 +87,7 @@ export default function Portfolio() {
         {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
           {PROJECTS.map((project, i) => {
-            const Icon = project.title.includes('AI') || project.title.includes('MedTech') ? Bot : project.title.includes('Commerce') ? Globe : Layout;
+            const Icon = project.category.includes('Animation') ? Sparkles : project.category.includes('Verwaltung') ? Layout : Globe;
             return (
               <motion.div
                 key={i}

@@ -45,11 +45,10 @@ export default function PublicLayout() {
   const searchItems = [
     { name: 'Home', path: '/', category: 'Seite' },
     { name: 'Leistungen', path: '/services', category: 'Seite' },
-    { name: 'Webdesign', path: '/services/webdesign', category: 'Service' },
-    { name: 'KI Automation', path: '/services/ai-automation', category: 'Service' },
-    { name: 'KI Chatbots', path: '/services/ai-chatbots', category: 'Service' },
-    { name: 'Workflow Automation', path: '/services/workflow-automation', category: 'Service' },
-    { name: 'KI Automation Spezialseite', path: '/ai-automation', category: 'Seite' },
+    { name: 'Website Erstellung', path: '/services/webdesign', category: 'Service' },
+    { name: 'Design & Animation', path: '/services/animation', category: 'Service' },
+    { name: 'Website Verwaltung', path: '/services/management', category: 'Service' },
+    { name: 'Zusatzleistungen', path: '/services/add-ons', category: 'Service' },
     { name: 'Preise & Kalkulator', path: '/pricing', category: 'Tool' },
     { name: 'Referenzen', path: '/portfolio', category: 'Seite' },
     { name: 'Häufige Fragen (FAQ)', path: '/faq', category: 'Support' },
@@ -86,12 +85,12 @@ export default function PublicLayout() {
                 <div className="absolute inset-0 bg-cyan-500/5 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <span className="font-display font-medium text-2xl tracking-tight text-slate-50 flex items-center leading-none">
-                Viktor<span className="text-cyan-500 ml-1 opacity-60">Labs</span>
+                VIKTOR<span className="text-cyan-500 ml-1.5 font-light opacity-60 italic">LABS</span>
               </span>
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-10">
+            <nav className="hidden lg:flex items-center gap-10" aria-label="Hauptnavigation">
               {[
                 { name: 'Leistungen', path: '/services' },
                 { name: 'Preise', path: '/pricing' },
@@ -103,6 +102,7 @@ export default function PublicLayout() {
                 <Link 
                   key={item.path} 
                   to={item.path}
+                  aria-current={location.pathname === item.path ? 'page' : undefined}
                   className={`text-[11px] uppercase tracking-[0.3em] font-black transition-all hover:tracking-[0.4em] ${
                     location.pathname === item.path ? 'text-cyan-500' : 'text-slate-500 hover:text-white'
                   }`}
@@ -116,19 +116,23 @@ export default function PublicLayout() {
             <div className="flex items-center gap-4 md:gap-6">
               <div className="hidden lg:flex items-center gap-6">
                 <Link to="/pricing" className="hidden xl:block">
-                  <button className="text-[10px] uppercase tracking-[0.2em] font-black text-cyan-500 hover:text-white transition-colors flex items-center gap-2">
-                    <Sparkles size={14} />
+                  <button 
+                    aria-label="Preiskalkulator öffnen"
+                    className="text-[10px] uppercase tracking-[0.2em] font-black text-cyan-500 hover:text-white transition-colors flex items-center gap-2"
+                  >
+                    <Sparkles size={14} aria-hidden="true" />
                     Kalkulator
                   </button>
                 </Link>
 
                 <button 
                   onClick={() => setIsSearchOpen(true)}
+                  aria-label="Suche öffnen (Cmd+K)"
                   className="flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-all group"
                 >
-                  <SearchIcon size={14} />
+                  <SearchIcon size={14} aria-hidden="true" />
                   <span className="text-[10px] uppercase tracking-widest font-bold">Suchen</span>
-                  <span className="text-[9px] bg-white/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                  <span className="text-[9px] bg-white/10 px-1.5 py-0.5 rounded flex items-center gap-1" aria-hidden="true">
                     <Command size={10} /> K
                   </span>
                 </button>
@@ -300,12 +304,12 @@ export default function PublicLayout() {
             <div className="col-span-1 lg:col-span-1">
               <Link to="/" className="flex items-center gap-3 mb-8 group">
                 <Hexagon className="w-6 h-6 text-cyan-500 fill-cyan-500/10" />
-                <span className="font-display font-bold text-xl tracking-tight text-slate-50 uppercase">
-                  Viktor<span className="text-cyan-500 ml-1.5 opacity-80">Labs</span>
+                <span className="font-display font-bold text-xl tracking-tight text-slate-50 uppercase italic">
+                  VIKTOR<span className="text-cyan-500 ml-1.5 font-light opacity-80">LABS</span>
                 </span>
               </Link>
               <p className="text-slate-400 text-sm leading-relaxed mb-8">
-                Wir digitalisieren Unternehmen mit High-End Websites und intelligenten KI-Lösungen. Modern, transparent und ergebnisorientiert.
+                Wir gestalten erstklassige Websites mit flüssigen Animationen und professioneller Verwaltung. Transparent, modern und effektiv.
               </p>
               <div className="flex items-center gap-4">
                 {/* Socials placeholder */}
@@ -318,10 +322,10 @@ export default function PublicLayout() {
             <div>
               <h4 className="text-xs uppercase tracking-[0.2em] font-bold text-white mb-8">Leistungen</h4>
               <ul className="space-y-4">
-                <li><Link to="/services/webdesign" className="text-sm text-gray-500 hover:text-white transition-colors">Website Entwicklung</Link></li>
-                <li><Link to="/services/ai-automation" className="text-sm text-gray-500 hover:text-white transition-colors">KI Automationen</Link></li>
-                <li><Link to="/services/ai-chatbots" className="text-sm text-gray-500 hover:text-white transition-colors">Chatbots</Link></li>
-                <li><Link to="/services/workflow-automation" className="text-sm text-gray-500 hover:text-white transition-colors">Workflow Automation</Link></li>
+                <li><Link to="/services/webdesign" className="text-sm text-gray-500 hover:text-white transition-colors">Website Erstellung</Link></li>
+                <li><Link to="/services/animation" className="text-sm text-gray-500 hover:text-white transition-colors">Design & Animation</Link></li>
+                <li><Link to="/services/management" className="text-sm text-gray-500 hover:text-white transition-colors">Website Verwaltung</Link></li>
+                <li><Link to="/services/add-ons" className="text-sm text-gray-500 hover:text-white transition-colors">Zusatzleistungen</Link></li>
               </ul>
             </div>
 

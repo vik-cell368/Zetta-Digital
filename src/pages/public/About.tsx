@@ -7,7 +7,7 @@ const VALUES = [
   {
     icon: <Target className="w-6 h-6" />,
     title: "Ergebnisorientiert",
-    desc: "Wir bauen keine Webseiten um der Webseiten willen. Jedes Projekt hat ein klares Ziel: Mehr Umsatz, mehr Leads oder mehr Zeit."
+    desc: "Wir bauen keine Webseiten um der Webseiten willen. Jedes Projekt hat ein klares Ziel: Ein erstklassiger Auftritt, der Kunden überzeugt."
   },
   {
     icon: <Eye className="w-6 h-6" />,
@@ -15,9 +15,9 @@ const VALUES = [
     desc: "Keine versteckten Kosten, keine Agentur-Phrasen. Wir kommunizieren auf Augenhöhe und halten unsere Versprechen."
   },
   {
-    icon: <Cpu className="w-6 h-6" />,
-    title: "Technologisch führend",
-    desc: "Wir nutzen die modernsten Tech-Stacks (Next.js, KI-Automationen), um unseren Kunden einen unfairen Wettbewerbsvorteil zu verschaffen."
+    icon: <Sparkles className="w-6 h-6" />,
+    title: "Innovatives Design",
+    desc: "Wir nutzen modernste Technologien für 2D & 3D Animationen, um einen bleibenden Eindruck bei Ihren Besuchern zu hinterlassen."
   }
 ];
 
@@ -33,15 +33,15 @@ export default function About() {
             animate={{ opacity: 1, y: 0 }}
             className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/[0.03] border border-white/10 text-cyan-500 text-[10px] uppercase tracking-[0.3em] font-black mb-12 backdrop-blur-md"
           >
-            Digital Craftsmanship
+            Digital Architecture & Motion
           </motion.div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
             <div className="space-y-10">
               <h1 className="text-5xl md:text-8xl font-display font-medium text-slate-50 tracking-tight leading-[0.9]">
-                WIR DENKEN <br /> <span className="text-slate-600">DIGITALISIERUNG</span> <br /> <span className="text-white">MENSCHLICH.</span>
+                DIGITALE <br /> <span className="text-slate-600 italic">ARCHITEKTUR</span> <br /> <span className="text-white">& MOTION.</span>
               </h1>
               <p className="text-slate-400 text-xl md:text-2xl font-light leading-relaxed max-w-xl">
-                Viktor Labs wurde mit einer klaren Vision gegründet: Technologie so einzusetzen, dass sie dem Menschen dient – nicht umgekehrt. Wir bauen Brücken zwischen digitaler Effizienz und echter Partnerschaft.
+                Viktor Labs steht für eine klare Haltung: Digitale Präsenzen müssen nicht nur funktionieren – sie müssen überzeugen. Wir verbinden Architektur mit Bewegung.
               </p>
             </div>
             <div className="relative">
@@ -85,10 +85,10 @@ export default function About() {
           </div>
           <div className="lg:col-span-2 text-slate-400 text-xl md:text-2xl font-light leading-relaxed space-y-10">
             <p>
-              In einer Welt, in der die digitale Präsenz über den Erfolg eines Unternehmens entscheidet, reicht "gut genug" nicht mehr aus. Viele Agenturen bauen Webseiten, die zwar schön aussehen, aber keinen geschäftlichen Nutzen bringen.
+              In einer Welt, in der die digitale Präsenz über den Erfolg eines Unternehmens entscheidet, ist eine Website weit mehr als eine Visitenkarte. Sie ist Ihr unermüdlichster Vertriebskanal und das Gesicht Ihrer Qualität.
             </p>
             <p>
-              Wir haben Viktor Labs gestartet, um das zu ändern. Wir kombinieren High-End Design mit messbarer Performance und menschlicher Empathie. Unser Ziel ist es, dass Ihre Website nicht nur Ihre Visitenkarte ist, sondern Ihr stärkster Partner im Business.
+              Wir verbinden digitale Architektur mit fließender Bewegung, um Marken online nach vorn zu bringen. Handverlesene, hochperformante Digitalkunst mit messbarem Geschäftswert – German Engineering digital übersetzt.
             </p>
           </div>
         </div>
@@ -120,7 +120,7 @@ export default function About() {
             <h2 className="text-4xl md:text-6xl font-display font-medium text-slate-50 tracking-tight">UNSER <span className="text-slate-600">TECH STACK</span></h2>
           </div>
           <div className="flex flex-wrap justify-center gap-6 max-w-4xl mx-auto">
-            {['Next.js', 'React', 'Tailwind', 'Framer Motion', 'OpenAI', 'Python', 'Supabase', 'Stripe'].map(tech => (
+            {['React', 'Vite', 'Tailwind', 'Framer Motion', 'Three.js', 'Lottie', 'WebGL', 'Supabase'].map(tech => (
               <span key={tech} className="px-10 py-5 rounded-full bg-white/[0.03] border border-white/10 text-slate-400 font-black uppercase text-[10px] tracking-[0.3em] hover:text-cyan-500 hover:border-cyan-500/50 transition-all duration-500 cursor-default">
                 {tech}
               </span>

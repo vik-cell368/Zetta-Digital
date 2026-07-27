@@ -10,7 +10,8 @@ import {
   Hexagon,
   Layers,
   Zap,
-  Globe
+  Globe,
+  Layout
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
@@ -39,9 +40,9 @@ export default function Home() {
   const navigate = useNavigate();
   const [config, setConfig] = useState({
     hero: {
-      title: "WIR GESTALTEN DIE ZUKUNFT. <span class='italic font-light'>GEMEINSAM.</span>",
-      subtitle: "Maßgeschneiderte Web-Applikationen und KI-Lösungen, die Ihr Business menschlich voranbringen. Effizient, transparent und bodenständig.",
-      buttonText: "Projekt starten"
+      title: "WIR BAUEN KEINE WEBSITES. <br /> <span class='text-cyan-500'>WIR BAUEN DIGITALEN VORSPRUNG.</span>",
+      subtitle: "Hochperformante Web-Architektur trifft auf immersive 3D-Ästhetik. Für Unternehmen, die im Netz nicht nur teilnehmen, sondern den Standard definieren.",
+      buttonText: "Projekt anfragen & Vision besprechen"
     }
   });
 
@@ -76,7 +77,7 @@ export default function Home() {
       </div>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen pt-32 pb-20 flex flex-col items-center justify-center z-10 px-6">
+      <section className="relative min-h-screen pt-32 pb-20 flex flex-col items-center justify-center z-10 px-6" aria-labelledby="hero-title">
         <motion.div 
           style={{ opacity, scale }}
           className="container mx-auto max-w-6xl text-center"
@@ -86,10 +87,11 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/[0.03] border border-white/10 text-cyan-500 text-[10px] uppercase tracking-[0.3em] font-black mb-12 backdrop-blur-md"
           >
-            Digital Craftsmanship
+            Viktor Labs // Digital Architecture & Motion
           </motion.div>
 
           <motion.h1 
+            id="hero-title"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
@@ -114,62 +116,35 @@ export default function Home() {
           >
             <button 
               onClick={() => navigate('/booking')}
-              className="h-20 px-12 rounded-full bg-cyan-600 text-white font-black uppercase tracking-[0.2em] text-xs hover:scale-105 active:scale-95 transition-all shadow-2xl flex items-center gap-4"
+              aria-label="Projekt anfragen und Vision besprechen"
+              className="h-20 px-12 rounded-full bg-white text-dark-950 font-black uppercase tracking-[0.3em] text-[10px] hover:scale-105 active:scale-95 transition-all shadow-[0_20px_50px_rgba(255,255,255,0.2)] flex items-center gap-4 group"
             >
-              Projekt starten
-              <ArrowUpRight size={20} />
+              Projekt anfragen & Vision besprechen
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />
             </button>
             <button 
               onClick={() => navigate('/pricing')}
-              className="h-20 px-12 rounded-full bg-white/[0.03] border border-white/10 text-white font-black uppercase tracking-[0.2em] text-xs hover:bg-white/[0.08] transition-all flex items-center gap-4 backdrop-blur-sm"
+              aria-label="Individuellen Preis kalkulieren"
+              className="h-20 px-12 rounded-full bg-white/[0.03] border border-white/10 text-white font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white/[0.08] transition-all flex items-center gap-4 backdrop-blur-sm"
             >
-              Preise kalkulieren
-            </button>
-            <button 
-              onClick={() => navigate('/services')}
-              className="h-20 px-12 rounded-full bg-transparent text-slate-500 font-black uppercase tracking-[0.2em] text-xs hover:text-white transition-all flex items-center gap-4"
-            >
-              Leistungen
+              Individuellen Preis kalkulieren
             </button>
           </motion.div>
         </motion.div>
-
-        {/* Hero Bottom Stats/Badges */}
-        <div className="container mx-auto max-w-6xl mt-24">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { label: "Projekte", val: "250+" },
-              { label: "Zufriedenheit", val: "99%" },
-              { label: "KI-Agenten", val: "45" },
-              { label: "Experten", val: "12" }
-            ].map((stat, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 + i * 0.1 }}
-                className="text-center"
-              >
-                <div className="text-3xl md:text-4xl font-display font-bold text-white mb-2">{stat.val}</div>
-                <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
       </section>
 
-      {/* Philosophy Section - Human & Empathetic (Typographic Only) */}
-      <section className="py-48 relative z-10">
+      {/* Philosophy Section */}
+      <section className="py-48 relative z-10" aria-labelledby="vision-title">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
-            <div className="space-y-12">
+            <article className="space-y-12">
               <div className="space-y-8">
-                <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-4">Menschlichkeit</div>
-                <h2 className="text-5xl md:text-8xl font-display font-medium text-white leading-[0.95] tracking-tight">
-                  WIR GLAUBEN AN <br /> <span className="text-slate-600 italic">DIE KRAFT DER</span> <br /> <span className="text-white">EMPATHIE.</span>
+                <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-4">Viktor Labs Vision</div>
+                <h2 id="vision-title" className="text-5xl md:text-8xl font-display font-medium text-white leading-[0.95] tracking-tight">
+                  ÄSTHETIK TRIFFT AUF <br /> <span className="text-slate-600 italic">WIRTSCHAFTLICHKEIT.</span>
                 </h2>
                 <p className="text-slate-400 text-xl md:text-2xl leading-relaxed font-light max-w-xl">
-                  Hinter jedem Algorithmus und jeder Zeile Code steht ein Mensch mit einem Ziel. Wir bauen Brücken zwischen digitaler Effizienz und echter Partnerschaft.
+                  Eine Website ist längst keine digitale Visitenkarte mehr, sondern Ihr stärkster digitaler Vertriebskanal. Wir verbinden Architektur mit messbarem ROI.
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -177,18 +152,25 @@ export default function Home() {
                   <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500">
                     <CheckCircle2 size={28} />
                   </div>
-                  <div className="text-white font-bold text-xl">Integrität</div>
-                  <p className="text-slate-500 text-base font-light leading-relaxed">Ehrliche Beratung auf Augenhöhe ohne versteckte Absichten.</p>
+                  <div className="text-white font-bold text-xl">Absolute Transparenz</div>
+                  <p className="text-slate-500 text-base font-light leading-relaxed">Faire Festpreise, modulare Optionen und null versteckte Kosten. Wir setzen auf absolute Verlässlichkeit.</p>
                 </div>
                 <div className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 space-y-6">
                   <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500">
                     <Sparkles size={28} />
                   </div>
-                  <div className="text-white font-bold text-lg">Exzellenz</div>
-                  <p className="text-slate-500 text-sm font-light leading-relaxed">Höchste Standards in Design und technischer Umsetzung.</p>
+                  <div className="text-white font-bold text-lg">Immersive Ästhetik</div>
+                  <p className="text-slate-500 text-sm font-light leading-relaxed">Modernstes Design und flüssige 3D-Interaktionen, die Besucher binden und Ihre Marke differenzieren.</p>
+                </div>
+                <div className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 space-y-6 md:col-span-2">
+                  <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500">
+                    <Layout size={28} />
+                  </div>
+                  <div className="text-white font-bold text-lg">Sorglose Freiheit</div>
+                  <p className="text-slate-500 text-sm font-light leading-relaxed">Wir halten Ihre Präsenz technisch sicher, blitzschnell und aktuell – German Engineering digital übersetzt.</p>
                 </div>
               </div>
-            </div>
+            </article>
             
             <div className="relative hidden lg:block">
               {/* Abstract Architectural Pattern */}
@@ -206,7 +188,7 @@ export default function Home() {
                 <div className="absolute inset-0 flex items-center justify-center">
                    <div className="text-center">
                       <div className="text-6xl font-display text-white/10 mb-2">2026</div>
-                      <div className="text-[10px] uppercase tracking-[0.4em] text-cyan-500 font-black">Future Focused</div>
+                      <div className="text-[10px] uppercase tracking-[0.4em] text-cyan-500 font-black">Digital Boutique</div>
                    </div>
                 </div>
               </div>
@@ -216,18 +198,18 @@ export default function Home() {
       </section>
 
       {/* Core Expertise Section */}
-      <section className="py-32 relative z-10 bg-dark-950/50">
+      <section className="py-32 relative z-10 bg-dark-950/50" aria-labelledby="expertise-title">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-end mb-24">
-            <div>
+            <header>
               <div className="text-cyan-500 font-black uppercase tracking-[0.3em] text-[10px] mb-6">Expertise</div>
-              <h2 className="text-4xl md:text-6xl font-display font-bold text-white leading-tight">
-                STRATEGY <br /> DESIGN <br /> <span className="text-slate-600">DELIVER IMPACT</span>
+              <h2 id="expertise-title" className="text-4xl md:text-6xl font-display font-bold text-white leading-tight">
+                UNSER HANDWERK. <br /> <span className="text-slate-600">IHRE WIRKUNG.</span>
               </h2>
-            </div>
+            </header>
             <div className="max-w-md">
               <p className="text-slate-400 text-lg leading-relaxed mb-8 font-light">
-                Wir verbinden kreatives Design mit modernster Technologie, um digitale Erlebnisse zu schaffen, die nicht nur gut aussehen, sondern Ergebnisse liefern.
+                Wir verbinden tiefgreifende Ästhetik mit flüssiger Interaktion, um digitale Erlebnisse zu schaffen, die Ihre Marke online dominieren lassen.
               </p>
               <div className="flex gap-4">
                 <div className="w-12 h-12 rounded-full bg-cyan-500 flex items-center justify-center text-dark-950">
@@ -242,21 +224,21 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <FeatureCard 
-              icon={Layers} 
-              title="KI-Integration" 
-              description="Automatisieren Sie Ihre Geschäftsprozesse mit intelligenten KI-Lösungen und LLM-Integrationen."
+              icon={Globe} 
+              title="High-End Webdesign" 
+              description="Von minimalistischem Schwarz-Weiß bis hin zu lebendigen, interaktiven Markenwelten. Maßgeschneidert auf Ihre Zielgruppe."
               to="/services"
             />
             <FeatureCard 
-              icon={Target} 
-              title="Modern Web" 
-              description="Hochperformante Web-Applikationen mit Fokus auf User Experience und Conversion-Optimierung."
+              icon={Sparkles} 
+              title="Motion & 3D" 
+              description="Hochwertige Animationen, die Ihre Produkte greifbar machen und die Verweildauer drastisch erhöhen."
               to="/services"
             />
             <FeatureCard 
-              icon={TrendingUp} 
-              title="Digital Growth" 
-              description="Strategische Begleitung Ihrer digitalen Transformation für nachhaltiges Wachstum und Skalierung."
+              icon={Layout} 
+              title="Rundum-Sorglos-Verwaltung" 
+              description="Laufende Pflege, Performance-Optimierung und Aktualisierung. Ihre Website bleibt schnell und sicher."
               to="/services"
             />
           </div>
@@ -264,22 +246,23 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-40 relative z-10">
+      <section className="py-40 relative z-10" aria-labelledby="cta-title">
         <div className="container mx-auto px-6 max-w-5xl">
           <div className="glass-card p-12 md:p-28 rounded-[5rem] text-center relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/10 blur-[120px] -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-all duration-700" />
+            <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/10 blur-[120px] -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-all duration-700" aria-hidden="true" />
             
-            <h2 className="text-5xl md:text-8xl font-display font-bold text-white mb-10 relative z-10 leading-[0.85] tracking-tighter">
-              WE SOLVE. <br /> <span className="text-cyan-500">YOU GROW.</span>
+            <h2 id="cta-title" className="text-5xl md:text-8xl font-display font-bold text-white mb-10 relative z-10 leading-[0.85] tracking-tighter">
+              BEREIT FÜR DEN <br /> <span className="text-cyan-500">NÄCHSTEN LEVEL?</span>
             </h2>
             <p className="text-slate-400 text-xl md:text-2xl max-w-2xl mx-auto mb-16 relative z-10 font-light leading-relaxed">
-              Bereit für die digitale Zukunft? Lassen Sie uns gemeinsam etwas Außergewöhnliches schaffen.
+              Lassen Sie uns gemeinsam eine digitale Präsenz erschaffen, die Ihre Kunden begeistert.
             </p>
             <button 
               onClick={() => navigate('/booking')}
-              className="h-20 px-16 rounded-full bg-white text-dark-950 font-black uppercase tracking-[0.3em] text-xs hover:scale-105 transition-all relative z-10 shadow-2xl"
+              aria-label="Kostenlose Erstberatung sichern"
+              className="h-20 px-16 rounded-full bg-white text-dark-950 font-black uppercase tracking-[0.3em] text-[10px] hover:scale-105 transition-all relative z-10 shadow-2xl"
             >
-              Kostenlose Beratung
+              Kostenlose Erstberatung sichern
             </button>
           </div>
         </div>

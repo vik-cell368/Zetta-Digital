@@ -22,27 +22,45 @@ export default function Pricing() {
     } else {
       setTiers([
         {
-          name: t('pricing.starter.name'),
-          price: t('pricing.starter.price'),
-          description: t('pricing.starter.desc'),
-          features: t('pricing.starter.features', { returnObjects: true }) as string[],
-          cta: t('home.phase4_btn'),
+          name: 'Basis Paket',
+          price: '550',
+          description: 'Der perfekte Einstieg für einen professionellen, minimalistischen Auftritt.',
+          features: [
+            'Website Standard (Schwarz-Weiß)',
+            'Responsive Design',
+            'Grundlegende SEO Optimierung',
+            'Schnelle Ladezeiten',
+            'Kontakt-Formular'
+          ],
+          cta: 'Projekt starten',
           popular: false
         },
         {
-          name: t('pricing.business.name'),
-          price: t('pricing.business.price'),
-          description: t('pricing.business.desc'),
-          features: t('pricing.business.features', { returnObjects: true }) as string[],
-          cta: t('home.phase4_btn'),
+          name: 'Business Plus',
+          price: '1.250',
+          description: 'Maximale Wirkung durch Farbe, Animationen und professionelle Verwaltung.',
+          features: [
+            'Design Upgrade (Bunt)',
+            '2D/3D Animationen inklusive',
+            'Terminvereinbarung System',
+            'Monatliche Verwaltung Standard',
+            'Google Maps Bewertungen Integration'
+          ],
+          cta: 'Jetzt wachsen',
           popular: true
         },
         {
-          name: t('pricing.custom.name'),
-          price: t('pricing.custom.price'),
-          description: t('pricing.custom.desc'),
-          features: t('pricing.custom.features', { returnObjects: true }) as string[],
-          cta: t('home.phase4_btn'),
+          name: 'Enterprise',
+          price: 'Anfrage',
+          description: 'Maßgeschneiderte Lösungen mit High-End 3D-Modellen und Vollverwaltung.',
+          features: [
+            'Personalisierte 3D-Objekte',
+            'Komplette Full-Service Verwaltung',
+            'Social Media News-Page',
+            'Sound-Effekte & Immersive UX',
+            'Priorisierter 24/7 Support'
+          ],
+          cta: 'Individuelle Beratung',
           popular: false
         }
       ]);

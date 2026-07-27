@@ -1,11 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Service, BusinessSettings, BusinessHours, BlockedDate } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
-import { Calendar as CalendarIcon, Clock, ArrowRight, ChevronRight, ChevronLeft, CheckCircle2, Loader2 } from 'lucide-react';
+import { 
+  Calendar as CalendarIcon, 
+  Clock, 
+  ArrowRight, 
+  ChevronRight, 
+  ChevronLeft, 
+  CheckCircle2, 
+  Loader2,
+  Upload,
+  FileText,
+  X
+} from 'lucide-react';
 import { format, parse, isAfter, startOfDay, addDays, isSameDay, parseISO } from 'date-fns';
 import { getDateLocale } from '@/lib/utils';
 import { DayPicker } from 'react-day-picker';
@@ -53,8 +64,18 @@ export default function Booking() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<BookingFormData>();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setUploadedFile(e.target.files[0]);
+    }
+  };
+
+  const removeFile = () => setUploadedFile(null);
 
   useEffect(() => {
     async function fetchInitialData() {
@@ -124,18 +145,10 @@ export default function Booking() {
             setServices([
               {
                 id: '1',
-                name: JSON.stringify({ en: 'Website Development', de: 'Webentwicklung' }),
-                description: JSON.stringify({ en: 'Modern tech stacks, lightning fast performance.', de: 'Moderne Tech-Stacks, blitzschnelle Performance.' }),
-                price: 1500,
-                duration_minutes: 60,
-                is_active: true
-              },
-              {
-                id: '2',
-                name: JSON.stringify({ en: 'Online Shops', de: 'Online-Shops' }),
-                description: JSON.stringify({ en: 'Optimized for conversion and growth.', de: 'Optimiert für Konversion und Wachstum.' }),
-                price: 2500,
-                duration_minutes: 90,
+                name: JSON.stringify({ en: 'Website Strategy Session', de: 'Website Beratung' }),
+                description: JSON.stringify({ en: 'Executive discussion to outline your technological trajectory and digital presence.', de: 'Kostenlose Erstberatung für moderne Unternehmenswebsites, Landingpages und digitale Lösungen.' }),
+                price: 0,
+                duration_minutes: 45,
                 is_active: true
               }
             ] as Service[]);
@@ -533,6 +546,64 @@ export default function Booking() {
                           placeholder={t('booking.form_notes_ph')}
                           className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl min-h-[120px]"
                         />
+                      </div>
+
+                      {/* File Uploader */}
+                      <div>
+                        <label className="block text-xs uppercase tracking-widest font-mono text-gray-400 mb-3">
+                          {t('booking.form_upload_label')}
+                        </label>
+                        <div 
+                          onClick={() => fileInputRef.current?.click()}
+                          onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-cyan-500'); }}
+                          onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('border-cyan-500'); }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove('border-cyan-500');
+                            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                              setUploadedFile(e.dataTransfer.files[0]);
+                            }
+                          }}
+                          className={cn(
+                            "relative border-2 border-dashed border-white/10 rounded-2xl p-8 transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center text-center",
+                            uploadedFile ? "border-cyan-500/50 bg-cyan-500/5" : "hover:border-white/20 hover:bg-white/[0.02]"
+                          )}
+                        >
+                          <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            onChange={handleFileChange} 
+                            className="hidden" 
+                            accept=".pdf,.docx,.doc,.txt"
+                          />
+                          
+                          {uploadedFile ? (
+                            <div className="flex flex-col items-center space-y-4">
+                              <div className="w-16 h-16 rounded-full bg-cyan-500/10 flex items-center justify-center text-cyan-500">
+                                <FileText size={32} />
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-white font-medium">{uploadedFile.name}</p>
+                                <p className="text-slate-500 text-xs">{(uploadedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                              </div>
+                              <button 
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); removeFile(); }}
+                                className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-slate-400 text-[10px] uppercase tracking-widest hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 transition-all flex items-center gap-2"
+                              >
+                                <X size={14} /> Entfernen
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-slate-500 mb-6 group-hover:scale-110 group-hover:text-cyan-500 transition-all">
+                                <Upload size={32} />
+                              </div>
+                              <p className="text-slate-300 mb-2">{t('booking.form_upload_hint')}</p>
+                              <p className="text-slate-500 text-[10px] uppercase tracking-widest">DSGVO-KONFORMER UPLOAD</p>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </form>
                   </div>

@@ -9,15 +9,15 @@ const FAQS = [
     items: [
       {
         q: "Was unterscheidet Viktor Labs von anderen Agenturen?",
-        a: "Wir verkaufen keine 'Webseiten' – wir verkaufen digitale Wertschöpfungsketten. Unsere Projekte sind von Grund auf auf Conversion, Geschwindigkeit und moderne Technologie (Next.js) optimiert. Zudem integrieren wir KI direkt in Ihre Workflows, um echte Zeit- und Kostenersparnis zu schaffen."
+        a: "Wir verkaufen keine 'Webseiten' – wir verkaufen digitale Wertschöpfungsketten. Als Viktor Labs entwickeln wir High-End-Websites mit immersiven 3D-Animationen und kompromissloser Performance, die Marken online dominieren lassen."
       },
       {
         q: "Wie lange dauert ein typisches Projekt?",
-        a: "Eine Standard-Business-Website benötigt in der Regel 2–4 Wochen. Komplexere Projekte mit KI-Automation oder umfangreichen Backends können 6–8 Wochen in Anspruch nehmen."
+        a: "Eine Standard-Business-Website benötigt in der Regel 2–4 Wochen. Komplexere Projekte mit umfangreichen 3D-Modellen können 6–8 Wochen in Anspruch nehmen."
       },
       {
-        q: "Werden meine Daten für das KI-Training verwendet?",
-        a: "Nein. Wir nutzen professionelle Schnittstellen (Enterprise APIs), bei denen Ihre Daten nicht zum Training öffentlicher Modelle verwendet werden. Ihre Geschäftsgeheimnisse bleiben sicher."
+        q: "Kann ich die Inhalte später selbst ändern?",
+        a: "Ja. Wir integrieren auf Wunsch ein einfach zu bedienendes CMS, mit dem Sie Texte und Bilder ohne Programmierkenntnisse anpassen können. Alternativ übernehmen wir das im Rahmen unserer Verwaltungs-Pakete."
       }
     ]
   },
@@ -26,49 +26,36 @@ const FAQS = [
     items: [
       {
         q: "Wie setzen sich die Preise zusammen?",
-        a: "Wir arbeiten mit transparenten Fixpreisen für die Erstellung und optionalen monatlichen Gebühren für Wartung, Hosting und KI-Services. Alle Preise können Sie live in unserem Konfigurator kalkulieren."
+        a: "Wir arbeiten mit transparenten Fixpreisen für die Erstellung (ab 550 € für Schwarz-Weiß) und optionalen monatlichen Gebühren für die Verwaltung (ab 59,99 €). Alle Details finden Sie in unserem Preiskalkulator."
       },
       {
         q: "Gibt es versteckte Kosten?",
-        a: "Nein. Unser Angebot ist ein Fixpreis-Angebot. Kosten für Drittanbieter (z.B. Domain, spezielle API-Credits) werden transparent kommuniziert."
+        a: "Nein. Unser Angebot ist ein Fixpreis-Angebot. Kosten für Drittanbieter (z.B. Domain, Hosting) werden transparent kommuniziert."
       },
       {
-        q: "Bieten Sie Ratenzahlung an?",
-        a: "Ja, für größere Projekte bieten wir individuelle Zahlungspläne an. Sprechen Sie uns einfach im Erstgespräch darauf an."
+        q: "Sind die monatlichen Kosten verpflichtend?",
+        a: "Nein. Die Verwaltung ist optional. Sie können Ihre Website auch selbst pflegen, wir beraten Sie gerne dazu."
       }
     ]
   },
   {
-    category: "Technik & SEO",
+    category: "Design & Animation",
     items: [
       {
-        q: "Nutzen Sie WordPress?",
-        a: "In der Regel nicht. Wir setzen auf moderne Headless-Architekturen (React/Next.js). Das macht Ihre Seite schneller, sicherer und besser für Google optimiert als herkömmliche Systeme."
+        q: "Was ist der Unterschied zwischen 2D und 3D Animation?",
+        a: "2D Animationen sind flache Grafiken, die sich bewegen (z.B. Icons oder Illustrationen). 3D Animationen sind räumliche Modelle, die Tiefe und eine moderne Ästhetik in Ihre Website bringen."
       },
       {
-        q: "Ist die Website für Google optimiert?",
-        a: "Ja, jede Seite wird nach aktuellen SEO-Standards (Core Web Vitals, semantisches HTML, Meta-Daten) entwickelt. Für maximale Sichtbarkeit bieten wir zudem unsere Premium-SEO-Pakete an."
+        q: "Können Sie auch personalisierte Objekte erstellen?",
+        a: "Ja, wir modellieren individuelle 3D-Objekte passend zu Ihrer Branche oder Ihrem Produkt ab 299 €."
       },
       {
-        q: "Kann ich die Inhalte später selbst ändern?",
-        a: "Ja. Wir integrieren auf Wunsch ein einfach zu bedienendes CMS (Content Management System), mit dem Sie Texte und Bilder ohne Programmierkenntnisse anpassen können."
-      }
-    ]
-  },
-  {
-    category: "KI-Automation",
-    items: [
-      {
-        q: "Welche Prozesse lassen sich automatisieren?",
-        a: "Fast alles, was repetitiv ist: E-Mail-Beantwortung, Lead-Qualifizierung, Datenübertragung zwischen Tools, Social Media Postings oder die Erstellung von Berichten."
+        q: "Wie funktioniert der Upload von PDF-Briefings?",
+        a: "Über unser Formular können Sie Konzept-PDFs oder Briefings direkt per Drag-and-Drop datenschutzkonform hochladen. Dies ermöglicht uns eine präzise Vorbereitung auf unser Erstgespräch."
       },
       {
-        q: "Brauche ich technisches Vorwissen für den Chatbot?",
-        a: "Überhaupt nicht. Wir richten alles schlüsselfertig für Sie ein. Die Pflege der Daten ist so einfach wie das Ausfüllen eines Formulars."
-      },
-      {
-        q: "Was passiert, wenn die KI einen Fehler macht?",
-        a: "Unsere Systeme sind so eingestellt, dass sie im Zweifelsfall an einen menschlichen Mitarbeiter übergeben. Wir implementieren Sicherheitsmechanismen (Guardrails), um die Qualität der Antworten zu sichern."
+        q: "Machen Animationen die Website langsam?",
+        a: "Nein. Wir nutzen modernste Technologien wie WebGL und Lottie, um flüssige Animationen bei minimaler Ladezeit zu garantieren. Sie fesseln den Blick und erhöhen die Verweildauer signifikant."
       }
     ]
   }

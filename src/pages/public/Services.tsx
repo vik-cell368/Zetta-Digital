@@ -7,14 +7,12 @@ import { Service } from '@/lib/types';
 import { getTranslatedText } from '@/lib/utils';
 import { 
   Globe, 
-  Bot, 
-  Zap, 
-  Cpu, 
+  Sparkles,
   ArrowRight, 
   CheckCircle2, 
   MessageSquare, 
   Layout, 
-  LineChart 
+  Zap
 } from 'lucide-react';
 
 import PriceConfigurator from '@/components/pricing/PriceConfigurator';
@@ -50,121 +48,76 @@ export default function Services() {
     fetchServices();
   }, []);
 
-  const getServiceIcon = (id: string, index: number) => {
-    const icons = [Globe, Zap, MessageSquare, Cpu, Bot, Layout, LineChart];
+  const getServiceIcon = (id: string) => {
     if (id === 'webdesign') return Globe;
-    if (id === 'ai-automation') return Zap;
-    if (id === 'ai-chatbots') return MessageSquare;
-    if (id === 'workflow-automation') return Cpu;
-    return icons[index % icons.length];
-  };
-
-  const servicesData = {
-    'webdesign': {
-      id: 'webdesign',
-      title: t('services.webdesign.title'),
-      description: t('services.webdesign.description'),
-      features: t('services.webdesign.features', { returnObjects: true }) as string[],
-      process: t('services.webdesign.process', { returnObjects: true }) as string[],
-      tech: t('services.webdesign.tech', { returnObjects: true }) as string[],
-      faq: [
-        { q: t('services.webdesign.faq_q1'), a: t('services.webdesign.faq_a1') },
-        { q: t('services.webdesign.faq_q2'), a: t('services.webdesign.faq_a2') }
-      ]
-    },
-    'ai-automation': {
-      id: 'ai-automation',
-      title: t('services.ai_automation.title'),
-      description: t('services.ai_automation.description'),
-      features: t('services.ai_automation.features', { returnObjects: true }) as string[],
-      process: t('services.ai_automation.process', { returnObjects: true }) as string[],
-      tech: t('services.ai_automation.tech', { returnObjects: true }) as string[],
-      faq: [
-        { q: t('services.ai_automation.faq_q1'), a: t('services.ai_automation.faq_a1') }
-      ]
-    },
-    'ai-chatbots': {
-      id: 'ai-chatbots',
-      title: t('services.ai_chatbots.title'),
-      description: t('services.ai_chatbots.description'),
-      features: t('services.ai_chatbots.features', { returnObjects: true }) as string[],
-      process: t('services.ai_chatbots.process', { returnObjects: true }) as string[],
-      tech: t('services.ai_chatbots.tech', { returnObjects: true }) as string[],
-      faq: [
-        { q: t('services.ai_chatbots.faq_q1'), a: t('services.ai_chatbots.faq_a1') }
-      ]
-    },
-    'workflow-automation': {
-      id: 'workflow-automation',
-      title: t('services.workflow_automation.title'),
-      description: t('services.workflow_automation.description'),
-      features: t('services.workflow_automation.features', { returnObjects: true }) as string[],
-      process: t('services.workflow_automation.process', { returnObjects: true }) as string[],
-      tech: t('services.workflow_automation.tech', { returnObjects: true }) as string[],
-      faq: [
-        { q: t('services.workflow_automation.faq_q1'), a: t('services.workflow_automation.faq_a1') }
-      ]
-    }
+    if (id === 'animation') return Sparkles;
+    if (id === 'management') return Layout;
+    if (id === 'add-ons') return Zap;
+    return Globe;
   };
 
   const displayServices = React.useMemo(() => {
-    // If no DB services, return defaults
-    if (!dbServices || dbServices.length === 0) {
-      return Object.values(servicesData).map((s, i) => ({
-        ...s,
-        icon: getServiceIcon(s.id, i)
-      }));
-    }
+    const services = [
+      {
+        id: 'webdesign',
+        title: 'High-End Webdesign',
+        description: 'Fokus auf Conversion-Optimierung und zielgenaues Targeting. Keine Templates – maßgeschneiderte Unikate für Ihren Erfolg.',
+        features: [
+          'Standard (Schwarz-Weiß) ab 550 €',
+          'Buntes Design ab 250 € Zusatz',
+          'Responsive Design für alle Geräte',
+          'SEO-Optimierung inklusive'
+        ],
+        process: ['Zielanalyse', 'Konzeption', 'High-End Design', 'Go-Live'],
+        tech: ['React', 'Tailwind CSS', 'Framer Motion'],
+        icon: Globe
+      },
+      {
+        id: 'animation',
+        title: 'Motion & 3D',
+        description: 'Produkte dreidimensional greifbar machen und Verweildauern maximieren. Immersive Erlebnisse ohne Performance-Verlust.',
+        features: [
+          'Animation 2D ab 80 €',
+          'Personalisierte 2D-Animation ab 200 €',
+          'Animation 3D ab 180 €',
+          'Personalisierte 3D-Animation ab 299 €'
+        ],
+        process: ['Storyboard', '3D Modeling', 'Animation', 'Integration'],
+        tech: ['Three.js', 'Lottie', 'WebGL'],
+        icon: Sparkles
+      },
+      {
+        id: 'management',
+        title: 'Rundum-Sorglos-Verwaltung',
+        description: 'Dauerhafte Betreuung, höchste Sicherheit und blitzschnelle Ladezeiten. Wir sind Ihr unermüdlicher technischer Partner.',
+        features: [
+          'Standard-Verwaltung ab 59,99 € / Monat',
+          'Voll-Verwaltung ab 99,99 € / Monat',
+          'Terminpflege & Arbeitszeiten',
+          'Inhaltsaktualisierungen'
+        ],
+        process: ['Sicherheits-Check', 'Updates', 'Performance', 'Support'],
+        tech: ['Managed Hosting', 'Security Suite', 'Analytics'],
+        icon: Layout
+      },
+      {
+        id: 'add-ons',
+        title: 'Zusatzleistungen',
+        description: 'Intelligente Prozesse für nahtlose Terminbuchungen und Bewertungen. Automatisieren Sie Ihren Vertrieb.',
+        features: [
+          'Terminvereinbarung ab 74,99 €',
+          'Social Media Connection ab 79 €',
+          'Nachrichten-Page ab 170 €',
+          'Google Maps Bewertungen ab 99 €'
+        ],
+        process: ['Anforderungs-Check', 'Integration', 'Automation', 'Testlauf'],
+        tech: ['API Integration', 'Automation Tools', 'Review Widgets'],
+        icon: Zap
+      }
+    ];
 
-    // Merge DB services with hardcoded ones
-    const finalServices = Object.values(servicesData).map((fallback, i) => {
-      const dbService = dbServices.find(s => s.id === fallback.id);
-      if (!dbService) return { ...fallback, icon: getServiceIcon(fallback.id, i) };
-
-      const featuresRaw = getTranslatedText(dbService.features || '', currentLang);
-      const processRaw = getTranslatedText(dbService.process || '', currentLang);
-      const faqsRaw = getTranslatedText(dbService.faqs || '', currentLang);
-
-      return {
-        id: dbService.id,
-        title: getTranslatedText(dbService.name, currentLang) || fallback.title,
-        description: getTranslatedText(dbService.description, currentLang) || fallback.description,
-        features: featuresRaw ? featuresRaw.split('\n').filter(Boolean) : fallback.features,
-        process: processRaw ? processRaw.split('\n').filter(Boolean) : fallback.process,
-        tech: dbService.tech ? dbService.tech.split(',').map(t => t.trim()) : fallback.tech,
-        faq: faqsRaw ? faqsRaw.split('\n').filter(Boolean).map(line => {
-          const [q, a] = line.split('|');
-          return { q: q?.trim(), a: a?.trim() };
-        }).filter(item => item.q && item.a) : fallback.faq,
-        icon: getServiceIcon(dbService.id, i)
-      };
-    });
-
-    // Add extra services from DB
-    const extraServices = dbServices
-      .filter(s => !servicesData[s.id as keyof typeof servicesData])
-      .map((s, i) => {
-        const featuresRaw = getTranslatedText(s.features || '', currentLang);
-        const processRaw = getTranslatedText(s.process || '', currentLang);
-        const faqsRaw = getTranslatedText(s.faqs || '', currentLang);
-
-        return {
-          id: s.id,
-          title: getTranslatedText(s.name, currentLang),
-          description: getTranslatedText(s.description, currentLang),
-          features: featuresRaw ? featuresRaw.split('\n').filter(Boolean) : [],
-          process: processRaw ? processRaw.split('\n').filter(Boolean) : [],
-          tech: s.tech ? s.tech.split(',').map(t => t.trim()) : [],
-          faq: faqsRaw ? faqsRaw.split('\n').filter(Boolean).map(line => {
-            const [q, a] = line.split('|');
-            return { q: q?.trim(), a: a?.trim() };
-          }).filter(item => item.q && item.a) : [],
-          icon: getServiceIcon(s.id, i + Object.keys(servicesData).length)
-        };
-      });
-
-    return [...finalServices, ...extraServices];
-  }, [dbServices, currentLang, i18n.language]);
+    return services;
+  }, []);
 
   if (isLoading) {
     return (
@@ -202,7 +155,7 @@ export default function Services() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 mb-48">
                 <div>
-                  <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-12">Vorteile</div>
+                  <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-12">Leistungen</div>
                   <ul className="space-y-8">
                     {service.features.map((feature, idx) => (
                       <li key={idx} className="flex items-start text-xl text-slate-300 font-light leading-relaxed">
@@ -214,7 +167,7 @@ export default function Services() {
                 </div>
                 
                 <div>
-                  <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-12">Prozess</div>
+                  <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-12">Unser Ansatz</div>
                   <div className="space-y-10">
                     {service.process.map((step, index) => (
                       <div key={index} className="flex items-center group">
@@ -229,7 +182,7 @@ export default function Services() {
               </div>
 
               <div className="bg-white/[0.02] border border-white/5 rounded-[4rem] p-12 md:p-20 mb-48">
-                <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-12">Technologie-Stack</div>
+                <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-12">Technologie & Fokus</div>
                 <div className="flex flex-wrap gap-4">
                   {service.tech.map((t, idx) => (
                     <span key={idx} className="px-10 py-4 rounded-full border border-white/5 bg-white/[0.03] text-slate-400 text-xs font-black uppercase tracking-[0.2em] hover:text-white hover:border-white/20 transition-all duration-500 cursor-default">
@@ -239,24 +192,10 @@ export default function Services() {
                 </div>
               </div>
 
-              {service.faq && service.faq.length > 0 && (
-                <div className="mb-48">
-                  <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-16">Häufig gestellte Fragen</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                    {service.faq.map((item, i) => (
-                      <div key={i} className="bg-white/[0.02] border border-white/5 p-12 rounded-[3rem] hover:border-white/10 transition-colors">
-                        <h4 className="text-2xl text-white mb-6 font-display font-medium tracking-tight">{item.q}</h4>
-                        <p className="text-lg text-slate-400 font-light leading-relaxed">{item.a}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <div className="bg-cyan-600 rounded-[5rem] p-16 md:p-32 text-center space-y-12 relative overflow-hidden group">
                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(255,255,255,0.2),transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                  <h2 className="text-5xl md:text-8xl font-display font-medium text-dark-950 relative z-10 leading-[0.9] tracking-tighter uppercase">STARTEN WIR <br /> GEMEINSAM?</h2>
-                 <p className="text-dark-950/70 text-xl md:text-2xl font-medium max-w-2xl mx-auto relative z-10">{t('services.cta_subtitle')}</p>
+                 <p className="text-dark-950/70 text-xl md:text-2xl font-medium max-w-2xl mx-auto relative z-10">Lassen Sie uns Ihre Vision in eine erstklassige Website verwandeln.</p>
                  <div className="pt-8 relative z-10">
                     <Link to="/booking">
                       <button className="h-24 px-16 rounded-full bg-dark-950 text-white font-black uppercase tracking-[0.3em] text-xs hover:scale-105 active:scale-95 transition-all flex items-center gap-4 mx-auto shadow-2xl group/btn">
@@ -286,21 +225,21 @@ export default function Services() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <div className="max-w-5xl mb-32 space-y-8">
+          <header className="max-w-5xl mb-32 space-y-8">
             <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px]">Unsere Expertise</div>
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-display font-medium text-white tracking-tighter leading-[0.85]">
-              LÖSUNGEN FÜR <br /> <span className="text-slate-600 italic">EINE DIGITALE</span> <br /> <span className="text-white">ZUKUNFT.</span>
+            <h1 id="services-title" className="text-6xl md:text-8xl lg:text-9xl font-display font-medium text-white tracking-tighter leading-[0.85]">
+              UNSER HANDWERK. <br /> <span className="text-slate-600 italic">IHRE</span> <br /> <span className="text-white">WIRKUNG.</span>
             </h1>
             <p className="text-xl md:text-3xl text-slate-400 font-light leading-relaxed max-w-4xl">
-              Wir begleiten Sie von der ersten Idee bis zur technischen Umsetzung. Ehrlich, transparent und mit höchstem Anspruch an Design und Code.
+              Wir entwickeln High-End-Websites mit immersiven 3D-Animationen und kompromissloser Performance. Für Unternehmen, die den Standard definieren wollen.
             </p>
-          </div>
+          </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-48">
             {displayServices.map((service, index) => {
               const Icon = service.icon;
               return (
-                <motion.div
+                <motion.article
                   key={service.id}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -328,7 +267,7 @@ export default function Services() {
                       </div>
                     </div>
                   </Link>
-                </motion.div>
+                </motion.article>
               );
             })}
           </div>
