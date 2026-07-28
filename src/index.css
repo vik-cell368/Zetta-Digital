@@ -1,26 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Playfair Display", serif;
-  --font-tech: "Space Grotesk", sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-serif: "Playfair Display", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  --color-dark-950: #0D0F13;
-  --color-dark-900: #14171D;
-  --color-dark-800: #1C2129;
-  --color-dark-700: #262D38;
+  --color-dark-950: #0D0D0D;
+  --color-dark-900: #212121;
+  --color-dark-800: #1A1A1A;
+  --color-dark-700: #2A2A2A;
   
-  --color-cyan-400: #7396A1;
-  --color-cyan-500: #4A6D7C;
-  --color-cyan-600: #36505D;
+  --color-cyan-400: #3395FF;
+  --color-cyan-500: #007BFF;
+  --color-cyan-600: #0062CC;
 
-  --color-warm-50: #FAF9F6;
-  --color-warm-100: #F3F1EA;
-  --color-warm-500: #C5A059;
-
-  --color-slate-50: #F8FAFC;
+  --color-slate-50: #F8F9FA;
   --color-slate-100: #f1f5f9;
   --color-slate-400: #94A3B8;
   --color-slate-500: #64748B;
@@ -28,30 +24,44 @@
 
 @layer base {
   body {
-    @apply bg-dark-950 text-slate-200 font-sans antialiased selection:bg-cyan-500/20 selection:text-white;
+    @apply bg-white text-slate-900 font-sans antialiased selection:bg-cyan-500/20 selection:text-white;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display text-slate-50 tracking-tight;
+    @apply font-display text-dark-900 tracking-tight;
   }
 }
 
 @layer utilities {
   .glass-card {
-    @apply bg-dark-900/40 backdrop-blur-3xl border border-white/5 shadow-2xl rounded-[4rem];
+    @apply bg-white/[0.03] border border-white/10 backdrop-blur-2xl shadow-2xl;
   }
   
-  .text-glow {
-    text-shadow: 0 0 50px rgba(74, 109, 124, 0.15);
+  .section-light {
+    @apply bg-white text-slate-900;
   }
 
-  .text-glow-gold {
-    text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+  .section-dark {
+    @apply bg-dark-900 text-white;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 40px rgba(0, 123, 255, 0.2);
   }
 
   .bg-noise {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    opacity: 0.03;
+    opacity: 0.02;
+  }
+
+  .bg-grid-white {
+    background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+
+  .bg-grid-dark {
+    background-image: radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
   }
 }
 

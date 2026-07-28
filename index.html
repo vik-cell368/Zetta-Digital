@@ -4,9 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#020617" />
+    <meta name="robots" content="index, follow" />
     <meta name="description" content="Viktor Labs - Digital Architecture & Motion. Wir entwickeln High-End-Websites mit immersiven 3D-Animationen und kompromissloser Performance. Erleben Sie digitale Exzellenz." />
     <meta name="keywords" content="Viktor Labs, Webdesign, 3D Animation, Motion Design, High-End Websites, Performance Optimierung, Digitale Architektur" />
     
+    <link rel="canonical" href="https://viktor-labs.de/" />
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://viktor-labs.de/" />
@@ -26,9 +29,29 @@
     <!-- Preconnect & Preload -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" href="/src/main.tsx" as="script" crossorigin>
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ProfessionalService",
+      "name": "Viktor Labs",
+      "url": "https://viktor-labs.de",
+      "logo": "https://viktor-labs.de/logo.png",
+      "image": "https://viktor-labs.de/og-image.png",
+      "description": "High-End Webdesign, 3D Animationen & digitale Performance-Architektur.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "DE"
+      },
+      "priceRange": "€€€"
+    }
+    </script>
   </head>
   <body class="bg-dark-950 text-slate-200 antialiased selection:bg-cyan-500/30 selection:text-white overflow-x-hidden">
+    <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-cyan-500 focus:text-white">
+      Zum Hauptinhalt springen
+    </a>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <noscript>

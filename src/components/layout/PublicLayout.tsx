@@ -67,44 +67,49 @@ export default function PublicLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-dark-950 text-gray-100 font-sans selection:bg-cyan-500/30">
-      
-      {/* Navigation */}
+           {/* Navigation */}
       <header 
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isScrolled ? 'py-4' : 'py-8'
+          isScrolled ? 'py-3' : 'py-5 md:py-6'
         }`}
       >
-        <div className="container mx-auto px-6">
-          <div className={`mx-auto max-w-6xl rounded-full transition-all duration-500 flex items-center justify-between px-6 md:px-10 h-16 ${
-            isScrolled ? 'glass-card border-white/10 bg-dark-900/60' : 'bg-transparent border-transparent'
+        <div className="container mx-auto px-4 md:px-6">
+          <div className={`mx-auto max-w-7xl rounded-full transition-all duration-500 flex items-center justify-between px-4 sm:px-6 md:px-8 h-16 md:h-18 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.6)] border ${
+            isScrolled 
+              ? 'bg-dark-950/90 border-white/20 backdrop-blur-3xl' 
+              : 'bg-dark-900/60 border-white/10 backdrop-blur-2xl'
           }`}>
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-4 group">
-              <div className="relative">
-                <Hexagon className="w-10 h-10 text-cyan-500 fill-cyan-500/5 group-hover:scale-110 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-cyan-500/5 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Link to="/" className="flex items-center gap-2.5 sm:gap-3.5 group shrink-0">
+              <div className="relative flex items-center justify-center rounded-full overflow-hidden shrink-0">
+                <img 
+                  src="/logo.png" 
+                  alt="Viktor Labs Logo" 
+                  className="h-9 sm:h-10 md:h-11 w-auto object-contain rounded-full group-hover:scale-105 transition-transform duration-500" 
+                  referrerPolicy="no-referrer"
+                />
               </div>
-              <span className="font-display font-medium text-2xl tracking-tight text-slate-50 flex items-center leading-none">
-                VIKTOR<span className="text-cyan-500 ml-1.5 font-light opacity-60 italic">LABS</span>
-              </span>
+              <div className="hidden sm:flex flex-col shrink-0">
+                <span className="font-display font-medium text-base md:text-lg tracking-tight text-white leading-none whitespace-nowrap">
+                  VIKTOR<span className="text-cyan-500">LABS</span>
+                </span>
+                <span className="text-[6.5px] md:text-[7.5px] uppercase tracking-[0.3em] text-slate-400 font-black mt-0.5 whitespace-nowrap">Digital Architecture</span>
+              </div>
             </Link>
 
-            {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-10" aria-label="Hauptnavigation">
+            {/* Desktop Nav (lg+ screens) */}
+            <nav className="hidden lg:flex items-center gap-4 xl:gap-8 2xl:gap-10 shrink-0" aria-label="Hauptnavigation">
               {[
                 { name: 'Leistungen', path: '/services' },
                 { name: 'Preise', path: '/pricing' },
-                { name: 'Prozess', path: '/process' },
-                { name: 'Projekte', path: '/portfolio' },
                 { name: 'Über Uns', path: '/about' },
-                { name: 'FAQ', path: '/faq' },
               ].map((item) => (
                 <Link 
                   key={item.path} 
                   to={item.path}
                   aria-current={location.pathname === item.path ? 'page' : undefined}
-                  className={`text-[11px] uppercase tracking-[0.3em] font-black transition-all hover:tracking-[0.4em] ${
-                    location.pathname === item.path ? 'text-cyan-500' : 'text-slate-500 hover:text-white'
+                  className={`text-[9.5px] md:text-[10px] uppercase tracking-[0.2em] font-black transition-all hover:text-cyan-500 whitespace-nowrap ${
+                    location.pathname === item.path ? 'text-cyan-500' : 'text-white'
                   }`}
                 >
                   {item.name}
@@ -113,14 +118,14 @@ export default function PublicLayout() {
             </nav>
 
             {/* Actions */}
-            <div className="flex items-center gap-4 md:gap-6">
-              <div className="hidden lg:flex items-center gap-6">
-                <Link to="/pricing" className="hidden xl:block">
+            <div className="flex items-center gap-2.5 sm:gap-3 md:gap-4 shrink-0">
+              <div className="hidden lg:flex items-center gap-3 xl:gap-5 2xl:gap-6 shrink-0">
+                <Link to="/pricing" className="hidden 2xl:block shrink-0">
                   <button 
                     aria-label="Preiskalkulator öffnen"
-                    className="text-[10px] uppercase tracking-[0.2em] font-black text-cyan-500 hover:text-white transition-colors flex items-center gap-2"
+                    className="text-[10px] uppercase tracking-[0.2em] font-black text-cyan-500 hover:text-white transition-colors flex items-center gap-1.5 whitespace-nowrap"
                   >
-                    <Sparkles size={14} aria-hidden="true" />
+                    <Sparkles size={13} aria-hidden="true" />
                     Kalkulator
                   </button>
                 </Link>
@@ -128,21 +133,21 @@ export default function PublicLayout() {
                 <button 
                   onClick={() => setIsSearchOpen(true)}
                   aria-label="Suche öffnen (Cmd+K)"
-                  className="flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-all group"
+                  className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-all group shrink-0"
                 >
-                  <SearchIcon size={14} aria-hidden="true" />
-                  <span className="text-[10px] uppercase tracking-widest font-bold">Suchen</span>
-                  <span className="text-[9px] bg-white/10 px-1.5 py-0.5 rounded flex items-center gap-1" aria-hidden="true">
-                    <Command size={10} /> K
+                  <SearchIcon size={13} aria-hidden="true" />
+                  <span className="text-[9.5px] uppercase tracking-wider font-bold whitespace-nowrap">Suchen</span>
+                  <span className="text-[8.5px] bg-white/10 px-1.5 py-0.5 rounded flex items-center gap-0.5" aria-hidden="true">
+                    <Command size={9} /> K
                   </span>
                 </button>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2.5 shrink-0 px-1">
                   {['DE', 'EN'].map((lang) => (
                     <button
                       key={lang}
                       onClick={() => changeLanguage(lang.toLowerCase())}
-                      className={`text-[10px] font-black tracking-[0.2em] transition-colors ${
+                      className={`text-[9.5px] md:text-[10px] font-black tracking-[0.15em] transition-colors ${
                         currentLang.toUpperCase() === lang ? 'text-cyan-500' : 'text-slate-500 hover:text-white'
                       }`}
                     >
@@ -150,23 +155,25 @@ export default function PublicLayout() {
                     </button>
                   ))}
                 </div>
-                <Link to="/booking">
-                  <button className="h-14 px-10 rounded-full bg-white text-dark-950 text-[10px] uppercase tracking-[0.2em] font-black hover:bg-cyan-500 hover:scale-105 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.05)] active:scale-95">
-                    Anfrage starten
+
+                <Link to="/booking" className="shrink-0">
+                  <button className="h-10 md:h-11 px-4 md:px-5 rounded-full bg-cyan-500 text-white text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-black hover:scale-[1.03] active:scale-95 transition-all shadow-[0_8px_25px_rgba(0,123,255,0.25)] whitespace-nowrap">
+                    Beratung vereinbaren
                   </button>
                 </Link>
               </div>
 
-              {/* Mobile Actions */}
-              <div className="lg:hidden flex items-center gap-4">
-                <button onClick={() => setIsSearchOpen(true)} className="p-2 text-gray-400">
-                  <SearchIcon size={20} />
+              {/* Mobile / Tablet Actions */}
+              <div className="lg:hidden flex items-center gap-2 sm:gap-3">
+                <button onClick={() => setIsSearchOpen(true)} className="p-2 text-gray-400 hover:text-white transition-colors" aria-label="Suche">
+                  <SearchIcon size={18} />
                 </button>
                 <button 
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="p-2 text-white"
+                  className="p-2 sm:p-2.5 rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all"
+                  aria-label="Menü umschalten"
                 >
-                  {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                  {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
                 </button>
               </div>
             </div>
@@ -259,7 +266,7 @@ export default function PublicLayout() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-40 bg-dark-950 flex flex-col items-center justify-center p-6 lg:hidden"
+            className="fixed inset-0 z-40 bg-dark-950 flex flex-col items-center justify-center p-6 xl:hidden"
           >
             <div className="flex flex-col items-center gap-8 text-center">
               {[
@@ -291,78 +298,82 @@ export default function PublicLayout() {
         )}
       </AnimatePresence>
 
-      <main className="flex-1 flex flex-col">
+      <main id="main-content" className="flex-1 flex flex-col" tabIndex={-1}>
         <AnimatePresence mode="wait">
           <PageTransition><Outlet /></PageTransition>
         </AnimatePresence>
       </main>
 
       {/* Footer */}
-      <footer className="bg-dark-950 border-t border-white/5 py-20">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-24 mb-20">
-            <div className="col-span-1 lg:col-span-1">
-              <Link to="/" className="flex items-center gap-3 mb-8 group">
-                <Hexagon className="w-6 h-6 text-cyan-500 fill-cyan-500/10" />
-                <span className="font-display font-bold text-xl tracking-tight text-slate-50 uppercase italic">
-                  VIKTOR<span className="text-cyan-500 ml-1.5 font-light opacity-80">LABS</span>
+      <footer className="bg-dark-900 border-t border-white/5 py-24 relative overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-cyan-500/5 blur-[120px] rounded-full pointer-events-none" />
+        <div className="container mx-auto px-6 max-w-7xl relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-20 mb-20">
+            <div>
+              <Link to="/" className="flex items-center gap-4 mb-8 group">
+                <img 
+                  src="/logo.png" 
+                  alt="Viktor Labs Logo" 
+                  className="h-14 w-auto object-contain rounded-full" 
+                  referrerPolicy="no-referrer"
+                />
+                <span className="font-display font-medium text-2xl tracking-tight text-white leading-none">
+                  VIKTOR<span className="text-cyan-500">LABS</span>
                 </span>
               </Link>
-              <p className="text-slate-400 text-sm leading-relaxed mb-8">
-                Wir gestalten erstklassige Websites mit flüssigen Animationen und professioneller Verwaltung. Transparent, modern und effektiv.
+              <p className="text-slate-400 text-sm leading-relaxed mb-10 max-w-xs font-light">
+                Hochperformante Web-Architektur trifft auf immersive Ästhetik. Wir entwickeln intelligente Lösungen für Unternehmen, die den Standard im Netz setzen wollen.
               </p>
               <div className="flex items-center gap-4">
-                {/* Socials placeholder */}
                 {[1,2,3].map(i => (
-                  <div key={i} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-cyan-500/20 transition-colors cursor-pointer" />
+                  <div key={i} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-cyan-500/20 transition-all cursor-pointer group/social">
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-600 group-hover/social:bg-cyan-500 transition-colors" />
+                  </div>
                 ))}
               </div>
             </div>
 
             <div>
-              <h4 className="text-xs uppercase tracking-[0.2em] font-bold text-white mb-8">Leistungen</h4>
-              <ul className="space-y-4">
-                <li><Link to="/services/webdesign" className="text-sm text-gray-500 hover:text-white transition-colors">Website Erstellung</Link></li>
-                <li><Link to="/services/animation" className="text-sm text-gray-500 hover:text-white transition-colors">Design & Animation</Link></li>
-                <li><Link to="/services/management" className="text-sm text-gray-500 hover:text-white transition-colors">Website Verwaltung</Link></li>
-                <li><Link to="/services/add-ons" className="text-sm text-gray-500 hover:text-white transition-colors">Zusatzleistungen</Link></li>
+              <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-white mb-10 opacity-50">Leistungen</h4>
+              <ul className="space-y-5">
+                <li><Link to="/services/webdesign" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Website Erstellung</Link></li>
+                <li><Link to="/services/animation" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Design & Animation</Link></li>
+                <li><Link to="/services/management" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Website Verwaltung</Link></li>
+                <li><Link to="/pricing" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Preise & Optionen</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-xs uppercase tracking-[0.2em] font-bold text-white mb-8">Agentur</h4>
-              <ul className="space-y-4">
-                <li><Link to="/about" className="text-sm text-gray-500 hover:text-white transition-colors">Über Uns</Link></li>
-                <li><Link to="/process" className="text-sm text-gray-500 hover:text-white transition-colors">Unser Prozess</Link></li>
-                <li><Link to="/portfolio" className="text-sm text-gray-500 hover:text-white transition-colors">Projekte</Link></li>
-                <li><Link to="/pricing" className="text-sm text-gray-500 hover:text-white transition-colors">Preise</Link></li>
-                <li><Link to="/faq" className="text-sm text-gray-500 hover:text-white transition-colors">FAQ</Link></li>
+              <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-white mb-10 opacity-50">Agentur</h4>
+              <ul className="space-y-5">
+                <li><Link to="/about" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Über Viktor Labs</Link></li>
+                <li><Link to="/process" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Unser Prozess</Link></li>
+                <li><Link to="/portfolio" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Referenzen</Link></li>
+                <li><Link to="/faq" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Häufige Fragen</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-xs uppercase tracking-[0.2em] font-bold text-white mb-8">Kontakt</h4>
-              <ul className="space-y-4">
-                <li><Link to="/contact" className="text-sm text-gray-500 hover:text-white transition-colors">Kontaktformular</Link></li>
-                <li className="text-slate-400 text-sm">hello@viktorlabs.de</li>
-                <li className="text-slate-400 text-sm">+49 123 4567890</li>
-                <li>
-                  <Link to="/booking" className="text-sm text-cyan-500 font-bold hover:underline">
-                    Jetzt Termin vereinbaren
+              <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-white mb-10 opacity-50">Kontakt</h4>
+              <ul className="space-y-5">
+                <li className="text-slate-400 text-sm font-light">hello@viktorlabs.de</li>
+                <li className="text-slate-400 text-sm font-light">+49 176 1234567</li>
+                <li className="pt-4">
+                  <Link to="/booking" className="inline-flex h-12 px-8 rounded-full bg-cyan-500 text-white text-[10px] uppercase tracking-[0.2em] font-black items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-[0_10px_30px_rgba(0,123,255,0.3)]">
+                    Beratung vereinbaren
                   </Link>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-8">
-              <Link to="/imprint" className="text-[10px] uppercase tracking-widest text-gray-600 hover:text-white">Impressum</Link>
-              <Link to="/privacy" className="text-[10px] uppercase tracking-widest text-gray-600 hover:text-white">Datenschutz</Link>
-              <button className="text-[10px] uppercase tracking-widest text-gray-600 hover:text-white">Sitemap</button>
+          <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-10">
+              <Link to="/legal" className="text-[9px] uppercase tracking-[0.3em] text-slate-600 hover:text-white transition-colors font-black">Impressum</Link>
+              <Link to="/legal" className="text-[9px] uppercase tracking-[0.3em] text-slate-600 hover:text-white transition-colors font-black">Datenschutz</Link>
             </div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">
-              © {new Date().getFullYear()} VIKTOR LABS. ALL RIGHTS RESERVED.
+            <p className="text-[9px] uppercase tracking-[0.4em] text-slate-700 font-black">
+              © {new Date().getFullYear()} VIKTOR LABS. <span className="text-slate-800">GERMAN ENGINEERING.</span>
             </p>
           </div>
         </div>

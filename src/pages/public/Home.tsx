@@ -1,244 +1,270 @@
 import { motion, useScroll, useTransform } from 'motion/react';
 import { 
-  ArrowUpRight, 
+  ArrowRight, 
+  Globe, 
   Sparkles, 
-  CheckCircle2, 
-  TrendingUp, 
-  MessageSquare, 
-  Target,
-  ArrowRight,
-  Hexagon,
-  Layers,
+  Layout, 
   Zap,
-  Globe,
-  Layout
+  CheckCircle2,
+  Box,
+  Layers,
+  ArrowUpRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState, useRef } from 'react';
+import { useRef } from 'react';
+import { cn } from '@/lib/utils';
 
-const FeatureCard = ({ icon: Icon, title, description, to }: { icon: any, title: string, description: string, to?: string }) => {
+const BentoCard = ({ 
+  className, 
+  children, 
+  title, 
+  subtitle, 
+  icon: Icon,
+  to 
+}: { 
+  className?: string, 
+  children?: React.ReactNode, 
+  title?: string, 
+  subtitle?: string, 
+  icon?: any,
+  to?: string
+}) => {
   const navigate = useNavigate();
   return (
     <motion.div 
-      whileHover={{ y: -5 }}
-      className="group p-12 rounded-[3.5rem] bg-dark-900/40 backdrop-blur-2xl border border-white/5 hover:border-cyan-500/30 transition-all duration-500 cursor-pointer flex flex-col h-full shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
       onClick={() => to && navigate(to)}
+      className={cn(
+        "group relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-200 hover:border-cyan-500/30 transition-all duration-700 cursor-pointer p-8 flex flex-col justify-between",
+        className
+      )}
     >
-      <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500 mb-10 group-hover:scale-110 transition-transform duration-500">
-        <Icon className="w-8 h-8" />
-      </div>
-      <h3 className="text-3xl font-display font-bold text-white mb-6 leading-tight tracking-tight">{title}</h3>
-      <p className="text-slate-400 text-lg leading-relaxed mb-10 flex-grow font-light">{description}</p>
-      <div className="flex items-center gap-3 text-cyan-500 font-black uppercase tracking-[0.2em] text-[10px] transform translate-x-0 group-hover:translate-x-3 transition-all">
-        Detailansicht <ArrowRight size={16} />
-      </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 via-transparent to-transparent opacity-0 group-hover:opacity-10 transition-opacity duration-700" />
+      
+      {children ? (
+        children
+      ) : (
+        <>
+          <div className="space-y-4">
+            {Icon && (
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-cyan-500 group-hover:scale-110 transition-all duration-700">
+                <Icon size={24} />
+              </div>
+            )}
+            <div>
+              <h3 className="text-2xl font-display font-medium text-dark-900 mb-2 tracking-tight uppercase">{title}</h3>
+              <p className="text-slate-500 text-sm font-light leading-relaxed">{subtitle}</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between mt-8">
+            <div className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-400 group-hover:text-cyan-500 transition-colors">
+              Details
+            </div>
+            <ArrowUpRight size={16} className="text-slate-300 group-hover:text-cyan-500 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+          </div>
+        </>
+      )}
     </motion.div>
   );
 };
 
 export default function Home() {
   const navigate = useNavigate();
-  const [config, setConfig] = useState({
-    hero: {
-      title: "WIR BAUEN KEINE WEBSITES. <br /> <span class='text-cyan-500'>WIR BAUEN DIGITALEN VORSPRUNG.</span>",
-      subtitle: "Hochperformante Web-Architektur trifft auf immersive 3D-Ästhetik. Für Unternehmen, die im Netz nicht nur teilnehmen, sondern den Standard definieren.",
-      buttonText: "Projekt anfragen & Vision besprechen"
-    }
-  });
-
   const containerRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"]
-  });
-
-  const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
-
-  useEffect(() => {
-    const savedConfig = localStorage.getItem('viktor_labs_site_config');
-    if (savedConfig) {
-      try {
-        const parsed = JSON.parse(savedConfig);
-        if (parsed.hero) setConfig(prev => ({ ...prev, hero: parsed.hero }));
-      } catch (e) {
-        console.error("Failed to parse config", e);
-      }
-    }
-  }, []);
-
+  
   return (
-    <div ref={containerRef} className="relative bg-dark-950 overflow-hidden">
-      {/* Subtle Background Grain & Soft Glows */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] right-[-5%] w-[60%] h-[60%] bg-cyan-600/5 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] left-[-5%] w-[50%] h-[50%] bg-cyan-900/10 blur-[100px] rounded-full" />
-        <div className="absolute inset-0 bg-noise opacity-5" />
-      </div>
-
+    <div ref={containerRef} className="relative bg-white overflow-hidden">
       {/* Hero Section */}
-      <section className="relative min-h-screen pt-32 pb-20 flex flex-col items-center justify-center z-10 px-6" aria-labelledby="hero-title">
-        <motion.div 
-          style={{ opacity, scale }}
-          className="container mx-auto max-w-6xl text-center"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/[0.03] border border-white/10 text-cyan-500 text-[10px] uppercase tracking-[0.3em] font-black mb-12 backdrop-blur-md"
-          >
-            Viktor Labs // Digital Architecture & Motion
-          </motion.div>
+      <section className="relative min-h-screen pt-44 md:pt-48 lg:pt-52 pb-20 flex flex-col items-center justify-center z-10 px-6 bg-dark-900">
+        <div className="absolute inset-0 bg-grid-white pointer-events-none opacity-50" />
+        <div className="absolute inset-0 bg-noise opacity-20 pointer-events-none" />
+        <div className="container mx-auto max-w-7xl relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+            <div className="lg:col-span-7 text-left">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/[0.03] border border-white/10 text-cyan-500 text-[10px] uppercase tracking-[0.4em] font-black mb-12 backdrop-blur-md"
+              >
+                Digital Architecture & AI Motion
+              </motion.div>
 
-          <motion.h1 
-            id="hero-title"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-            className="text-6xl md:text-8xl lg:text-[9.5rem] font-display font-medium text-white mb-12 tracking-tight leading-[0.85]"
-            dangerouslySetInnerHTML={{ __html: config.hero.title }}
-          />
+              <motion.h1 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+                className="text-4xl sm:text-6xl md:text-7xl lg:text-7xl xl:text-8xl 2xl:text-[9rem] font-display font-medium text-white mb-12 tracking-tight leading-[0.88] text-glow uppercase break-words min-w-0"
+              >
+                DIE ZUKUNFT <br /> DES WEB... <br /> <span className="text-cyan-500">NEU DEFINIERT</span>
+              </motion.h1>
 
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 1 }}
-            className="text-xl md:text-3xl text-slate-400 max-w-4xl mx-auto mb-20 leading-relaxed font-light"
-          >
-            {config.hero.subtitle}
-          </motion.p>
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 1 }}
+                className="text-xl md:text-2xl text-slate-400 max-w-xl mb-16 leading-relaxed font-light"
+              >
+                Hochperformante Web-Architektur trifft auf immersive Ästhetik. Wir entwickeln intelligente Lösungen für Unternehmen, die den Standard im Netz setzen wollen.
+              </motion.p>
 
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 1 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-6"
-          >
-            <button 
-              onClick={() => navigate('/booking')}
-              aria-label="Projekt anfragen und Vision besprechen"
-              className="h-20 px-12 rounded-full bg-white text-dark-950 font-black uppercase tracking-[0.3em] text-[10px] hover:scale-105 active:scale-95 transition-all shadow-[0_20px_50px_rgba(255,255,255,0.2)] flex items-center gap-4 group"
-            >
-              Projekt anfragen & Vision besprechen
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />
-            </button>
-            <button 
-              onClick={() => navigate('/pricing')}
-              aria-label="Individuellen Preis kalkulieren"
-              className="h-20 px-12 rounded-full bg-white/[0.03] border border-white/10 text-white font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white/[0.08] transition-all flex items-center gap-4 backdrop-blur-sm"
-            >
-              Individuellen Preis kalkulieren
-            </button>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* Philosophy Section */}
-      <section className="py-48 relative z-10" aria-labelledby="vision-title">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
-            <article className="space-y-12">
-              <div className="space-y-8">
-                <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-4">Viktor Labs Vision</div>
-                <h2 id="vision-title" className="text-5xl md:text-8xl font-display font-medium text-white leading-[0.95] tracking-tight">
-                  ÄSTHETIK TRIFFT AUF <br /> <span className="text-slate-600 italic">WIRTSCHAFTLICHKEIT.</span>
-                </h2>
-                <p className="text-slate-400 text-xl md:text-2xl leading-relaxed font-light max-w-xl">
-                  Eine Website ist längst keine digitale Visitenkarte mehr, sondern Ihr stärkster digitaler Vertriebskanal. Wir verbinden Architektur mit messbarem ROI.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 space-y-6">
-                  <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500">
-                    <CheckCircle2 size={28} />
-                  </div>
-                  <div className="text-white font-bold text-xl">Absolute Transparenz</div>
-                  <p className="text-slate-500 text-base font-light leading-relaxed">Faire Festpreise, modulare Optionen und null versteckte Kosten. Wir setzen auf absolute Verlässlichkeit.</p>
-                </div>
-                <div className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 space-y-6">
-                  <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500">
-                    <Sparkles size={28} />
-                  </div>
-                  <div className="text-white font-bold text-lg">Immersive Ästhetik</div>
-                  <p className="text-slate-500 text-sm font-light leading-relaxed">Modernstes Design und flüssige 3D-Interaktionen, die Besucher binden und Ihre Marke differenzieren.</p>
-                </div>
-                <div className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 space-y-6 md:col-span-2">
-                  <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500">
-                    <Layout size={28} />
-                  </div>
-                  <div className="text-white font-bold text-lg">Sorglose Freiheit</div>
-                  <p className="text-slate-500 text-sm font-light leading-relaxed">Wir halten Ihre Präsenz technisch sicher, blitzschnell und aktuell – German Engineering digital übersetzt.</p>
-                </div>
-              </div>
-            </article>
-            
-            <div className="relative hidden lg:block">
-              {/* Abstract Architectural Pattern */}
-              <div className="aspect-square relative flex items-center justify-center">
-                <div className="absolute inset-0 bg-cyan-600/5 rounded-full blur-[120px]" />
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-                  className="relative w-full h-full border border-white/[0.03] rounded-full flex items-center justify-center"
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 1 }}
+                className="flex flex-col sm:flex-row gap-6"
+              >
+                <button 
+                  onClick={() => navigate('/booking')}
+                  className="h-16 px-12 rounded-full bg-cyan-500 text-white font-black uppercase tracking-[0.3em] text-[10px] hover:scale-105 active:scale-95 transition-all shadow-[0_20px_50px_rgba(0,123,255,0.4)] flex items-center gap-4 group"
                 >
-                  <div className="w-4/5 h-4/5 border border-white/[0.05] rounded-full flex items-center justify-center">
-                    <div className="w-3/5 h-3/5 border border-white/[0.08] rounded-full" />
-                  </div>
-                </motion.div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                   <div className="text-center">
-                      <div className="text-6xl font-display text-white/10 mb-2">2026</div>
-                      <div className="text-[10px] uppercase tracking-[0.4em] text-cyan-500 font-black">Digital Boutique</div>
-                   </div>
-                </div>
+                  Beratung vereinbaren
+                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+                <button 
+                  onClick={() => navigate('/services')}
+                  className="h-16 px-12 rounded-full bg-white/[0.03] border border-white/10 text-white font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white/[0.08] transition-all flex items-center gap-4 backdrop-blur-sm"
+                >
+                  Leistungen
+                </button>
+              </motion.div>
+            </div>
+
+            <div className="lg:col-span-5 relative">
+              <div className="grid grid-cols-2 gap-6 auto-rows-[280px]">
+                <BentoCard 
+                  className="bg-white col-span-2 row-span-1 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)]"
+                  title="24/7 AI Sales"
+                  subtitle="Intelligente Prozesse für maximalen ROI."
+                  icon={Zap}
+                  to="/services/management"
+                />
+                <BentoCard 
+                  className="bg-slate-50 col-span-1 shadow-xl"
+                  title="3D Design"
+                  subtitle="Immersive Erlebnisse."
+                  icon={Box}
+                  to="/services/animation"
+                />
+                <BentoCard 
+                  className="bg-slate-100 col-span-1 shadow-xl"
+                  title="Safety"
+                  subtitle="German Engineering."
+                  icon={Layers}
+                  to="/about"
+                />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Core Expertise Section */}
-      <section className="py-32 relative z-10 bg-dark-950/50" aria-labelledby="expertise-title">
+      {/* Content Sections - White Background */}
+      <section className="py-48 relative z-10 bg-white">
         <div className="container mx-auto px-6 max-w-7xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-end mb-24">
-            <header>
-              <div className="text-cyan-500 font-black uppercase tracking-[0.3em] text-[10px] mb-6">Expertise</div>
-              <h2 id="expertise-title" className="text-4xl md:text-6xl font-display font-bold text-white leading-tight">
-                UNSER HANDWERK. <br /> <span className="text-slate-600">IHRE WIRKUNG.</span>
-              </h2>
-            </header>
-            <div className="max-w-md">
-              <p className="text-slate-400 text-lg leading-relaxed mb-8 font-light">
-                Wir verbinden tiefgreifende Ästhetik mit flüssiger Interaktion, um digitale Erlebnisse zu schaffen, die Ihre Marke online dominieren lassen.
-              </p>
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-full bg-cyan-500 flex items-center justify-center text-dark-950">
-                  <Zap size={20} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 xl:gap-24 items-center">
+            <article className="space-y-12 min-w-0">
+              <div className="space-y-8">
+                <div className="text-cyan-600 font-black uppercase tracking-[0.4em] text-[10px] mb-4">Viktor Labs Vision</div>
+                <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-display font-medium text-dark-900 leading-[0.95] tracking-tight uppercase break-words">
+                  ÄSTHETIK TRIFFT <br /> <span className="text-slate-400 italic">WIRTSCHAFT.</span>
+                </h2>
+                <p className="text-slate-500 text-xl md:text-2xl leading-relaxed font-light max-w-xl">
+                  Eine Website ist längst keine digitale Visitenkarte mehr, sondern Ihr stärkster digitaler Vertriebskanal.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="p-12 rounded-[2.5rem] bg-slate-50 border border-slate-200 space-y-6 group hover:border-cyan-500/20 transition-all shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500 group-hover:scale-110 transition-transform">
+                    <CheckCircle2 size={28} />
+                  </div>
+                  <div className="text-dark-900 font-bold text-xl uppercase tracking-tight">Absolute Transparenz</div>
+                  <p className="text-slate-500 text-base font-light leading-relaxed">Faire Festpreise, modulare Optionen und null versteckte Kosten.</p>
                 </div>
-                <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white">
-                  <Globe size={20} />
+                <div className="p-12 rounded-[2.5rem] bg-slate-50 border border-slate-200 space-y-6 group hover:border-cyan-500/20 transition-all shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500 group-hover:scale-110 transition-transform">
+                    <Sparkles size={28} />
+                  </div>
+                  <div className="text-dark-900 font-bold text-xl uppercase tracking-tight">Immersive Ästhetik</div>
+                  <p className="text-slate-500 text-base font-light leading-relaxed">Modernstes Design und flüssige 3D-Interaktionen, die Besucher binden.</p>
                 </div>
               </div>
+            </article>
+            
+            <div className="relative hidden lg:block overflow-hidden rounded-[3rem] aspect-square shadow-2xl">
+               <img 
+                src="/aesthetik.png" 
+                alt="Ästhetik trifft Wirtschaft - Viktor Labs" 
+                width="600"
+                height="600"
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover hover:scale-105 transition-all duration-1000"
+                referrerPolicy="no-referrer"
+               />
+               <div className="absolute inset-0 bg-dark-900/10 hover:bg-transparent transition-all duration-700" />
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <FeatureCard 
-              icon={Globe} 
-              title="High-End Webdesign" 
-              description="Von minimalistischem Schwarz-Weiß bis hin zu lebendigen, interaktiven Markenwelten. Maßgeschneidert auf Ihre Zielgruppe."
+      {/* Expertise Section */}
+      <section className="py-40 relative z-10 bg-slate-50 border-y border-slate-200 overflow-hidden">
+        <div className="absolute inset-0 bg-grid-dark pointer-events-none opacity-40" />
+        <div className="container mx-auto px-6 max-w-7xl relative z-10">
+          <div className="text-center mb-24">
+            <div className="text-cyan-600 font-black uppercase tracking-[0.4em] text-[10px] mb-6">Expertise</div>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-display font-medium text-dark-900 leading-[0.92] tracking-tighter uppercase break-words">
+              UNSERE <br /> <span className="text-slate-400 italic">LEISTUNGEN.</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 grid-rows-2 gap-6 auto-rows-[400px]">
+            {/* Main Showcase */}
+            <BentoCard 
+              className="md:col-span-4 lg:col-span-4 row-span-2 !p-0 bg-dark-900 group border-none shadow-2xl overflow-hidden"
               to="/services/webdesign"
-            />
-            <FeatureCard 
-              icon={Sparkles} 
-              title="Motion & 3D" 
-              description="Hochwertige Animationen, die Ihre Produkte greifbar machen und die Verweildauer drastisch erhöhen."
+            >
+              <div className="relative h-full w-full flex flex-col">
+                <div className="p-12 pb-0 relative z-10">
+                  <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-4">Core Craft</div>
+                  <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-medium text-white mb-6 tracking-tight leading-none uppercase break-words">
+                    HIGH-END <br /> <span className="text-slate-500">WEBDESIGN.</span>
+                  </h3>
+                  <p className="text-slate-400 text-lg max-w-md font-light leading-relaxed">
+                    Von minimalistischem Schwarz-Weiß bis hin zu lebendigen, interaktiven Markenwelten.
+                  </p>
+                </div>
+                <div className="mt-auto relative h-[400px]">
+                   <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent z-10" />
+                   <img 
+                    src="/leistungen.png" 
+                    alt="Web Design Showcase - Viktor Labs" 
+                    width="800"
+                    height="400"
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover object-top opacity-60 group-hover:scale-105 group-hover:opacity-100 transition-all duration-1000"
+                    referrerPolicy="no-referrer"
+                   />
+                </div>
+              </div>
+            </BentoCard>
+
+            <BentoCard 
+              className="md:col-span-2 lg:col-span-2 shadow-lg"
+              title="Motion & 3D"
+              subtitle="Hochwertige Animationen, die Produkte greifbar machen."
+              icon={Box}
               to="/services/animation"
             />
-            <FeatureCard 
-              icon={Layout} 
-              title="Rundum-Sorglos-Verwaltung" 
-              description="Laufende Pflege, Performance-Optimierung und Aktualisierung. Ihre Website bleibt schnell und sicher."
+
+            <BentoCard 
+              className="md:col-span-2 lg:col-span-2 shadow-lg"
+              title="Management"
+              subtitle="Ihr Vertriebsteam, 24/7 im digitalen Einsatz."
+              icon={Zap}
               to="/services/management"
             />
           </div>
@@ -246,27 +272,43 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-40 relative z-10" aria-labelledby="cta-title">
-        <div className="container mx-auto px-6 max-w-5xl">
-          <div className="glass-card p-12 md:p-28 rounded-[5rem] text-center relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/10 blur-[120px] -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-all duration-700" aria-hidden="true" />
+      <section className="py-40 relative z-10 bg-white overflow-hidden">
+        <div className="absolute inset-0 bg-grid-dark pointer-events-none opacity-20" />
+        <div className="container mx-auto px-6 max-w-5xl relative z-10">
+          <div className="bg-dark-900 p-12 md:p-28 rounded-[4rem] text-center relative overflow-hidden group shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]">
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/10 blur-[150px] -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-all duration-700" />
             
-            <h2 id="cta-title" className="text-5xl md:text-8xl font-display font-bold text-white mb-10 relative z-10 leading-[0.85] tracking-tighter">
-              BEREIT FÜR DEN <br /> <span className="text-cyan-500">NÄCHSTEN LEVEL?</span>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-display font-medium text-white mb-10 relative z-10 leading-[0.88] tracking-tighter uppercase break-words">
+              BEREIT FÜR DEN <br /> <span className="text-cyan-500">VORSPRUNG?</span>
             </h2>
             <p className="text-slate-400 text-xl md:text-2xl max-w-2xl mx-auto mb-16 relative z-10 font-light leading-relaxed">
               Lassen Sie uns gemeinsam eine digitale Präsenz erschaffen, die Ihre Kunden begeistert.
             </p>
             <button 
               onClick={() => navigate('/booking')}
-              aria-label="Kostenlose Erstberatung sichern"
-              className="h-20 px-16 rounded-full bg-white text-dark-950 font-black uppercase tracking-[0.3em] text-[10px] hover:scale-105 transition-all relative z-10 shadow-2xl"
+              className="h-20 px-16 rounded-full bg-cyan-500 text-white font-black uppercase tracking-[0.3em] text-[10px] hover:scale-105 active:scale-95 transition-all relative z-10 shadow-[0_20px_50px_rgba(0,123,255,0.5)] flex items-center justify-center mx-auto gap-4 group/cta"
             >
-              Kostenlose Erstberatung sichern
+              Beratung vereinbaren
+              <ArrowRight size={20} className="group-hover/cta:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>
       </section>
+
+      {/* Floating Action Button */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="fixed bottom-10 right-10 z-[100] hidden lg:block"
+      >
+        <button 
+          onClick={() => navigate('/booking')}
+          aria-label="Beratung vereinbaren"
+          className="h-20 w-20 rounded-full bg-cyan-500 text-white flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all group"
+        >
+          <ArrowRight size={24} className="-rotate-45 group-hover:rotate-0 transition-transform duration-500" />
+        </button>
+      </motion.div>
     </div>
   );
 }

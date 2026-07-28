@@ -1,12 +1,19 @@
 import express from "express";
 import path from "path";
 import helmet from "helmet";
+import compression from "compression";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  // Compression middleware (Gzip / Brotli)
+  app.use(compression({
+    level: 6,
+    threshold: 1024,
+  }));
 
   // Security headers - Reinforced for SSL/TLS environments
   app.use(helmet({
@@ -79,14 +86,26 @@ Text to translate:
     });
     app.use(vite.middlewares);
   } else {
-    // Production: serve from dist folder
+    // Production: serve from dist folder with optimal cache controls
     const distPath = path.resolve(process.cwd(), 'dist');
-    app.use(express.static(distPath, { index: false }));
+    app.use(express.static(distPath, { 
+      index: false,
+      maxAge: '1y',
+      immutable: true,
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+        } else if (filePath.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|webp|avif|woff|woff2)$/)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+      }
+    }));
     
     app.get('*', (req, res, next) => {
       // Avoid catching API routes or static files that should have been handled by static middleware
       if (req.path.startsWith('/api')) return next();
       
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.sendFile(path.join(distPath, 'index.html'), (err) => {
         if (err) {
           console.error("Error sending index.html", err);

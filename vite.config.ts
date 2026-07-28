@@ -10,20 +10,13 @@ export default defineConfig(() => {
       alias: {
         '@': path.resolve(__dirname, './src'),
       },
+      dedupe: ['react', 'react-dom', 'react-router-dom', 'motion'],
     },
     build: {
       target: 'esnext',
       minify: true,
       cssMinify: true,
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            'vendor-ui': ['motion/react', 'lucide-react'],
-            'vendor-utils': ['clsx', 'tailwind-merge'],
-          },
-        },
-      },
+      rollupOptions: {},
       chunkSizeWarningLimit: 1000,
       reportCompressedSize: false,
     },
