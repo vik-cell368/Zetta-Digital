@@ -33,6 +33,10 @@ interface BookingFormData {
   email: string;
   phone: string;
   notes: string;
+  industry: string;
+  company: string;
+  size: string;
+  startDate: string;
 }
 
 const pageVariants = {
@@ -47,6 +51,12 @@ const pageTransition = {
   duration: 0.5
 };
 
+interface TimeSlot {
+  time: string;
+  isAvailable: boolean;
+  isBooked: boolean;
+}
+
 export default function Booking() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -60,7 +70,7 @@ export default function Booking() {
   
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [availableTimes, setAvailableTimes] = useState<TimeSlot[]>([]);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -134,17 +144,44 @@ export default function Booking() {
           if (local) setBlockedDates(JSON.parse(local));
         }
 
-        // As requested: Only show Website Beratung
-        setServices([
-          {
+        let activeServices: Service[] = [];
+        if (sData && sData.length > 0) {
+          activeServices = sData.filter(s => s.is_active);
+        } else {
+          const local = localStorage.getItem('viktor_labs_services');
+          if (local) {
+            try {
+              activeServices = JSON.parse(local).filter((s: Service) => s.is_active);
+            } catch (err) {
+              console.warn("Failed parsing local services", err);
+            }
+          }
+        }
+
+        // Always ensure "Kostenloses Erstgespräch" is present as the primary option
+        const hasErstgespraech = activeServices.some(s => {
+          const nameStr = getTranslatedText(s.name, 'de').toLowerCase();
+          return nameStr.includes('erstgespräch') || nameStr.includes('beratung');
+        });
+
+        if (!hasErstgespraech) {
+          const defaultErstgespraech: Service = {
             id: '1',
-            name: JSON.stringify({ en: 'Website Strategy Session', de: 'Website Beratung' }),
+            name: JSON.stringify({ en: 'Free Strategy Session', de: 'Kostenloses Erstgespräch' }),
             description: JSON.stringify({ en: 'Executive discussion to outline your technological trajectory and digital presence.', de: 'Kostenlose Erstberatung für moderne Unternehmenswebsites, Landingpages und digitale Lösungen.' }),
             price: 0,
             duration_minutes: 45,
-            is_active: true
-          }
-        ] as Service[]);
+            is_active: true,
+            features: '',
+            process: '',
+            tech: '',
+            faqs: '',
+            created_at: new Date().toISOString()
+          };
+          activeServices = [defaultErstgespraech, ...activeServices];
+        }
+
+        setServices(activeServices);
       } catch (e) {
         console.warn("Booking data fetch failed", e);
       } finally {
@@ -167,14 +204,45 @@ export default function Booking() {
     setIsTimesLoading(true);
     
     try {
-      const { data: appointments } = await supabase
-        .from('appointments')
-        .select('start_time, end_time')
-        .in('status', ['confirmed', 'pending'])
-        .gte('start_time', startOfDay(date).toISOString())
-        .lt('start_time', addDays(startOfDay(date), 1).toISOString());
+      // 1. Fetch appointments from Supabase (expanding date range slightly for timezones)
+      const rangeStart = startOfDay(addDays(date, -1)).toISOString();
+      const rangeEnd = startOfDay(addDays(date, 2)).toISOString();
 
-      const times: string[] = [];
+      let fetchedAppointments: Array<{ start_time: string; end_time: string; status?: string }> = [];
+
+      try {
+        const { data: dbData, error } = await supabase
+          .from('appointments')
+          .select('start_time, end_time, status')
+          .in('status', ['confirmed', 'pending'])
+          .gte('start_time', rangeStart)
+          .lt('start_time', rangeEnd);
+
+        if (!error && dbData) {
+          fetchedAppointments = dbData;
+        }
+      } catch (err) {
+        console.warn("Supabase fetch failed", err);
+      }
+
+      // 2. Fetch appointments from localStorage to merge
+      const localAppsRaw = localStorage.getItem('viktor_labs_appointments');
+      let localApps: Array<{ start_time?: string; end_time?: string; status?: string }> = [];
+      if (localAppsRaw) {
+        try {
+          localApps = JSON.parse(localAppsRaw);
+        } catch {
+          localApps = [];
+        }
+      }
+
+      // Combine both sources
+      const allAppointments = [
+        ...fetchedAppointments,
+        ...localApps.filter(a => a.start_time && a.end_time && (a.status === 'confirmed' || a.status === 'pending' || !a.status))
+      ];
+
+      const times: TimeSlot[] = [];
       const weekday = date.getDay();
       const dayShifts = businessHours.filter(h => h.weekday === weekday && h.is_open);
       const interval = settings?.slot_interval_minutes || 30;
@@ -199,44 +267,45 @@ export default function Booking() {
           if (slotEnd > end) break;
 
           let isAvailable = true;
+          let isBooked = false;
+
           // Don't allow past times or times within 3 hours if today
           const threeHoursFromNow = new Date(new Date().getTime() + 3 * 60 * 60000);
           if (isSameDay(date, new Date()) && !isAfter(slotStart, threeHoursFromNow)) {
             isAvailable = false;
           }
 
-          if (isAvailable && appointments) {
-            for (const appt of appointments) {
-              const apptStart = new Date(appt.start_time);
-              const apptEnd = new Date(appt.end_time);
-              if (
-                (slotStart >= apptStart && slotStart < apptEnd) ||
-                (slotEnd > apptStart && slotEnd <= apptEnd) ||
-                (slotStart <= apptStart && slotEnd >= apptEnd)
-              ) {
+          if (allAppointments.length > 0) {
+            const slotStartMs = slotStart.getTime();
+            const slotEndMs = slotEnd.getTime();
+
+            for (const appt of allAppointments) {
+              if (!appt.start_time || !appt.end_time) continue;
+              const apptStartMs = new Date(appt.start_time).getTime();
+              const apptEndMs = new Date(appt.end_time).getTime();
+
+              // Overlap check: slotStart < apptEnd AND slotEnd > apptStart
+              if (slotStartMs < apptEndMs && slotEndMs > apptStartMs) {
                 isAvailable = false;
+                isBooked = true;
                 break;
               }
             }
           }
 
-          if (isAvailable) {
-            times.push(timeString);
-          }
+          times.push({
+            time: timeString,
+            isAvailable,
+            isBooked
+          });
           
           current = new Date(current.getTime() + interval * 60000);
         }
       }
       setAvailableTimes(times);
     } catch (e) {
-      console.warn("Error fetching available times", e);
-      // Fallback: Show all times if Supabase fails
-      const fallbackTimes = [];
-      for (let h = 9; h < 17; h++) {
-        fallbackTimes.push(`${h.toString().padStart(2, '0')}:00:00`);
-        fallbackTimes.push(`${h.toString().padStart(2, '0')}:30:00`);
-      }
-      setAvailableTimes(fallbackTimes);
+      console.warn("Error processing available times", e);
+      setAvailableTimes([]);
     } finally {
       setIsTimesLoading(false);
     }
@@ -253,28 +322,40 @@ export default function Booking() {
     );
     const endDateTime = new Date(startDateTime.getTime() + selectedService.duration_minutes * 60000);
 
+    const fullNotes = `Branche: ${data.industry}\n` +
+                      `Unternehmen: ${data.company}\n` +
+                      `Größe: ${data.size}\n` +
+                      `Wunschstart: ${data.startDate}\n` +
+                      `-------------------\n` +
+                      `Nachricht: ${data.notes}\n` +
+                      `Datei: ${uploadedFile ? uploadedFile.name : 'Keine'}`;
+
     const payload = {
       service_id: selectedService.id,
-      services: { name: selectedService.name }, // For local display in admin
+      services: { name: selectedService.name }, 
       full_name: data.full_name,
       email: data.email,
       phone: data.phone,
       start_time: startDateTime.toISOString(),
       end_time: endDateTime.toISOString(),
-      status: 'confirmed',
-      notes: data.notes
+      status: 'pending',
+      notes: fullNotes,
+      company: data.company,
+      industry: data.industry
     };
 
     try {
+      // Also save as lead in localStorage for consistency
+      const localLeads = localStorage.getItem('viktor_labs_appointments');
+      const leads = localLeads ? JSON.parse(localLeads) : [];
+      leads.push({ ...payload, id: crypto.randomUUID(), created_at: new Date().toISOString() });
+      localStorage.setItem('viktor_labs_appointments', JSON.stringify(leads));
+
       const { error } = await supabase.from('appointments').insert(payload);
       if (error) throw error;
       setStep('success');
     } catch (err) {
-      console.warn("Supabase booking failed, saving to localStorage", err);
-      const localApps = localStorage.getItem('viktor_labs_appointments');
-      const apps = localApps ? JSON.parse(localApps) : [];
-      apps.push({ ...payload, id: crypto.randomUUID(), created_at: new Date().toISOString() });
-      localStorage.setItem('viktor_labs_appointments', JSON.stringify(apps));
+      console.warn("Supabase booking failed, saved to local lead management", err);
       setStep('success');
     } finally {
       setIsSubmitting(false);
@@ -299,7 +380,7 @@ export default function Booking() {
             Consultation
           </motion.div>
           <h1 className="text-5xl md:text-8xl font-display font-medium text-white tracking-tight leading-[0.9]">{t('booking.title')}</h1>
-          <p className="text-slate-400 text-xl md:text-2xl font-light max-w-2xl mx-auto leading-relaxed">Schedule an executive discussion to outline your technological trajectory.</p>
+          <p className="text-slate-400 text-xl md:text-2xl font-light max-w-2xl mx-auto leading-relaxed">Vereinbaren Sie ein Gespräch mit unseren Experten.</p>
         </div>
 
           <div className="flex justify-center mb-16 px-2">
@@ -360,7 +441,9 @@ export default function Booking() {
                       <div className="relative z-10">
                         <div className="flex justify-between items-start mb-3 md:mb-4">
                           <h3 className="font-display text-xl md:text-2xl text-slate-50 group-hover:text-cyan-400 transition-colors">{getTranslatedText(service.name, currentLang)}</h3>
-                          <span className="font-sans font-light text-slate-50 text-sm md:text-base">{formatCurrency(service.price)}</span>
+                          <span className="font-sans font-medium text-cyan-400 text-sm md:text-base">
+                            {service.price && service.price > 0 ? formatCurrency(service.price) : 'Kostenlos'}
+                          </span>
                         </div>
                         <p className="text-xs md:text-sm text-slate-400 mb-6 md:mb-8 font-light leading-relaxed line-clamp-2">{getTranslatedText(service.description, currentLang)}</p>
                         <div className="flex items-center text-[10px] md:text-xs font-mono uppercase tracking-widest text-slate-500">
@@ -440,22 +523,47 @@ export default function Booking() {
                   <p className="text-slate-400 font-light">{t('booking.no_slots')}</p>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
-                    {availableTimes.map(time => {
-                      const timeDisplay = format(parse(time, 'HH:mm:ss', new Date()), 'HH:mm');
-                      const isSelected = selectedTime === time;
+                    {availableTimes.map(slot => {
+                      const timeDisplay = format(parse(slot.time, 'HH:mm:ss', new Date()), 'HH:mm');
+                      const isSelected = selectedTime === slot.time;
+                      
+                      if (slot.isBooked) {
+                        return (
+                          <div
+                            key={slot.time}
+                            className="py-4 px-3 rounded-xl font-mono text-center border bg-red-950/20 border-red-500/20 text-slate-500 cursor-not-allowed select-none opacity-60 flex flex-col items-center justify-center min-h-[70px]"
+                          >
+                            <span className="text-sm line-through decoration-red-500/50">{timeDisplay}</span>
+                            <span className="text-[10px] font-sans text-red-400/80 font-bold uppercase tracking-wider mt-0.5">Belegt</span>
+                          </div>
+                        );
+                      }
+
+                      if (!slot.isAvailable) {
+                        return (
+                          <div
+                            key={slot.time}
+                            className="py-4 px-3 rounded-xl font-mono text-center border bg-white/[0.02] border-white/5 text-slate-600 cursor-not-allowed select-none opacity-40 flex flex-col items-center justify-center min-h-[70px]"
+                          >
+                            <span className="text-sm">{timeDisplay}</span>
+                            <span className="text-[10px] font-sans text-slate-600 mt-0.5">Nicht verfügbar</span>
+                          </div>
+                        );
+                      }
+
                       return (
                         <button
-                          key={time}
-                          onClick={() => setSelectedTime(time)}
+                          key={slot.time}
+                          onClick={() => setSelectedTime(slot.time)}
                           aria-pressed={isSelected}
                           className={cn(
-                            "py-5 rounded-xl font-mono text-base transition-all duration-300 border active:scale-95 touch-manipulation",
+                            "py-4 px-3 rounded-xl font-mono transition-all duration-300 border active:scale-95 touch-manipulation flex flex-col items-center justify-center min-h-[70px]",
                             isSelected 
                               ? "bg-cyan-500 border-cyan-500 text-dark-950 font-bold shadow-[0_0_20px_rgba(6,182,212,0.2)]" 
                               : "bg-dark-950 border-white/5 hover:border-cyan-500/30 hover:bg-dark-900 text-slate-300"
                           )}
                         >
-                          {timeDisplay}
+                          <span className="text-base">{timeDisplay}</span>
                         </button>
                       );
                     })}
@@ -470,7 +578,7 @@ export default function Booking() {
                   onClick={() => setStep('details')}
                   className="bg-cyan-500 hover:bg-cyan-400 text-dark-950 font-semibold uppercase tracking-widest text-xs px-10 h-14 rounded-full transition-transform active:scale-95 disabled:opacity-50"
                 >
-                  {t('booking.btn_continue')} <ArrowRight className="ml-3 w-4 h-4" />
+                  Weiter zur Kontaktinfo <ArrowRight className="ml-3 w-4 h-4" />
                 </Button>
               </div>
             </motion.div>
@@ -490,52 +598,89 @@ export default function Booking() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                 <div className="md:col-span-2">
                   <div className="bg-dark-900/50 backdrop-blur-md rounded-2xl p-10 border border-white/5">
-                    <h2 className="text-3xl font-display text-slate-50 mb-10">{t('booking.your_details')}</h2>
+                    <h2 className="text-3xl font-display text-slate-50 mb-4">Fast geschafft.</h2>
+                    <p className="text-slate-400 text-sm mb-10">Geben Sie uns noch ein paar Informationen, damit wir Ihr individuelles Angebot finalisieren können.</p>
                     
                     <form id="booking-form" onSubmit={handleSubmit(onSubmitDetails)} className="space-y-8">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                        <div>
+                          <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Branche</label>
+                          <Input 
+                            {...register('industry')}
+                            placeholder="z.B. Gastronomie"
+                            className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Unternehmen</label>
+                          <Input 
+                            {...register('company')}
+                            placeholder="Ihr Firmenname"
+                            className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                        <div>
+                          <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Unternehmensgröße</label>
+                          <Input 
+                            {...register('size')}
+                            placeholder="z.B. 1-10 Mitarbeiter"
+                            className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Gewünschter Start</label>
+                          <Input 
+                            type="text"
+                            {...register('startDate')}
+                            placeholder="tt.mm.jjjj"
+                            className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
+                          />
+                        </div>
+                      </div>
+
                       <div>
-                        <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">{t('booking.form_name')}</label>
+                        <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Vollständiger Name</label>
                         <Input 
-                          {...register('full_name', { required: 'Name is required' })}
-                          placeholder="Jane Doe"
+                          {...register('full_name', { required: 'Name ist erforderlich' })}
+                          placeholder="Ihr Name"
                           error={errors.full_name?.message}
                           className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
                         />
                       </div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                        {settings?.booking_email_visible !== false && (
-                          <div>
-                            <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">{t('booking.form_email')}</label>
-                            <Input 
-                              type="email"
-                              {...register('email', { 
-                                required: settings?.booking_email_required ? 'Email is required' : false,
-                                pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' }
-                              })}
-                              placeholder="jane@example.com"
-                              error={errors.email?.message}
-                              className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
-                            />
-                          </div>
-                        )}
-                        {settings?.booking_phone_visible !== false && (
-                          <div>
-                            <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">{t('booking.form_phone')}</label>
-                            <Input 
-                              type="tel"
-                              {...register('phone', { required: settings?.booking_phone_required ? 'Phone is required' : false })}
-                              placeholder="+1 (555) 000-0000"
-                              error={errors.phone?.message}
-                              className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
-                            />
-                          </div>
-                        )}
+                        <div>
+                          <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">E-Mail Adresse</label>
+                          <Input 
+                            type="email"
+                            {...register('email', { 
+                              required: 'E-Mail ist erforderlich',
+                              pattern: { value: /^\S+@\S+$/i, message: 'Ungültige E-Mail' }
+                            })}
+                            placeholder="jane@example.com"
+                            error={errors.email?.message}
+                            className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Telefonnummer (optional)</label>
+                          <Input 
+                            type="tel"
+                            {...register('phone')}
+                            placeholder="+49"
+                            className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
+                          />
+                        </div>
                       </div>
+
                       <div>
-                        <label className="block text-xs uppercase tracking-widest font-mono text-gray-400 mb-3">{t('booking.form_notes')}</label>
+                        <label className="block text-xs uppercase tracking-widest font-mono text-gray-400 mb-3">Ihre Nachricht oder spezielle Wünsche...</label>
                         <Textarea 
                           {...register('notes')}
-                          placeholder={t('booking.form_notes_ph')}
+                          placeholder="Erzählen Sie uns von Ihrem Projekt..."
                           className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl min-h-[120px]"
                         />
                       </div>
@@ -543,7 +688,7 @@ export default function Booking() {
                       {/* File Uploader */}
                       <div>
                         <label className="block text-xs uppercase tracking-widest font-mono text-gray-400 mb-3">
-                          {t('booking.form_upload_label')}
+                          Vorhandene Unterlagen (PDF)
                         </label>
                         <div 
                           onClick={() => fileInputRef.current?.click()}
@@ -566,7 +711,7 @@ export default function Booking() {
                             ref={fileInputRef} 
                             onChange={handleFileChange} 
                             className="hidden" 
-                            accept=".pdf,.docx,.doc,.txt"
+                            accept=".pdf"
                           />
                           
                           {uploadedFile ? (
@@ -591,8 +736,8 @@ export default function Booking() {
                               <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-slate-500 mb-6 group-hover:scale-110 group-hover:text-cyan-500 transition-all">
                                 <Upload size={32} />
                               </div>
-                              <p className="text-slate-300 mb-2">{t('booking.form_upload_hint')}</p>
-                              <p className="text-slate-500 text-[10px] uppercase tracking-widest">DSGVO-KONFORMER UPLOAD</p>
+                              <p className="text-slate-300 mb-2">Keine ausgewählt</p>
+                              <p className="text-slate-500 text-[10px] uppercase tracking-widest">Klicken oder PDF hierher ziehen</p>
                             </>
                           )}
                         </div>
@@ -603,28 +748,28 @@ export default function Booking() {
                 
                 <div className="md:col-span-1">
                   <div className="bg-dark-900/80 backdrop-blur-md rounded-2xl p-8 border border-white/5 sticky top-32">
-                    <h2 className="text-xl font-serif text-white mb-8">{t('booking.summary')}</h2>
+                    <h2 className="text-xl font-serif text-white mb-8">Zusammenfassung</h2>
                     
                     <div className="space-y-8">
                       <div>
-                        <div className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-2">{t('booking.step_service')}</div>
+                        <div className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-2">Terminart</div>
                         <div className="font-sans font-light text-white">{selectedService && getTranslatedText(selectedService.name, currentLang)}</div>
                       </div>
                       <div>
-                        <div className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-2">{t('booking.step_date_time')}</div>
+                        <div className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-2">Datum & Uhrzeit</div>
                         <div className="font-sans font-light text-white">
                           {selectedDate && format(selectedDate, 'd. MMMM yyyy', { locale: de })}<br/>
-                          {selectedTime && format(parse(selectedTime, 'HH:mm:ss', new Date()), 'HH:mm')}
+                          {selectedTime && format(parse(selectedTime, 'HH:mm:ss', new Date()), 'HH:mm')} Uhr
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-2">{t('booking.sum_duration')}</div>
-                        <div className="font-sans font-light text-white">{selectedService?.duration_minutes} {t('booking.min')}</div>
+                        <div className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-2">Dauer</div>
+                        <div className="font-sans font-light text-white">{selectedService?.duration_minutes} min</div>
                       </div>
                       <div className="pt-8 border-t border-white/10">
                         <div className="flex justify-between items-end">
-                          <span className="text-xs uppercase tracking-widest font-mono text-gray-500">{t('booking.sum_total')}</span>
-                          <span className="text-3xl font-serif text-cyan-400">{selectedService && formatCurrency(selectedService.price)}</span>
+                          <span className="text-xs uppercase tracking-widest font-mono text-gray-500">Investition</span>
+                          <span className="text-3xl font-serif text-cyan-400">Kostenlos</span>
                         </div>
                       </div>
                     </div>
@@ -634,10 +779,10 @@ export default function Booking() {
                     type="submit" 
                     form="booking-form" 
                     size="lg" 
-                    className="w-full mt-8 bg-cyan-500 hover:bg-cyan-400 text-dark-950 font-semibold uppercase tracking-widest text-xs h-16 rounded-full transition-transform active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.1)] hover:shadow-[0_0_50px_rgba(6,182,212,0.2)]"
+                    className="w-full mt-8 bg-cyan-500 hover:bg-cyan-400 text-dark-950 font-bold uppercase tracking-widest text-xs h-16 rounded-full transition-transform active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.1)] hover:shadow-[0_0_50px_rgba(6,182,212,0.2)]"
                     isLoading={isSubmitting}
                   >
-                    {t('booking.confirm_btn')}
+                    Termin für kostenloses Beratungsgespräch vereinbaren
                   </Button>
                 </div>
               </div>
@@ -657,12 +802,12 @@ export default function Booking() {
                 <div className="w-32 h-32 bg-dark-950 border border-white/5 rounded-full flex items-center justify-center mb-12 shadow-[0_0_50px_rgba(6,182,212,0.1)]">
                   <CheckCircle2 className="w-16 h-16 text-cyan-500" />
                 </div>
-                <h2 className="text-5xl md:text-6xl font-display text-slate-50 mb-6">{t('booking.success_title')}</h2>
+                <h2 className="text-5xl md:text-6xl font-display text-slate-50 mb-6">Erfolgreich gebucht!</h2>
                 <p className="text-slate-400 max-w-lg mx-auto mb-16 text-xl font-light leading-relaxed">
-                  {t('booking.success_desc')}
+                  Ihr Termin wurde bestätigt. Wir haben Ihnen eine E-Mail mit allen Details und dem Link für das Gespräch gesendet.
                 </p>
                 <Button onClick={() => navigate('/')} className="bg-cyan-500 text-dark-950 hover:bg-cyan-400 px-12 h-16 rounded-full font-semibold uppercase tracking-widest text-xs transition-transform active:scale-95">
-                  {t('booking.return_home')}
+                  Zurück zur Startseite
                 </Button>
               </div>
             </motion.div>

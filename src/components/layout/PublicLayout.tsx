@@ -101,7 +101,7 @@ export default function PublicLayout() {
             <nav className="hidden lg:flex items-center gap-4 xl:gap-8 2xl:gap-10 shrink-0" aria-label="Hauptnavigation">
               {[
                 { name: 'Leistungen', path: '/services' },
-                { name: 'Preise', path: '/pricing' },
+                { name: 'Kalkulator', path: '/pricing' },
                 { name: 'Über Uns', path: '/about' },
               ].map((item) => (
                 <Link 
@@ -356,8 +356,8 @@ export default function PublicLayout() {
             <div>
               <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-white mb-10 opacity-50">Kontakt</h4>
               <ul className="space-y-5">
-                <li className="text-slate-400 text-sm font-light">hello@viktorlabs.de</li>
-                <li className="text-slate-400 text-sm font-light">+49 176 1234567</li>
+                <li className="text-slate-400 text-sm font-light">contact@viktorlabs.dev</li>
+                <li className="text-slate-400 text-sm font-light">+49 (0) 123 456789</li>
                 <li className="pt-4">
                   <Link to="/booking" className="inline-flex h-12 px-8 rounded-full bg-cyan-500 text-white text-[10px] uppercase tracking-[0.2em] font-black items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-[0_10px_30px_rgba(0,123,255,0.3)]">
                     Beratung vereinbaren
@@ -369,8 +369,8 @@ export default function PublicLayout() {
 
           <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex items-center gap-10">
-              <Link to="/legal" className="text-[9px] uppercase tracking-[0.3em] text-slate-600 hover:text-white transition-colors font-black">Impressum</Link>
-              <Link to="/legal" className="text-[9px] uppercase tracking-[0.3em] text-slate-600 hover:text-white transition-colors font-black">Datenschutz</Link>
+              <Link to="/imprint" className="text-[9px] uppercase tracking-[0.3em] text-slate-600 hover:text-white transition-colors font-black">Impressum</Link>
+              <Link to="/privacy" className="text-[9px] uppercase tracking-[0.3em] text-slate-600 hover:text-white transition-colors font-black">Datenschutz</Link>
             </div>
             <p className="text-[9px] uppercase tracking-[0.4em] text-slate-700 font-black">
               © {new Date().getFullYear()} VIKTOR LABS. <span className="text-slate-800">GERMAN ENGINEERING.</span>

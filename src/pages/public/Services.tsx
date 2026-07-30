@@ -283,7 +283,26 @@ export default function Services() {
         </div>
 
         <div className="border-t border-slate-100 pt-48">
-           <PriceConfigurator />
+           <div className="bg-slate-50 rounded-[4rem] p-12 md:p-24 text-center space-y-10 border border-slate-200 shadow-sm overflow-hidden relative group">
+             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/5 blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+             
+             <div className="text-cyan-600 font-black uppercase tracking-[0.4em] text-[10px] relative z-10">Transparente Investition</div>
+             <h2 className="text-4xl md:text-7xl font-display font-medium text-dark-900 leading-[0.95] tracking-tight uppercase relative z-10">
+               ERHALTEN SIE SOFORT EINE <br /> <span className="text-slate-400 italic">ÜBERSICHT.</span>
+             </h2>
+             <p className="text-slate-500 text-xl md:text-2xl font-light max-w-2xl mx-auto relative z-10 leading-relaxed">
+               Nutzen Sie unseren interaktiven Kalkulator für eine sofortige, transparente Übersicht Ihrer Investition – maßgeschneidert auf Ihre Bedürfnisse.
+             </p>
+             
+             <div className="pt-8 relative z-10">
+               <Link to="/pricing">
+                 <button className="h-18 px-14 rounded-full bg-dark-900 text-white font-black uppercase tracking-[0.3em] text-[10px] hover:bg-dark-800 hover:scale-[1.03] active:scale-95 transition-all flex items-center gap-4 mx-auto shadow-2xl">
+                   Preise kalkulieren
+                   <ArrowRight size={24} className="text-cyan-500" />
+                 </button>
+               </Link>
+             </div>
+           </div>
         </div>
       </div>
     </div>

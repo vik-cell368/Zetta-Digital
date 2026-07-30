@@ -1,6 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { 
   Check, 
   ChevronRight, 
@@ -20,7 +22,11 @@ import {
   Calendar,
   Building2,
   FileText,
-  ChevronLeft
+  ChevronLeft,
+  Plus,
+  Minus,
+  Upload,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -49,23 +55,23 @@ interface Category {
 const CONFIG_DATA: Category[] = [
   {
     id: 'base',
-    name: '1. Grundpaket (Pflicht)',
+    name: '1. Website (Pflicht)',
     icon: <Monitor className="w-5 h-5" />,
     options: [
-      { id: 'p_starter', name: 'Starter Website', price: 550, category: 'base', desc: 'Ideal für einfache Präsenzen' },
-      { id: 'p_business', name: 'Business Website', price: 990, category: 'base', desc: 'Der Standard für Unternehmen' },
-      { id: 'p_premium', name: 'Premium Website', price: 1490, category: 'base', desc: 'High-End Design & Performance' },
+      { 
+        id: 'p_starter', 
+        name: 'Standard Website', 
+        price: 550, 
+        category: 'base', 
+        desc: 'Inklusive 4 Seiten: Startseite, Über uns, Kontakt, Impressum & Datenschutz' 
+      },
     ],
   },
   {
     id: 'pages',
-    name: '2. Zusätzliche Seiten',
+    name: '2. Seitenanzahl',
     icon: <Layout className="w-5 h-5" />,
-    options: [
-      { id: 'page_1', name: '+1 Seite', price: 50, category: 'pages' },
-      { id: 'page_5', name: '+5 Seiten', price: 220, category: 'pages' },
-      { id: 'page_10', name: '+10 Seiten', price: 400, category: 'pages' },
-    ],
+    options: [], // Handled by dynamic counter
   },
   {
     id: 'design',
@@ -165,8 +171,13 @@ const CONFIG_DATA: Category[] = [
 
 export default function Configurator() {
   const navigate = useNavigate();
-  const [selections, setSelections] = useState<Record<string, string[]>>({});
+  const pdfRef = useRef<HTMLDivElement>(null);
+  const [selections, setSelections] = useState<Record<string, string[]>>({
+    base: ['p_starter']
+  });
+  const [additionalPages, setAdditionalPages] = useState(0);
   const [step, setStep] = useState<'config' | 'details' | 'result'>('config');
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [formData, setFormData] = useState({
     industry: '',
     size: '',
@@ -175,8 +186,37 @@ export default function Configurator() {
     email: '',
     phone: '',
     message: '',
-    company: ''
+    company: '',
+    file: null as File | null
   });
+
+  const generatePDF = async () => {
+    if (!pdfRef.current) return;
+    
+    setIsGeneratingPDF(true);
+    try {
+      const canvas = await html2canvas(pdfRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width / 2, canvas.height / 2]
+      });
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+      pdf.save(`ViktorLabs-Angebot-${formData.company || 'Projekt'}.pdf`);
+    } catch (error) {
+      console.error('PDF Generation failed:', error);
+      alert('PDF konnte nicht erstellt werden. Bitte versuchen Sie es erneut.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   const toggleOption = (category: string, optionId: string, multiple?: boolean) => {
     setSelections(prev => {
@@ -208,7 +248,7 @@ export default function Configurator() {
   }, [selections]);
 
   const totals = useMemo(() => {
-    return selectedOptions.reduce(
+    const baseTotal = selectedOptions.reduce(
       (acc, curr) => {
         if (curr.monthly) acc.monthly += curr.price;
         else acc.oneTime += curr.price;
@@ -216,7 +256,12 @@ export default function Configurator() {
       },
       { oneTime: 0, monthly: 0 }
     );
-  }, [selectedOptions]);
+
+    // Add additional pages price
+    baseTotal.oneTime += additionalPages * 49;
+
+    return baseTotal;
+  }, [selectedOptions, additionalPages]);
 
   const handleNext = () => {
     if (!selections['base'] || selections['base'].length === 0) {
@@ -229,6 +274,32 @@ export default function Configurator() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Create lead entry for Admin Dashboard
+    const leadData = {
+      id: Math.random().toString(36).substr(2, 9),
+      full_name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      company: formData.company,
+      industry: formData.industry,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      notes: `Konfiguration:\n` + 
+             `${selectedOptions.map(o => `- ${o.name} (${o.price}€)`).join('\n')}\n` +
+             `${additionalPages > 0 ? `- ${additionalPages} zusätzliche Seiten (${additionalPages * 49}€)\n` : ''}` +
+             `-------------------\n` +
+             `Gesamt: ${totals.oneTime}€ (+ ${totals.monthly}€/Mo)\n\n` +
+             `Nachricht: ${formData.message}\n` +
+             `Unternehmensgröße: ${formData.size}\n` +
+             `Wunschtermin: ${formData.startDate}\n` +
+             `Datei: ${formData.file ? formData.file.name : 'Keine'}`,
+    };
+
+    // Save to LocalStorage
+    const existingLeads = JSON.parse(localStorage.getItem('viktor_labs_appointments') || '[]');
+    localStorage.setItem('viktor_labs_appointments', JSON.stringify([...existingLeads, leadData]));
+
     setStep('result');
     window.scrollTo(0, 0);
   };
@@ -288,38 +359,94 @@ export default function Configurator() {
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {category.options.map((option) => {
-                          const isSelected = (selections[category.id] || []).includes(option.id);
-                          return (
-                            <button
-                              key={option.id}
-                              onClick={() => toggleOption(category.id, option.id, category.multiple)}
-                              className={`text-left p-6 rounded-[2rem] border transition-all relative group h-full flex flex-col ${
-                                isSelected 
-                                  ? 'bg-cyan-500/10 border-cyan-500 shadow-[0_0_30px_rgba(6,182,212,0.1)]' 
-                                  : 'bg-dark-900 border-white/5 hover:border-white/10'
-                              }`}
-                            >
-                              <div className="flex justify-between items-start mb-2">
-                                <span className={`text-lg font-bold ${isSelected ? 'text-cyan-500' : 'text-slate-50'}`}>
-                                  {option.name}
+                        {category.id === 'pages' ? (
+                          <div className="col-span-full bg-dark-900 border border-white/5 rounded-[2.5rem] p-8 md:p-12 flex flex-col items-center justify-center space-y-8">
+                            <div className="text-center">
+                              <h4 className="text-2xl font-display font-bold text-white mb-3">Wie viele zusätzliche Seiten?</h4>
+                              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-8">
+                                <Check className="w-3.5 h-3.5 text-cyan-500" />
+                                <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">4 Seiten sind bereits inklusive</span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-8 md:gap-12">
+                              <button 
+                                onClick={() => setAdditionalPages(Math.max(0, additionalPages - 1))}
+                                className="w-14 h-14 md:w-20 md:h-20 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white/10 hover:border-cyan-500 transition-all active:scale-90"
+                              >
+                                <Minus size={28} />
+                              </button>
+                              
+                              <div className="flex flex-col items-center min-w-[140px] md:min-w-[180px]">
+                                <span className="text-7xl md:text-9xl font-display font-bold text-white leading-none tracking-tighter">
+                                  {additionalPages}
                                 </span>
-                                {isSelected && (
-                                  <div className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
-                                    <Check className="w-4 h-4 text-dark-950" />
+                                <span className="text-[11px] uppercase tracking-[0.4em] text-cyan-500 font-black mt-6">
+                                  {additionalPages === 1 ? 'Weitere Seite' : 'Weitere Seiten'}
+                                </span>
+                              </div>
+
+                              <button 
+                                onClick={() => setAdditionalPages(additionalPages + 1)}
+                                className="w-14 h-14 md:w-20 md:h-20 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white/10 hover:border-cyan-500 transition-all active:scale-90"
+                              >
+                                <Plus size={28} />
+                              </button>
+                            </div>
+                            
+                            <div className="text-cyan-500 font-black text-lg bg-cyan-500/10 px-8 py-3 rounded-full border border-cyan-500/20 mt-4">
+                              + {(additionalPages * 49).toLocaleString('de-DE')} €
+                              <span className="text-slate-500 text-xs font-normal ml-4 uppercase tracking-widest">(49 € pro Seite)</span>
+                            </div>
+                          </div>
+                        ) : (
+                          category.options.map((option) => {
+                            const isSelected = (selections[category.id] || []).includes(option.id);
+                            return (
+                              <button
+                                key={option.id}
+                                onClick={() => toggleOption(category.id, option.id, category.multiple)}
+                                className={`text-left p-6 rounded-[2rem] border transition-all relative group h-full flex flex-col ${
+                                  isSelected 
+                                    ? 'bg-cyan-500/10 border-cyan-500 shadow-[0_0_30px_rgba(6,182,212,0.1)]' 
+                                    : 'bg-dark-900 border-white/5 hover:border-white/10'
+                                }`}
+                              >
+                                <div className="flex justify-between items-start mb-2">
+                                  <span className={`text-lg font-bold ${isSelected ? 'text-cyan-500' : 'text-slate-50'}`}>
+                                    {option.name}
+                                  </span>
+                                  {isSelected && (
+                                    <div className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
+                                      <Check className="w-4 h-4 text-dark-950" />
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-slate-500 text-xs mb-6 flex-1">
+                                  {option.desc || (category.multiple ? 'Optional' : '')}
+                                </p>
+                                
+                                {option.id === 'p_starter' && (
+                                  <div className="mb-6 grid grid-cols-2 gap-x-4 gap-y-2">
+                                    {['Startseite', 'Über uns', 'Kontakt', 'Impressum & Datenschutz'].map(s => (
+                                      <div key={s} className="flex items-center gap-2 text-[10px] text-slate-500">
+                                        <div className="w-1 h-1 rounded-full bg-cyan-500/50" />
+                                        {s}
+                                      </div>
+                                    ))}
                                   </div>
                                 )}
-                              </div>
-                              <p className="text-slate-500 text-xs mb-6 flex-1">{option.desc || (category.multiple ? 'Optional' : '')}</p>
-                              <div className="flex justify-end items-center mt-auto">
-                                <span className="text-xl font-display font-bold text-slate-50">
-                                  {option.price === 0 ? 'inkl.' : `${option.price}€`}
-                                  {option.monthly && <span className="text-xs text-slate-500 ml-1">/ Mo.</span>}
-                                </span>
-                              </div>
-                            </button>
-                          );
-                        })}
+
+                                <div className="flex justify-end items-center mt-auto">
+                                  <span className="text-xl font-display font-bold text-slate-50">
+                                    {option.price === 0 ? 'inkl.' : `${option.price}€`}
+                                    {option.monthly && <span className="text-xs text-slate-500 ml-1">/ Mo.</span>}
+                                  </span>
+                                </div>
+                              </button>
+                            );
+                          })
+                        )}
                       </div>
                     </section>
                   ))}
@@ -431,10 +558,31 @@ export default function Configurator() {
                           value={formData.message}
                           onChange={e => setFormData({...formData, message: e.target.value})}
                         />
+
+                        {/* PDF Upload */}
+                        <div className="space-y-4">
+                          <label className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                            <Upload className="w-3 h-3" /> Vorhandene Unterlagen (PDF)
+                          </label>
+                          <div className="relative group">
+                            <input 
+                              type="file" 
+                              accept=".pdf"
+                              onChange={(e) => setFormData({...formData, file: e.target.files?.[0] || null})}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            />
+                            <div className="h-20 rounded-2xl bg-dark-950 border border-white/5 flex items-center justify-between px-8 group-hover:border-cyan-500/50 transition-all">
+                              <span className="text-slate-400 text-sm">
+                                {formData.file ? formData.file.name : "Klicken oder PDF hierher ziehen"}
+                              </span>
+                              <Upload className="w-5 h-5 text-slate-500 group-hover:text-cyan-500 transition-colors" />
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
-                      <Button type="submit" className="w-full h-20 bg-cyan-500 text-dark-950 font-bold text-xl rounded-3xl shadow-[0_0_50px_rgba(212,175,55,0.2)] group hover:bg-gold-400">
-                        Individuelles Angebot erstellen
+                      <Button type="submit" className="w-full h-20 bg-cyan-500 text-dark-950 font-bold text-xl rounded-3xl shadow-[0_0_50px_rgba(6,182,212,0.2)] group hover:bg-gold-400 transition-all">
+                        Termin für kostenloses Beratungsgespräch vereinbaren
                         <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
                       </Button>
                     </form>
@@ -457,7 +605,7 @@ export default function Configurator() {
                     <p className="text-slate-400 text-lg">Vielen Dank für Ihr Vertrauen. Hier ist Ihr vorläufiges Projekt-Angebot.</p>
                   </div>
 
-                  <div className="bg-white text-dark-950 rounded-[3rem] overflow-hidden shadow-2xl relative">
+                  <div ref={pdfRef} className="bg-white text-dark-950 rounded-[3rem] overflow-hidden shadow-2xl relative">
                     {/* Visual Watermark / Logo */}
                     <div className="absolute top-10 right-10 opacity-10 pointer-events-none select-none">
                       <span className="font-display font-bold text-6xl tracking-tighter uppercase text-slate-900">Viktor Labs</span>
@@ -489,6 +637,15 @@ export default function Configurator() {
                                   <span className="text-gray-500 font-mono text-sm">{opt.price} €{opt.monthly ? '*' : ''}</span>
                                 </li>
                               ))}
+                              {additionalPages > 0 && (
+                                <li className="flex justify-between items-center group">
+                                  <span className="text-dark-950 font-bold flex items-center gap-3">
+                                    <div className="w-2 h-2 rounded-full bg-cyan-500" />
+                                    {additionalPages} zusätzliche Seiten
+                                  </span>
+                                  <span className="text-gray-500 font-mono text-sm">{additionalPages * 49} €</span>
+                                </li>
+                              )}
                             </ul>
                           </div>
                           <div className="p-8 bg-gray-50 rounded-3xl border border-gray-100">
@@ -524,16 +681,24 @@ export default function Configurator() {
                         <div className="text-sm text-gray-400 italic">
                           * Monatliche Kosten beginnen erst nach Projektabnahme.
                         </div>
-                        <Button className="h-14 px-8 bg-dark-950 text-white rounded-2xl flex items-center gap-3 group">
-                          <FileText className="w-5 h-5" />
-                          Angebot als PDF laden
-                        </Button>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-12 text-center">
-                    <p className="text-gray-500 text-sm mb-8">Wir haben Ihnen die Zusammenfassung auch per E-Mail gesendet.</p>
+                  <div className="mt-12 flex flex-col items-center gap-8">
+                    <Button 
+                      onClick={generatePDF} 
+                      disabled={isGeneratingPDF}
+                      className="h-16 px-10 bg-white text-dark-950 rounded-2xl flex items-center gap-3 group shadow-2xl hover:bg-cyan-500 transition-all font-bold"
+                    >
+                      {isGeneratingPDF ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <FileText className="w-5 h-5" />
+                      )}
+                      Angebot als PDF laden
+                    </Button>
+                    <p className="text-gray-500 text-sm">Wir haben Ihnen die Zusammenfassung auch per E-Mail gesendet.</p>
                     <Button variant="outline" onClick={() => navigate('/')} className="text-white border-white/10 hover:bg-white/5">
                       Zurück zur Startseite
                     </Button>
@@ -553,15 +718,23 @@ export default function Configurator() {
                 </h3>
                 
                 <div className="space-y-6 mb-10 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                  {selectedOptions.length === 0 ? (
+                  {selectedOptions.length === 0 && additionalPages === 0 ? (
                     <p className="text-slate-500 text-center py-10 italic">Noch keine Optionen gewählt.</p>
                   ) : (
-                    selectedOptions.map(opt => (
-                      <div key={opt.id} className="flex justify-between items-start gap-4">
-                        <div className="text-sm text-slate-400 font-medium">{opt.name}</div>
-                        <div className="text-slate-50 font-mono text-sm whitespace-nowrap">{opt.price} €</div>
-                      </div>
-                    ))
+                    <>
+                      {selectedOptions.map(opt => (
+                        <div key={opt.id} className="flex justify-between items-start gap-4">
+                          <div className="text-sm text-slate-400 font-medium">{opt.name}</div>
+                          <div className="text-slate-50 font-mono text-sm whitespace-nowrap">{opt.price} €</div>
+                        </div>
+                      ))}
+                      {additionalPages > 0 && (
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="text-sm text-slate-400 font-medium">{additionalPages} zusätzliche Seiten</div>
+                          <div className="text-slate-50 font-mono text-sm whitespace-nowrap">{additionalPages * 49} €</div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 

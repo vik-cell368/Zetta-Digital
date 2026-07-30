@@ -16,7 +16,14 @@ import {
   ExternalLink,
   Bot,
   FileText as FileTextIcon,
-  Globe as GlobeIcon
+  Globe as GlobeIcon,
+  Plus,
+  Trash2,
+  Edit3,
+  Check,
+  X,
+  Copy,
+  UserPlus
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -29,83 +36,304 @@ export default function LeadManagement() {
   const [filter, setFilter] = useState('Alle');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Status edit menu
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+
+  // Notes editing
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [editedNotes, setEditedNotes] = useState('');
+
+  // New Lead Modal
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newLead, setNewLead] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+    company: '',
+    notes: '',
+    status: 'pending'
+  });
+
+  // Toast / Feedback
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const fetchLeads = async () => {
+    setIsLoading(true);
+    let allLeads: any[] = [];
+    
+    try {
+      const { data: dbLeads } = await supabase
+        .from('appointments')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (dbLeads) allLeads = [...dbLeads];
+    } catch (e) {
+      console.warn("Supabase fetch failed", e);
+    }
+
+    try {
+      const localApps = localStorage.getItem('viktor_labs_appointments');
+      if (localApps) {
+        const apps = JSON.parse(localApps);
+        // Merge without duplicating IDs
+        const dbIds = new Set(allLeads.map(l => l.id));
+        const uniqueLocal = apps.filter((a: any) => !dbIds.has(a.id));
+        allLeads = [...allLeads, ...uniqueLocal].sort((a, b) => 
+          new Date(b.created_at || b.start_time || Date.now()).getTime() - new Date(a.created_at || a.start_time || Date.now()).getTime()
+        );
+      }
+    } catch (e) {
+      console.warn("LocalStorage fetch failed", e);
+    }
+
+    // Filter out obvious test noise if wanted, but keep real items
+    const humanLeads = allLeads.filter(lead => {
+      const email = lead.email?.toLowerCase() || '';
+      const isTest = email.includes('test@') || 
+                    email === 'test' || 
+                    email.includes('example.com') ||
+                    (!email.includes('@') && email.length < 3);
+      return !isTest;
+    }).sort((a, b) => 
+      new Date(b.created_at || b.start_time || Date.now()).getTime() - new Date(a.created_at || a.start_time || Date.now()).getTime()
+    );
+
+    setLeads(humanLeads);
+    setIsLoading(false);
+
+    // Sync selected lead if editing
+    if (selectedLead) {
+      const updatedSel = humanLeads.find(l => l.id === selectedLead.id);
+      if (updatedSel) setSelectedLead(updatedSel);
+    }
+  };
 
   useEffect(() => {
-    const fetchLeads = async () => {
-      setIsLoading(true);
-      let allLeads: any[] = [];
-      
-      try {
-        const { data: dbLeads } = await supabase
-          .from('appointments')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (dbLeads) allLeads = [...dbLeads];
-      } catch (e) {
-        console.warn("Supabase fetch failed", e);
-      }
-
-      try {
-        const localApps = localStorage.getItem('viktor_labs_appointments');
-        if (localApps) {
-          const apps = JSON.parse(localApps);
-          allLeads = [...allLeads, ...apps].sort((a, b) => 
-            new Date(b.created_at || b.start_time).getTime() - new Date(a.created_at || a.start_time).getTime()
-          );
-        }
-      } catch (e) {
-        console.warn("LocalStorage fetch failed", e);
-      }
-
-      // Filter for "Real Human" bookings
-      // We filter out common test strings and incomplete entries
-      const humanLeads = allLeads.filter(lead => {
-        const email = lead.email?.toLowerCase() || '';
-        const isTest = email.includes('test@') || 
-                      email === 'test' || 
-                      email.includes('example.com') ||
-                      !email.includes('@');
-        return !isTest;
-      }).sort((a, b) => 
-        new Date(b.created_at || b.start_time).getTime() - new Date(a.created_at || a.start_time).getTime()
-      );
-
-      setLeads(humanLeads);
-      setIsLoading(false);
-    };
-
     fetchLeads();
   }, []);
+
+  // Update Status
+  const handleUpdateStatus = async (leadId: string, newStatus: string) => {
+    setShowStatusMenu(false);
+
+    // Update in Supabase
+    try {
+      await supabase
+        .from('appointments')
+        .update({ status: newStatus })
+        .eq('id', leadId);
+    } catch (err) {
+      console.warn("Supabase update failed", err);
+    }
+
+    // Update in LocalStorage
+    try {
+      const localApps = localStorage.getItem('viktor_labs_appointments');
+      if (localApps) {
+        const apps = JSON.parse(localApps);
+        const updated = apps.map((a: any) => a.id === leadId ? { ...a, status: newStatus } : a);
+        localStorage.setItem('viktor_labs_appointments', JSON.stringify(updated));
+      }
+    } catch (err) {
+      console.warn("LocalStorage update error", err);
+    }
+
+    // Update State
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: newStatus } : l));
+    if (selectedLead && selectedLead.id === leadId) {
+      setSelectedLead(prev => ({ ...prev, status: newStatus }));
+    }
+
+    showToast(`Status auf "${newStatus === 'pending' ? 'Neu' : newStatus === 'confirmed' ? 'Bestätigt' : 'Abgesagt'}" geändert`);
+  };
+
+  // Save Notes
+  const handleSaveNotes = async () => {
+    if (!selectedLead) return;
+
+    try {
+      await supabase
+        .from('appointments')
+        .update({ notes: editedNotes })
+        .eq('id', selectedLead.id);
+    } catch (err) {
+      console.warn("Supabase notes update failed", err);
+    }
+
+    try {
+      const localApps = localStorage.getItem('viktor_labs_appointments');
+      if (localApps) {
+        const apps = JSON.parse(localApps);
+        const updated = apps.map((a: any) => a.id === selectedLead.id ? { ...a, notes: editedNotes } : a);
+        localStorage.setItem('viktor_labs_appointments', JSON.stringify(updated));
+      }
+    } catch (err) {
+      console.warn("LocalStorage notes update error", err);
+    }
+
+    setLeads(prev => prev.map(l => l.id === selectedLead.id ? { ...l, notes: editedNotes } : l));
+    setSelectedLead(prev => ({ ...prev, notes: editedNotes }));
+    setIsEditingNotes(false);
+    showToast("Notizen gespeichert");
+  };
+
+  // Delete Lead
+  const handleDeleteLead = async (leadId: string) => {
+    if (!confirm("Möchten Sie diesen Lead wirklich löschen?")) return;
+
+    setShowMoreMenu(false);
+
+    try {
+      await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', leadId);
+    } catch (err) {
+      console.warn("Supabase delete failed", err);
+    }
+
+    try {
+      const localApps = localStorage.getItem('viktor_labs_appointments');
+      if (localApps) {
+        const apps = JSON.parse(localApps);
+        const updated = apps.filter((a: any) => a.id !== leadId);
+        localStorage.setItem('viktor_labs_appointments', JSON.stringify(updated));
+      }
+    } catch (err) {
+      console.warn("LocalStorage delete error", err);
+    }
+
+    setLeads(prev => prev.filter(l => l.id !== leadId));
+    if (selectedLead?.id === leadId) {
+      setSelectedLead(null);
+    }
+    showToast("Lead wurde gelöscht");
+  };
+
+  // Create Manual Lead
+  const handleCreateLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newLead.full_name || !newLead.email) {
+      alert("Bitte füllen Sie Name und E-Mail aus.");
+      return;
+    }
+
+    const createdLead = {
+      id: 'lead_' + Date.now(),
+      full_name: newLead.full_name,
+      email: newLead.email,
+      phone: newLead.phone,
+      company: newLead.company,
+      notes: newLead.notes,
+      status: newLead.status,
+      created_at: new Date().toISOString(),
+      start_time: new Date().toISOString(),
+      end_time: new Date(Date.now() + 30 * 60000).toISOString()
+    };
+
+    // Try Supabase insert
+    try {
+      await supabase.from('appointments').insert([createdLead]);
+    } catch (err) {
+      console.warn("Supabase insert lead failed", err);
+    }
+
+    // LocalStorage insert
+    try {
+      const localApps = localStorage.getItem('viktor_labs_appointments');
+      const apps = localApps ? JSON.parse(localApps) : [];
+      localStorage.setItem('viktor_labs_appointments', JSON.stringify([createdLead, ...apps]));
+    } catch (err) {
+      console.warn("LocalStorage insert lead failed", err);
+    }
+
+    setLeads(prev => [createdLead, ...prev]);
+    setSelectedLead(createdLead);
+    setShowAddModal(false);
+    setNewLead({ full_name: '', email: '', phone: '', company: '', notes: '', status: 'pending' });
+    showToast("Neuer Lead erfolgreich angelegt");
+  };
+
+  // Copy to Clipboard
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    showToast(`${label} kopiert!`);
+  };
 
   const filteredLeads = leads.filter(lead => {
     const matchesFilter = filter === 'Alle' || lead.status === filter;
     const matchesSearch = 
       lead.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.company?.toLowerCase().includes(searchTerm.toLowerCase());
+      lead.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.phone?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 relative">
+      {/* Toast notification */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-24 right-8 z-50 bg-cyan-500 text-dark-950 font-bold px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs uppercase tracking-widest"
+          >
+            <CheckCircle2 size={18} />
+            {toastMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Header Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-50 mb-2">Lead Management</h1>
           <p className="text-slate-500 text-xs md:text-sm">Verwalten Sie Ihre eingehenden Anfragen und qualifizieren Sie Leads.</p>
         </div>
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex items-center gap-2 md:gap-3 flex-wrap">
           <div className="relative flex-1 md:flex-none">
             <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-slate-500 w-3 h-3 md:w-4 md:h-4" />
             <input 
               type="text" 
-              placeholder="Suchen..."
+              placeholder="Name, E-Mail, Firma suchen..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-10 md:h-12 bg-white/5 border border-white/10 rounded-xl pl-10 md:pl-12 pr-4 md:pr-6 text-white text-xs md:text-sm focus:border-cyan-500/50 transition-all"
+              className="w-full md:w-64 h-10 md:h-12 bg-white/5 border border-white/10 rounded-xl pl-10 md:pl-12 pr-4 md:pr-6 text-white text-xs md:text-sm focus:border-cyan-500/50 transition-all"
             />
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
-          <button className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all shrink-0">
+
+          <button 
+            onClick={() => setSearchTerm('')}
+            title="Filter zurücksetzen"
+            className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:border-cyan-500/50 transition-all shrink-0"
+          >
             <Filter size={16} />
+          </button>
+
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="h-10 md:h-12 px-4 md:px-6 rounded-xl bg-cyan-500 text-dark-950 font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-cyan-400 transition-all active:scale-95 shadow-lg shadow-cyan-500/20 shrink-0"
+          >
+            <Plus size={16} />
+            <span>Neuer Lead</span>
           </button>
         </div>
       </div>
@@ -119,43 +347,56 @@ export default function LeadManagement() {
                 key={cat}
                 onClick={() => setFilter(cat)}
                 className={`px-4 md:px-6 py-1.5 md:py-2 rounded-full text-[8px] md:text-[10px] uppercase tracking-widest font-bold border transition-all whitespace-nowrap ${
-                  filter === cat ? 'bg-cyan-500 text-dark-950 border-cyan-500' : 'bg-transparent text-slate-500 border-white/10 hover:border-white/20'
+                  filter === cat ? 'bg-cyan-500 text-dark-950 border-cyan-500 shadow-md shadow-cyan-500/20' : 'bg-transparent text-slate-500 border-white/10 hover:border-white/20 hover:text-slate-300'
                 }`}
               >
-                {cat === 'pending' ? 'Neu' : cat === 'confirmed' ? 'Bestätigt' : cat === 'cancelled' ? 'Abgesagt' : cat}
+                {cat === 'pending' ? 'Neu / Ausstehend' : cat === 'confirmed' ? 'Bestätigt' : cat === 'cancelled' ? 'Abgesagt' : 'Alle Leads'}
               </button>
             ))}
           </div>
 
           <div className="space-y-3">
             {isLoading ? (
-              <div className="p-12 text-center text-gray-500">Lädt...</div>
+              <div className="p-12 text-center text-gray-500">Lädt Leads...</div>
             ) : filteredLeads.length > 0 ? filteredLeads.map((lead) => (
               <motion.div 
                 layout
                 key={lead.id}
-                onClick={() => setSelectedLead(lead)}
+                onClick={() => {
+                  setSelectedLead(lead);
+                  setEditedNotes(lead.notes || '');
+                  setIsEditingNotes(false);
+                  setShowStatusMenu(false);
+                  setShowMoreMenu(false);
+                }}
                 className={`glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl border cursor-pointer transition-all ${
-                  selectedLead?.id === lead.id ? 'bg-cyan-500/10 border-cyan-500/50' : 'border-white/5 hover:border-white/10'
+                  selectedLead?.id === lead.id ? 'bg-cyan-500/10 border-cyan-500/50 shadow-lg shadow-cyan-500/5' : 'border-white/5 hover:border-white/20'
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 md:gap-4 min-w-0">
                     <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 shrink-0">
-                      <Users size={16} className="md:w-5 md:h-5" />
+                      <Users size={16} className="md:w-5 md:h-5 text-cyan-400" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm md:text-lg font-bold text-slate-50 truncate">{lead.full_name}</div>
-                      <div className="text-[10px] md:text-xs text-slate-500 truncate">{lead.email} • {new Date(lead.created_at || lead.start_time).toLocaleDateString()}</div>
+                      <div className="text-sm md:text-lg font-bold text-slate-50 truncate flex items-center gap-2">
+                        {lead.full_name}
+                        {lead.company && <span className="text-xs font-normal text-slate-400">({lead.company})</span>}
+                      </div>
+                      <div className="text-[10px] md:text-xs text-slate-500 truncate">
+                        {lead.email} • {new Date(lead.created_at || lead.start_time || Date.now()).toLocaleDateString('de-DE')}
+                      </div>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-[10px] md:text-sm font-bold text-slate-50 mb-1">{lead.service_id ? 'Pro' : 'Custom'}</div>
-                    <div className={`text-[8px] md:text-[10px] uppercase tracking-widest font-bold px-2 md:px-3 py-0.5 md:py-1 rounded-full ${
-                      lead.status === 'pending' || lead.status === 'Neu' ? 'bg-cyan-500 text-dark-950' : 'bg-white/5 text-slate-400'
+                    <div className="text-[10px] md:text-sm font-bold text-slate-50 mb-1">{lead.service_id ? 'Pro' : 'Beratung'}</div>
+                    <span className={`inline-block text-[8px] md:text-[10px] uppercase tracking-widest font-bold px-2.5 md:px-3 py-1 rounded-full ${
+                      lead.status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                      lead.status === 'cancelled' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                      'bg-cyan-500 text-dark-950 font-black'
                     }`}>
-                      {lead.status}
-                    </div>
+                      {lead.status === 'confirmed' ? 'Bestätigt' : lead.status === 'cancelled' ? 'Abgesagt' : 'Neu'}
+                    </span>
                   </div>
                 </div>
               </motion.div>
@@ -176,82 +417,373 @@ export default function LeadManagement() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="glass-card rounded-[3rem] border-white/5 overflow-hidden sticky top-32"
+                className="glass-card rounded-[2.5rem] md:rounded-[3rem] border-white/10 overflow-hidden sticky top-28 shadow-2xl"
               >
-                <div className="p-8 border-b border-white/5 bg-gradient-to-br from-white/5 to-transparent">
+                {/* Details Header */}
+                <div className="p-6 md:p-8 border-b border-white/5 bg-gradient-to-br from-white/5 to-transparent relative">
                   <div className="flex justify-between items-start mb-6">
-                    <div className="w-20 h-20 rounded-[2rem] bg-cyan-500 flex items-center justify-center text-dark-950 text-3xl font-display font-bold shadow-xl">
-                      {selectedLead.full_name?.[0]}
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] md:rounded-[2rem] bg-cyan-500 flex items-center justify-center text-dark-950 text-2xl md:text-3xl font-display font-bold shadow-xl shadow-cyan-500/20">
+                      {selectedLead.full_name?.[0]?.toUpperCase() || 'L'}
                     </div>
-                    <button className="p-2 rounded-lg bg-white/5 text-slate-400 hover:text-slate-50">
-                      <MoreVertical size={20} />
-                    </button>
+
+                    <div className="flex items-center gap-2 relative">
+                      <button 
+                        onClick={() => setShowMoreMenu(!showMoreMenu)}
+                        className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-slate-50 hover:bg-white/10 transition-all"
+                        title="Mehr Optionen"
+                      >
+                        <MoreVertical size={18} />
+                      </button>
+
+                      <button 
+                        onClick={() => setSelectedLead(null)}
+                        className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-slate-50 hover:bg-white/10 transition-all lg:hidden"
+                        title="Schließen"
+                      >
+                        <X size={18} />
+                      </button>
+
+                      {/* Dropdown Menu for More Options */}
+                      {showMoreMenu && (
+                        <div className="absolute right-0 top-12 w-48 bg-dark-900 border border-white/10 rounded-2xl p-2 shadow-2xl z-30">
+                          <button
+                            onClick={() => handleDeleteLead(selectedLead.id)}
+                            className="w-full text-left px-4 py-2.5 rounded-xl text-xs text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 font-bold transition-all"
+                          >
+                            <Trash2 size={14} />
+                            Lead Löschen
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <h3 className="text-2xl font-display font-bold text-slate-50 mb-1">{selectedLead.full_name}</h3>
-                  <p className="text-cyan-500 text-sm font-bold">{selectedLead.services?.name || 'Standard Beratung'}</p>
+
+                  <h3 className="text-xl md:text-2xl font-display font-bold text-slate-50 mb-1">{selectedLead.full_name}</h3>
+                  <p className="text-cyan-400 text-xs md:text-sm font-bold">
+                    {selectedLead.services?.name || selectedLead.service_id || 'Standard Digitale Beratung'}
+                  </p>
                 </div>
 
-                <div className="p-8 space-y-10">
-                  <div className="space-y-6">
-                    <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Kontakt</h4>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4 text-sm text-slate-400">
-                        <Mail size={16} className="text-cyan-500" />
-                        {selectedLead.email}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-slate-400">
-                        <Phone size={16} className="text-cyan-500" />
-                        {selectedLead.phone || 'Nicht angegeben'}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Notizen</h4>
-                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5 text-xs text-slate-400 leading-relaxed">
-                      {selectedLead.notes || 'Keine Notizen vorhanden.'}
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
+                <div className="p-6 md:p-8 space-y-8">
+                  {/* Status Badge & Selector */}
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Timeline</h4>
+                      <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Status</h4>
+                      <span className={`text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full ${
+                        selectedLead.status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                        selectedLead.status === 'cancelled' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                        'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                      }`}>
+                        {selectedLead.status === 'confirmed' ? 'Bestätigt' : selectedLead.status === 'cancelled' ? 'Abgesagt' : 'Ausstehend (Neu)'}
+                      </span>
                     </div>
-                    <div className="space-y-6 pl-4 border-l border-white/10">
+
+                    {/* Quick Status Switches */}
+                    <div className="grid grid-cols-3 gap-2 pt-1">
+                      <button
+                        onClick={() => handleUpdateStatus(selectedLead.id, 'pending')}
+                        className={`py-2 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                          selectedLead.status === 'pending'
+                            ? 'bg-cyan-500 text-dark-950 border-cyan-500 shadow-md shadow-cyan-500/20'
+                            : 'bg-white/5 text-slate-400 border-white/5 hover:border-white/10'
+                        }`}
+                      >
+                        Neu
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(selectedLead.id, 'confirmed')}
+                        className={`py-2 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                          selectedLead.status === 'confirmed'
+                            ? 'bg-emerald-500 text-dark-950 border-emerald-500 shadow-md shadow-emerald-500/20'
+                            : 'bg-white/5 text-slate-400 border-white/5 hover:border-white/10'
+                        }`}
+                      >
+                        Bestätigt
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(selectedLead.id, 'cancelled')}
+                        className={`py-2 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                          selectedLead.status === 'cancelled'
+                            ? 'bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-500/20'
+                            : 'bg-white/5 text-slate-400 border-white/5 hover:border-white/10'
+                        }`}
+                      >
+                        Abgesagt
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Contact Info */}
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Kontaktinformationen</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5 text-xs text-slate-300">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <Mail size={16} className="text-cyan-400 shrink-0" />
+                          <span className="truncate">{selectedLead.email}</span>
+                        </div>
+                        <button 
+                          onClick={() => copyToClipboard(selectedLead.email, 'E-Mail')}
+                          className="p-1.5 text-slate-400 hover:text-cyan-400 transition-colors shrink-0"
+                          title="E-Mail kopieren"
+                        >
+                          <Copy size={14} />
+                        </button>
+                      </div>
+
+                      {selectedLead.phone && (
+                        <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5 text-xs text-slate-300">
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <Phone size={16} className="text-cyan-400 shrink-0" />
+                            <span className="truncate">{selectedLead.phone}</span>
+                          </div>
+                          <button 
+                            onClick={() => copyToClipboard(selectedLead.phone, 'Telefonnummer')}
+                            className="p-1.5 text-slate-400 hover:text-cyan-400 transition-colors shrink-0"
+                            title="Telefonnummer kopieren"
+                          >
+                            <Copy size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Notes Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Notizen</h4>
+                      {!isEditingNotes ? (
+                        <button 
+                          onClick={() => {
+                            setEditedNotes(selectedLead.notes || '');
+                            setIsEditingNotes(true);
+                          }}
+                          className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider hover:underline flex items-center gap-1"
+                        >
+                          <Edit3 size={12} />
+                          Bearbeiten
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={handleSaveNotes}
+                          className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider hover:underline flex items-center gap-1"
+                        >
+                          <Check size={12} />
+                          Speichern
+                        </button>
+                      )}
+                    </div>
+
+                    {isEditingNotes ? (
+                      <div className="space-y-2">
+                        <textarea
+                          rows={4}
+                          value={editedNotes}
+                          onChange={(e) => setEditedNotes(e.target.value)}
+                          placeholder="Fügen Sie hier Notizen zum Kundengespräch oder Projekt hinzu..."
+                          className="w-full bg-dark-950 border border-cyan-500/50 rounded-2xl p-4 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => setIsEditingNotes(false)}
+                            className="px-3 py-1.5 rounded-xl bg-white/5 text-slate-400 text-xs hover:text-white"
+                          >
+                            Abbrechen
+                          </button>
+                          <button
+                            onClick={handleSaveNotes}
+                            className="px-4 py-1.5 rounded-xl bg-cyan-500 text-dark-950 font-bold text-xs"
+                          >
+                            Speichern
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-white/5 rounded-2xl border border-white/5 text-xs text-slate-300 leading-relaxed whitespace-pre-wrap min-h-[60px]">
+                        {selectedLead.notes || <span className="text-slate-600 italic">Keine Notizen vorhanden. Klicken Sie auf "Bearbeiten", um Notizen hinzuzufügen.</span>}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Timeline */}
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Verlauf</h4>
+                    <div className="space-y-4 pl-4 border-l border-white/10">
                       <div className="relative">
-                        <div className="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-cyan-500" />
-                        <div className="text-[10px] text-slate-500 mb-1">{new Date(selectedLead.created_at || selectedLead.start_time).toLocaleDateString()}</div>
-                        <div className="text-xs text-slate-50 font-medium flex items-center gap-2">
-                           <Bot size={12} className="text-cyan-500" />
-                           Lead über die Website generiert
+                        <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
+                        <div className="text-[10px] text-slate-500 mb-1">
+                          {new Date(selectedLead.created_at || selectedLead.start_time || Date.now()).toLocaleDateString('de-DE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                        <div className="text-xs text-slate-200 font-medium flex items-center gap-2">
+                           <Bot size={14} className="text-cyan-400" />
+                           Lead Anfrage eingegangen
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-8 border-t border-white/5 grid grid-cols-2 gap-4">
+                  {/* Bottom Primary Actions */}
+                  <div className="pt-6 border-t border-white/5 grid grid-cols-2 gap-3">
                     <a 
                       href={`mailto:${selectedLead.email}`}
-                      className="h-14 rounded-2xl bg-white/5 border border-white/10 text-[10px] uppercase tracking-widest font-bold text-slate-50 hover:bg-white/10 transition-all flex items-center justify-center"
+                      className="h-12 md:h-14 rounded-2xl bg-white/5 border border-white/10 text-[10px] uppercase tracking-widest font-bold text-slate-50 hover:bg-white/10 transition-all flex items-center justify-center gap-2 active:scale-95"
                     >
-                      Nachricht senden
+                      <Mail size={14} className="text-cyan-400" />
+                      E-Mail Senden
                     </a>
-                    <button className="h-14 rounded-2xl bg-cyan-500 text-dark-950 text-[10px] uppercase tracking-widest font-bold hover:scale-105 transition-all shadow-lg">
-                      Status ändern
-                    </button>
+
+                    {selectedLead.phone ? (
+                      <a 
+                        href={`tel:${selectedLead.phone}`}
+                        className="h-12 md:h-14 rounded-2xl bg-cyan-500 text-dark-950 text-[10px] uppercase tracking-widest font-black hover:bg-cyan-400 transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 active:scale-95"
+                      >
+                        <Phone size={14} />
+                        Anrufen
+                      </a>
+                    ) : (
+                      <button 
+                        onClick={() => {
+                          setEditedNotes(selectedLead.notes || '');
+                          setIsEditingNotes(true);
+                        }}
+                        className="h-12 md:h-14 rounded-2xl bg-white/10 border border-white/10 text-[10px] uppercase tracking-widest font-bold text-slate-200 hover:bg-white/20 transition-all flex items-center justify-center gap-2 active:scale-95"
+                      >
+                        <Edit3 size={14} className="text-cyan-400" />
+                        Notiz Verfassen
+                      </button>
+                    )}
                   </div>
                 </div>
               </motion.div>
             ) : (
-              <div className="h-[600px] glass-card rounded-[3rem] border-white/5 flex flex-col items-center justify-center text-center p-10 opacity-40">
-                <Users size={48} className="text-gray-500 mb-6" />
+              <div className="h-[500px] glass-card rounded-[3rem] border-white/5 flex flex-col items-center justify-center text-center p-10 opacity-40">
+                <Users size={48} className="text-slate-600 mb-6" />
                 <h3 className="text-xl font-bold text-white mb-2">Kein Lead ausgewählt</h3>
-                <p className="text-gray-500 text-sm">Wählen Sie einen Lead aus der Liste aus, um Details anzuzeigen.</p>
+                <p className="text-slate-500 text-xs max-w-xs">Wählen Sie einen Lead aus der linken Liste aus, um Kontaktdaten, Notizen und Status zu bearbeiten.</p>
               </div>
             )}
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Modal: Neuer Lead Manuell Erstellen */}
+      <AnimatePresence>
+        {showAddModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-dark-900 border border-white/10 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-6"
+            >
+              <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                <div className="flex items-center gap-3">
+                  <UserPlus className="text-cyan-400" size={20} />
+                  <h3 className="text-lg font-bold text-white">Neuen Lead anlegen</h3>
+                </div>
+                <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateLead} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    Vollständiger Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newLead.full_name}
+                    onChange={(e) => setNewLead({ ...newLead, full_name: e.target.value })}
+                    placeholder="z.B. Max Mustermann"
+                    className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                      E-Mail-Adresse *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={newLead.email}
+                      onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
+                      placeholder="max@beispiel.de"
+                      className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                      Telefonnummer
+                    </label>
+                    <input
+                      type="tel"
+                      value={newLead.phone}
+                      onChange={(e) => setNewLead({ ...newLead, phone: e.target.value })}
+                      placeholder="+49 170 1234567"
+                      className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    Firma
+                  </label>
+                  <input
+                    type="text"
+                    value={newLead.company}
+                    onChange={(e) => setNewLead({ ...newLead, company: e.target.value })}
+                    placeholder="z.B. Mustermann GmbH"
+                    className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    Notizen / Projektbeschreibung
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={newLead.notes}
+                    onChange={(e) => setNewLead({ ...newLead, notes: e.target.value })}
+                    placeholder="Details zum Interesse oder Anliegen..."
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="pt-4 flex justify-end gap-3 border-t border-white/5">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="px-5 h-11 rounded-xl bg-white/5 text-slate-300 font-bold text-xs hover:bg-white/10 transition-all"
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 h-11 rounded-xl bg-cyan-500 text-dark-950 font-bold text-xs uppercase tracking-wider hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-500/20"
+                  >
+                    Lead Anlegen
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+
