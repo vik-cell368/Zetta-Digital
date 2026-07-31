@@ -93,7 +93,7 @@ export default function InvoiceEditor() {
           const invDoc = await getDoc(doc(db, 'invoices', id));
           if (invDoc.exists()) {
             const data = { id: invDoc.id, ...invDoc.data() } as Invoice;
-            setInvoice(data);
+            setInvoice(prev => ({ ...prev, ...data }));
             
             // Check for auto-download
             const params = new URLSearchParams(location.search);
@@ -110,67 +110,74 @@ export default function InvoiceEditor() {
             if (local) {
               const invoices = JSON.parse(local) as Invoice[];
               const found = invoices.find(inv => inv.id === id);
-              if (found) setInvoice(found);
+              if (found) setInvoice(prev => ({ ...prev, ...found }));
             }
           }
-        } else if (leadId) {
-          // Pre-fill from lead
-          let lead: any = null;
-          try {
-            const leadDoc = await getDoc(doc(db, 'appointments', leadId));
-            if (leadDoc.exists()) lead = { id: leadDoc.id, ...leadDoc.data() };
-          } catch (e) {}
+        } else {
+          // New Invoice
+          if (leadId) {
+            // Pre-fill from lead
+            let lead: any = null;
+            try {
+              const leadDoc = await getDoc(doc(db, 'appointments', leadId));
+              if (leadDoc.exists()) lead = { id: leadDoc.id, ...leadDoc.data() };
+            } catch (e) {}
 
-          if (!lead) {
-            const local = localStorage.getItem('viktor_labs_appointments');
-            if (local) {
-              const leads = JSON.parse(local);
-              lead = leads.find((l: any) => l.id === leadId);
+            if (!lead) {
+              const local = localStorage.getItem('viktor_labs_appointments');
+              if (local) {
+                const leads = JSON.parse(local);
+                lead = leads.find((l: any) => l.id === leadId);
+              }
+            }
+
+            if (lead) {
+              setInvoice(prev => ({
+                ...prev,
+                customer_company: lead.company || '',
+                customer_name: lead.full_name || '',
+                customer_email: lead.email || '',
+                customer_phone: lead.phone || '',
+                items: [
+                  { 
+                    id: '1', 
+                    description: lead.service_id ? `Service: ${lead.service_id}` : 'Beratung & Service', 
+                    quantity: 1, 
+                    unit: 'Stk', 
+                    price_per_unit: 0, 
+                    total_price: 0 
+                  }
+                ]
+              }));
             }
           }
 
-          if (lead) {
-            setInvoice(prev => ({
-              ...prev,
-              customer_company: lead.company || '',
-              customer_name: lead.full_name || '',
-              customer_email: lead.email || '',
-              customer_phone: lead.phone || '',
-              items: [
-                { 
-                  id: '1', 
-                  description: lead.service_id ? `Service: ${lead.service_id}` : 'Beratung & Service', 
-                  quantity: 1, 
-                  unit: 'Stk', 
-                  price_per_unit: 0, 
-                  total_price: 0 
-                }
-              ]
-            }));
-          }
-        }
-
-        if (!isEditing) {
           // Generate new invoice number
           let allInvoices: Invoice[] = [];
-          const invSnapshot = await getDocs(collection(db, 'invoices'));
-          if (!invSnapshot.empty) {
-            allInvoices = invSnapshot.docs.map(doc => doc.data() as Invoice);
-          } else {
+          try {
+            const invSnapshot = await getDocs(collection(db, 'invoices'));
+            if (!invSnapshot.empty) {
+              allInvoices = invSnapshot.docs.map(doc => doc.data() as Invoice);
+            } else {
+              const local = localStorage.getItem('viktor_labs_invoices');
+              if (local) allInvoices = JSON.parse(local);
+            }
+          } catch (e) {
             const local = localStorage.getItem('viktor_labs_invoices');
             if (local) allInvoices = JSON.parse(local);
           }
 
           const currentYear = new Date().getFullYear();
-          const yearInvoices = allInvoices.filter(inv => inv.invoice_number.startsWith(`VL-${currentYear}-`));
+          const yearInvoices = allInvoices.filter(inv => inv.invoice_number?.startsWith(`VL-${currentYear}-`));
           
           let nextNumber = 1;
           if (yearInvoices.length > 0) {
             const numbers = yearInvoices.map(inv => {
               const parts = inv.invoice_number.split('-');
-              return parseInt(parts[parts.length - 1], 10);
+              const num = parseInt(parts[parts.length - 1], 10);
+              return isNaN(num) ? 0 : num;
             });
-            nextNumber = Math.max(...numbers) + 1;
+            nextNumber = Math.max(...numbers, 0) + 1;
           }
           
           const newNumber = `VL-${currentYear}-${nextNumber.toString().padStart(4, '0')}`;
@@ -834,7 +841,11 @@ export default function InvoiceEditor() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Rechnungsnummer</label>
-                <Input value={invoice.invoice_number} readOnly className="bg-dark-950/50 cursor-not-allowed font-mono text-cyan-500/50" />
+                <Input 
+                  value={invoice.invoice_number} 
+                  onChange={e => updateField('invoice_number', e.target.value)}
+                  className="bg-dark-950 font-mono text-cyan-500" 
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Rechnungsdatum</label>

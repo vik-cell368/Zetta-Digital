@@ -92,7 +92,7 @@ export default function ContractEditor() {
           const ctDoc = await getDoc(doc(db, 'contracts', id));
           if (ctDoc.exists()) {
             const data = { id: ctDoc.id, ...ctDoc.data() } as Contract;
-            setContract(data);
+            setContract(prev => ({ ...prev, ...data }));
             
             // Check for auto-download
             const params = new URLSearchParams(location.search);
@@ -107,58 +107,65 @@ export default function ContractEditor() {
             if (local) {
               const contracts = JSON.parse(local) as Contract[];
               const found = contracts.find(c => c.id === id);
-              if (found) setContract(found);
+              if (found) setContract(prev => ({ ...prev, ...found }));
             }
           }
-        } else if (leadId) {
-          // Pre-fill from lead
-          let lead: any = null;
-          try {
-            const leadDoc = await getDoc(doc(db, 'appointments', leadId));
-            if (leadDoc.exists()) lead = { id: leadDoc.id, ...leadDoc.data() };
-          } catch (e) {}
+        } else {
+          // New Contract
+          if (leadId) {
+            // Pre-fill from lead
+            let lead: any = null;
+            try {
+              const leadDoc = await getDoc(doc(db, 'appointments', leadId));
+              if (leadDoc.exists()) lead = { id: leadDoc.id, ...leadDoc.data() };
+            } catch (e) {}
 
-          if (!lead) {
-            const local = localStorage.getItem('viktor_labs_appointments');
-            if (local) {
-              const leads = JSON.parse(local);
-              lead = leads.find((l: any) => l.id === leadId);
+            if (!lead) {
+              const local = localStorage.getItem('viktor_labs_appointments');
+              if (local) {
+                const leads = JSON.parse(local);
+                lead = leads.find((l: any) => l.id === leadId);
+              }
+            }
+
+            if (lead) {
+              setContract(prev => ({
+                ...prev,
+                customer_company: lead.company || '',
+                customer_name: lead.full_name || '',
+                customer_email: lead.email || '',
+                customer_phone: lead.phone || '',
+                project_name: lead.service_id ? `Softwareentwicklung: ${lead.service_id}` : ''
+              }));
             }
           }
 
-          if (lead) {
-            setContract(prev => ({
-              ...prev,
-              customer_company: lead.company || '',
-              customer_name: lead.full_name || '',
-              customer_email: lead.email || '',
-              customer_phone: lead.phone || '',
-              project_name: lead.service_id ? `Softwareentwicklung: ${lead.service_id}` : ''
-            }));
-          }
-        }
-
-        if (!isEditing) {
           // Generate new contract number: CT-YYYY-XXXX
           let allContracts: Contract[] = [];
-          const ctSnapshot = await getDocs(collection(db, 'contracts'));
-          if (!ctSnapshot.empty) {
-            allContracts = ctSnapshot.docs.map(doc => doc.data() as Contract);
-          } else {
+          try {
+            const ctSnapshot = await getDocs(collection(db, 'contracts'));
+            if (!ctSnapshot.empty) {
+              allContracts = ctSnapshot.docs.map(doc => doc.data() as Contract);
+            } else {
+              const local = localStorage.getItem('viktor_labs_contracts');
+              if (local) allContracts = JSON.parse(local);
+            }
+          } catch (e) {
             const local = localStorage.getItem('viktor_labs_contracts');
             if (local) allContracts = JSON.parse(local);
           }
 
           const currentYear = new Date().getFullYear();
-          const yearContracts = allContracts.filter(c => c.contract_number.startsWith(`CT-${currentYear}-`));
+          const yearContracts = allContracts.filter(c => c.contract_number?.startsWith(`CT-${currentYear}-`));
           
           let nextNumber = 1;
           if (yearContracts.length > 0) {
             const numbers = yearContracts.map(c => {
               const parts = c.contract_number.split('-');
-              return parseInt(parts[parts.length - 1], 10);
+              const num = parseInt(parts[parts.length - 1], 10);
+              return isNaN(num) ? 0 : num;
             });
-            nextNumber = Math.max(...numbers) + 1;
+            nextNumber = Math.max(...numbers, 0) + 1;
           }
           
           const newNumber = `CT-${currentYear}-${nextNumber.toString().padStart(4, '0')}`;
@@ -599,7 +606,11 @@ export default function ContractEditor() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Vertragsnummer</label>
-                <Input value={contract.contract_number} readOnly className="bg-dark-950/50 font-mono text-cyan-500/50" />
+                <Input 
+                  value={contract.contract_number} 
+                  onChange={e => updateField('contract_number', e.target.value)}
+                  className="bg-dark-950 font-mono text-cyan-500" 
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Vertragsart</label>

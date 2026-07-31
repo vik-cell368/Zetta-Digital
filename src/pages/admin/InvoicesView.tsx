@@ -19,20 +19,22 @@ export default function InvoicesView() {
   const fetchInvoices = async () => {
     setIsLoading(true);
     try {
-      const q = query(collection(db, 'invoices'), orderBy('created_at', 'desc'));
+      const q = query(collection(db, 'invoices')); // Remove orderBy to avoid index issues
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Invoice));
       
-      if (data.length > 0) {
-        setInvoices(data);
-        localStorage.setItem('viktor_labs_invoices', JSON.stringify(data));
-      } else {
-        const local = localStorage.getItem('viktor_labs_invoices');
-        if (local) setInvoices(JSON.parse(local));
-      }
+      // Sort in memory
+      data.sort((a, b) => {
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return dateB - dateA;
+      });
+
+      setInvoices(data);
+      localStorage.setItem('viktor_labs_invoices', JSON.stringify(data));
     } catch (err) {
       console.warn("Invoices fetch failed, using local storage", err);
-      handleFirestoreError(err, OperationType.LIST, 'invoices');
+      // Don't throw for index errors, just use local
       const local = localStorage.getItem('viktor_labs_invoices');
       if (local) setInvoices(JSON.parse(local));
     } finally {
@@ -62,11 +64,14 @@ export default function InvoicesView() {
     }
   };
 
-  const filteredInvoices = invoices.filter(inv => 
-    inv.invoice_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    inv.customer_company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    inv.customer_email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredInvoices = invoices.filter(inv => {
+    const search = searchQuery.toLowerCase();
+    const nr = (inv.invoice_number || '').toLowerCase();
+    const comp = (inv.customer_company || '').toLowerCase();
+    const email = (inv.customer_email || '').toLowerCase();
+    
+    return nr.includes(search) || comp.includes(search) || email.includes(search);
+  });
 
   const getStatusIcon = (status: string) => {
     switch (status) {

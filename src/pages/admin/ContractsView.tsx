@@ -33,21 +33,22 @@ export default function ContractsView() {
     const fetchContracts = async () => {
       setIsLoading(true);
       try {
-        const q = query(collection(db, 'contracts'), orderBy('created_at', 'desc'));
+        const q = query(collection(db, 'contracts')); // Remove orderBy to avoid index issues
         const querySnapshot = await getDocs(q);
         const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
 
-        if (data.length > 0) {
-          setContracts(data);
-          localStorage.setItem('viktor_labs_contracts', JSON.stringify(data));
-        } else {
-          // Fallback to local storage
-          const local = localStorage.getItem('viktor_labs_contracts');
-          if (local) setContracts(JSON.parse(local));
-        }
+        // Sort in memory
+        data.sort((a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return dateB - dateA;
+        });
+
+        setContracts(data);
+        localStorage.setItem('viktor_labs_contracts', JSON.stringify(data));
       } catch (err) {
         console.error("Fetch failed", err);
-        handleFirestoreError(err, OperationType.LIST, 'contracts');
+        // Fallback
         const local = localStorage.getItem('viktor_labs_contracts');
         if (local) setContracts(JSON.parse(local));
       } finally {
@@ -59,11 +60,12 @@ export default function ContractsView() {
   }, []);
 
   const filteredContracts = contracts.filter(contract => {
-    const matchesSearch = 
-      contract.contract_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contract.customer_company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contract.project_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const search = searchTerm.toLowerCase();
+    const nr = (contract.contract_number || '').toLowerCase();
+    const comp = (contract.customer_company || '').toLowerCase();
+    const proj = (contract.project_name || '').toLowerCase();
     
+    const matchesSearch = nr.includes(search) || comp.includes(search) || proj.includes(search);
     const matchesStatus = statusFilter === 'all' || contract.status === statusFilter;
     
     return matchesSearch && matchesStatus;
