@@ -71,10 +71,9 @@ export default function InvoiceEditor() {
       setIsLoading(true);
       try {
         // Load settings first
-        const sSnapshot = await getDocs(query(collection(db, 'business_settings'), limit(1)));
-        const settings = sSnapshot.docs[0]?.data() as BusinessSettings;
-        if (settings) {
-          setBusinessSettings(settings);
+        const settingsDoc = await getDoc(doc(db, 'business_settings', 'current_settings'));
+        if (settingsDoc.exists()) {
+          setBusinessSettings(settingsDoc.data() as BusinessSettings);
         } else {
           const local = localStorage.getItem('viktor_labs_business_settings');
           if (local) setBusinessSettings(JSON.parse(local));
@@ -93,7 +92,19 @@ export default function InvoiceEditor() {
         if (isEditing) {
           const invDoc = await getDoc(doc(db, 'invoices', id));
           if (invDoc.exists()) {
-            setInvoice({ id: invDoc.id, ...invDoc.data() } as Invoice);
+            const data = { id: invDoc.id, ...invDoc.data() } as Invoice;
+            setInvoice(data);
+            
+            // Check for auto-download
+            const params = new URLSearchParams(location.search);
+            if (params.get('download') === 'true') {
+              // Wait a bit for state to settle
+              setTimeout(() => {
+                generatePDF(data);
+                // Clear param
+                navigate(location.pathname, { replace: true });
+              }, 1000);
+            }
           } else {
             const local = localStorage.getItem('viktor_labs_invoices');
             if (local) {
@@ -286,11 +297,7 @@ export default function InvoiceEditor() {
     } as Invoice;
 
     try {
-      if (isEditing && invoice.id) {
-        await setDoc(doc(db, 'invoices', invoice.id), finalInvoice);
-      } else {
-        await addDoc(collection(db, 'invoices'), finalInvoice);
-      }
+      await setDoc(doc(db, 'invoices', finalInvoice.id), finalInvoice);
       
       // Update local storage
       const local = localStorage.getItem('viktor_labs_invoices');
@@ -303,14 +310,16 @@ export default function InvoiceEditor() {
       localStorage.setItem('viktor_labs_invoices', JSON.stringify(invoices));
       
       if (downloadPDFAfter) {
-        generatePDF(finalInvoice);
+        await generatePDF(finalInvoice);
       }
       
       if (!isEditing) navigate('/admin/invoices');
       else alert('Rechnung gespeichert');
     } catch (err) {
       console.error("Save failed", err);
-      handleFirestoreError(err, OperationType.UPDATE, 'invoices');
+      // Inform the system about the error but catch it so fallback continues
+      try { handleFirestoreError(err, OperationType.UPDATE, 'invoices'); } catch(e) {}
+
       // Fallback local save
       const local = localStorage.getItem('viktor_labs_invoices');
       let invoices: Invoice[] = local ? JSON.parse(local) : [];
@@ -322,7 +331,7 @@ export default function InvoiceEditor() {
       localStorage.setItem('viktor_labs_invoices', JSON.stringify(invoices));
       
       if (downloadPDFAfter) {
-        generatePDF(finalInvoice);
+        await generatePDF(finalInvoice);
       }
       
       alert('Lokal gespeichert (Datenbank fehlgeschlagen)');

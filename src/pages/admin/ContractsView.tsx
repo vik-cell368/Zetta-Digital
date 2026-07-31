@@ -192,14 +192,25 @@ export default function ContractsView() {
                             size="sm" 
                             onClick={() => navigate(`/admin/contracts/edit/${contract.id}`)}
                             className="text-slate-400 hover:text-cyan-500"
+                            title="Bearbeiten"
                           >
                             <ExternalLink className="w-4 h-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="sm" 
+                            onClick={() => navigate(`/admin/contracts/edit/${contract.id}?download=true`)}
+                            className="text-slate-400 hover:text-emerald-500"
+                            title="PDF Herunterladen"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
                             onClick={() => deleteContract(contract.id)}
                             className="text-slate-400 hover:text-red-500"
+                            title="Löschen"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

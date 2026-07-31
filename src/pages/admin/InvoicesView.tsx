@@ -176,14 +176,25 @@ export default function InvoicesView() {
                             size="sm" 
                             className="h-8 w-8 p-0 text-slate-400 hover:text-cyan-500"
                             onClick={() => navigate(`/admin/invoices/edit/${invoice.id}`)}
+                            title="Bearbeiten"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="sm" 
+                            className="h-8 w-8 p-0 text-slate-400 hover:text-emerald-500"
+                            onClick={() => navigate(`/admin/invoices/edit/${invoice.id}?download=true`)}
+                            title="PDF Herunterladen"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
                             className="h-8 w-8 p-0 text-slate-400 hover:text-red-500"
                             onClick={() => handleDelete(invoice.id)}
+                            title="Löschen"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

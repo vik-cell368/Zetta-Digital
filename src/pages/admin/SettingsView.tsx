@@ -38,14 +38,14 @@ export default function SettingsView() {
 
   const fetchData = async () => {
     try {
-      const [sSnapshot, hSnapshot, bSnapshot] = await Promise.all([
-        getDocs(query(collection(db, 'business_settings'), limit(1))),
+      const [sDoc, hSnapshot, bSnapshot] = await Promise.all([
+        getDoc(doc(db, 'business_settings', 'current_settings')),
         getDocs(query(collection(db, 'business_hours'), orderBy('weekday'))),
         getDocs(query(collection(db, 'blocked_dates'), orderBy('blocked_date', 'asc')))
       ]);
       
-      const s = sSnapshot.docs[0]?.data() as BusinessSettings;
-      const sId = sSnapshot.docs[0]?.id;
+      const s = sDoc.exists() ? sDoc.data() as BusinessSettings : null;
+      const sId = sDoc.id;
 
       if (s) {
         const settingsWithDefaults = {
@@ -139,15 +139,11 @@ export default function SettingsView() {
     localStorage.setItem('viktor_labs_business_settings', JSON.stringify(updatedData));
     
     try {
-      if (settings?.id) {
-        await updateDoc(doc(db, 'business_settings', settings.id), updatedData as any);
-      } else {
-        await addDoc(collection(db, 'business_settings'), updatedData);
-      }
+      await setDoc(doc(db, 'business_settings', 'current_settings'), updatedData);
       alert('Einstellungen erfolgreich gespeichert');
     } catch (err) {
       console.warn("Firebase settings update failed", err);
-      handleFirestoreError(err, OperationType.UPDATE, 'business_settings');
+      try { handleFirestoreError(err, OperationType.UPDATE, 'business_settings'); } catch(e) {}
       alert('Fehler beim Speichern in der Cloud. Lokal gespeichert.');
     } finally {
       setIsSaving(false);
@@ -388,8 +384,18 @@ export default function SettingsView() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-white/10 pt-4 mt-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-100 mb-1">Steuernummer / USt-IdNr.</label>
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Steuernummer</label>
+                  <Input {...registerSettings('tax_number')} placeholder="123/456/78901" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-100 mb-1">USt-IdNr.</label>
                   <Input {...registerSettings('vat_id')} placeholder="DE123456789" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-white/10 pt-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Handelsregister (HRB)</label>
+                  <Input {...registerSettings('hrb')} placeholder="Amtsgericht Musterstadt, HRB 12345" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-100 mb-1">Website</label>

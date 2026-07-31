@@ -80,10 +80,9 @@ export default function ContractEditor() {
       setIsLoading(true);
       try {
         // Load settings first
-        const sSnapshot = await getDocs(query(collection(db, 'business_settings'), limit(1)));
-        const settings = sSnapshot.docs[0]?.data() as BusinessSettings;
-        if (settings) {
-          setBusinessSettings(settings);
+        const settingsDoc = await getDoc(doc(db, 'business_settings', 'current_settings'));
+        if (settingsDoc.exists()) {
+          setBusinessSettings(settingsDoc.data() as BusinessSettings);
         } else {
           const local = localStorage.getItem('viktor_labs_business_settings');
           if (local) setBusinessSettings(JSON.parse(local));
@@ -92,7 +91,17 @@ export default function ContractEditor() {
         if (isEditing) {
           const ctDoc = await getDoc(doc(db, 'contracts', id));
           if (ctDoc.exists()) {
-            setContract({ id: ctDoc.id, ...ctDoc.data() } as Contract);
+            const data = { id: ctDoc.id, ...ctDoc.data() } as Contract;
+            setContract(data);
+            
+            // Check for auto-download
+            const params = new URLSearchParams(location.search);
+            if (params.get('download') === 'true') {
+              setTimeout(() => {
+                generatePDF(data);
+                navigate(location.pathname, { replace: true });
+              }, 1000);
+            }
           } else {
             const local = localStorage.getItem('viktor_labs_contracts');
             if (local) {
@@ -345,11 +354,7 @@ export default function ContractEditor() {
     } as Contract;
 
     try {
-      if (isEditing && contract.id) {
-        await setDoc(doc(db, 'contracts', contract.id), finalContract);
-      } else {
-        await addDoc(collection(db, 'contracts'), finalContract);
-      }
+      await setDoc(doc(db, 'contracts', finalContract.id), finalContract);
       
       const local = localStorage.getItem('viktor_labs_contracts');
       let contracts: Contract[] = local ? JSON.parse(local) : [];
@@ -368,7 +373,7 @@ export default function ContractEditor() {
       else alert('Vertrag gespeichert');
     } catch (err) {
       console.error(err);
-      handleFirestoreError(err, OperationType.UPDATE, 'contracts');
+      try { handleFirestoreError(err, OperationType.UPDATE, 'contracts'); } catch(e) {}
       // Local fallback
       const local = localStorage.getItem('viktor_labs_contracts');
       let contracts: Contract[] = local ? JSON.parse(local) : [];

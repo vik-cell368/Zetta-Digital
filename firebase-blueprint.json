@@ -41,12 +41,14 @@
         "business_name": { "type": "string" },
         "business_address": { "type": "string" },
         "business_email": { "type": "string" },
+        "business_phone": { "type": "string" },
         "website": { "type": "string" },
         "vat_id": { "type": "string" },
+        "tax_number": { "type": "string" },
+        "hrb": { "type": "string" },
         "bank_name": { "type": "string" },
         "iban": { "type": "string" },
-        "bic": { "type": "string" },
-        "tax_office": { "type": "string" }
+        "bic": { "type": "string" }
       }
     },
     "Invoice": {
