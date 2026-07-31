@@ -31,6 +31,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
+import SEO from '@/components/SEO';
 
 // --- Types ---
 interface Option {
@@ -306,6 +307,10 @@ export default function Configurator() {
 
   return (
     <div className="min-h-screen pt-32 pb-20 px-4 md:px-8 bg-dark-950">
+      <SEO 
+        title="Preiskalkulator"
+        description="Erhalten Sie ein sofortiges Angebot für Ihr digitales Projekt mit unserem interaktiven Preiskalkulator."
+      />
       <div className="max-w-7xl mx-auto">
         
         {/* Header */}

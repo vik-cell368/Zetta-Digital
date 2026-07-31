@@ -36,6 +36,8 @@ const DEFAULT_CANCELLATION_TERMS = "Dieser Vertrag kann von beiden Parteien mit 
 const DEFAULT_WARRANTY = "Viktor Labs gewährleistet, dass die Software die vereinbarten Funktionen erfüllt. Die Gewährleistungsfrist beträgt 12 Monate ab Abnahme.";
 const DEFAULT_OTHER = "Diese Vertragsbeilage ist Bestandteil des Hauptvertrags. Bei Widersprüchen zwischen Hauptvertrag und Beilage gelten die Regelungen des Hauptvertrags, sofern nichts anderes ausdrücklich vereinbart wurde.";
 
+import { generateContractPDF } from '@/lib/pdf';
+
 export default function ContractEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -48,7 +50,7 @@ export default function ContractEditor() {
   const [businessSettings, setBusinessSettings] = useState<BusinessSettings | null>(null);
 
   const [contract, setContract] = useState<Partial<Contract>>({
-    contract_number: '',
+    contract_number: 'Laden...',
     contract_date: format(new Date(), 'yyyy-MM-dd'),
     start_date: format(new Date(), 'yyyy-MM-dd'),
     contract_type: 'Webentwicklung',
@@ -89,20 +91,20 @@ export default function ContractEditor() {
         }
 
         if (isEditing) {
-          const ctDoc = await getDoc(doc(db, 'contracts', id));
-          if (ctDoc.exists()) {
-            const data = { id: ctDoc.id, ...ctDoc.data() } as Contract;
-            setContract(prev => ({ ...prev, ...data }));
-            
-            // Check for auto-download
-            const params = new URLSearchParams(location.search);
-            if (params.get('download') === 'true') {
-              setTimeout(() => {
-                generatePDF(data);
-                navigate(location.pathname, { replace: true });
-              }, 1000);
+          try {
+            const ctDoc = await getDoc(doc(db, 'contracts', id));
+            if (ctDoc.exists()) {
+              const data = { id: ctDoc.id, ...ctDoc.data() } as Contract;
+              setContract(prev => ({ ...prev, ...data }));
+            } else {
+              const local = localStorage.getItem('viktor_labs_contracts');
+              if (local) {
+                const contracts = JSON.parse(local) as Contract[];
+                const found = contracts.find(c => c.id === id);
+                if (found) setContract(prev => ({ ...prev, ...found }));
+              }
             }
-          } else {
+          } catch (e) {
             const local = localStorage.getItem('viktor_labs_contracts');
             if (local) {
               const contracts = JSON.parse(local) as Contract[];
@@ -113,7 +115,6 @@ export default function ContractEditor() {
         } else {
           // New Contract
           if (leadId) {
-            // Pre-fill from lead
             let lead: any = null;
             try {
               const leadDoc = await getDoc(doc(db, 'appointments', leadId));
@@ -140,7 +141,7 @@ export default function ContractEditor() {
             }
           }
 
-          // Generate new contract number: CT-YYYY-XXXX
+          // Generate new contract number
           let allContracts: Contract[] = [];
           try {
             const ctSnapshot = await getDocs(collection(db, 'contracts'));
@@ -154,14 +155,14 @@ export default function ContractEditor() {
             const local = localStorage.getItem('viktor_labs_contracts');
             if (local) allContracts = JSON.parse(local);
           }
-
+          
           const currentYear = new Date().getFullYear();
           const yearContracts = allContracts.filter(c => c.contract_number?.startsWith(`CT-${currentYear}-`));
           
           let nextNumber = 1;
           if (yearContracts.length > 0) {
             const numbers = yearContracts.map(c => {
-              const parts = c.contract_number.split('-');
+              const parts = (c.contract_number || '').split('-');
               const num = parseInt(parts[parts.length - 1], 10);
               return isNaN(num) ? 0 : num;
             });
@@ -201,196 +202,15 @@ export default function ContractEditor() {
   };
 
   const generatePDF = async (ct: Contract) => {
-    const doc = new jsPDF();
-    const margin = 20;
-    const pageWidth = doc.internal.pageSize.width;
-    let y = 20;
-
-    // Design: White background, black text
-    doc.setFillColor(255, 255, 255);
-    doc.rect(0, 0, pageWidth, doc.internal.pageSize.height, 'F');
-
-    // Load Logo
-    let logoBase64 = '';
     try {
-      logoBase64 = await getBase64ImageFromUrl('/logo.png');
+      await generateContractPDF(ct, businessSettings);
     } catch (e) {
-      console.warn("Logo could not be loaded for PDF", e);
+      console.error("PDF gen failed", e);
+      alert("PDF konnte nicht generiert werden.");
     }
-
-    // Helper functions
-    const line = (thickness = 0.2, color = [0, 0, 0]) => {
-      doc.setDrawColor(color[0], color[1], color[2]);
-      doc.setLineWidth(thickness);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 10;
-    };
-
-    const addSection = (title: string, content: string) => {
-      if (y > 250) { doc.addPage(); y = 20; }
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.setTextColor(0, 0, 0);
-      doc.text(title, margin, y);
-      y += 7;
-      
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      const splitContent = doc.splitTextToSize(content, pageWidth - (margin * 2));
-      doc.text(splitContent, margin, y);
-      y += (splitContent.length * 5) + 10;
-    };
-
-    // 1. Header (Logo & Company Info)
-    if (logoBase64) {
-      doc.addImage(logoBase64, 'PNG', margin, y, 30, 30);
-      y += 5;
-    } else {
-      // Manual Logo Recreation
-      doc.setFontSize(24);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 0, 0);
-      doc.text('VIKTOR', margin, y + 10);
-      const viktorWidth = doc.getTextWidth('VIKTOR ');
-      doc.setTextColor(59, 130, 246); // Blue equivalent
-      doc.text('LABS', margin + viktorWidth, y + 10);
-      
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100, 100, 100);
-      doc.text('DIGITAL ARCHITECTURE', margin, y + 15, { charSpace: 2 });
-      y += 20;
-    }
-
-    // Left Contact Info
-    doc.setFontSize(9);
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'normal');
-    const contactX = margin;
-    let contactY = y + 10;
-    
-    const contactDetails = [
-      { label: 'E-Mail:', value: businessSettings?.business_email || '' },
-      { label: 'Tel:', value: businessSettings?.business_phone || '' },
-      { label: 'Web:', value: businessSettings?.website || '' },
-      { label: 'USt-IdNr:', value: businessSettings?.vat_id || '' }
-    ];
-
-    contactDetails.forEach(detail => {
-      if (detail.value) {
-        doc.setFont('helvetica', 'normal');
-        doc.text(detail.label, contactX, contactY);
-        doc.text(detail.value, contactX + 20, contactY);
-        contactY += 6;
-      }
-    });
-
-    // Right Meta Info (Table style)
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text('VERTRAGSBEILAGE', pageWidth - margin, y + 10, { align: 'right' });
-    
-    let metaY = y + 25;
-    doc.setFontSize(9);
-    const metaLabels = [
-      ['Vertragsnummer:', ct.contract_number],
-      ['Datum:', format(parseISO(ct.contract_date), 'dd.MM.yyyy')],
-      ['Projekt:', ct.project_name]
-    ];
-
-    metaLabels.forEach(([label, value]) => {
-      doc.setFont('helvetica', 'normal');
-      doc.text(label, pageWidth - 80, metaY);
-      doc.setFont('helvetica', 'bold');
-      doc.text(value || '', pageWidth - margin, metaY, { align: 'right' });
-      metaY += 6;
-    });
-
-    y = Math.max(contactY, metaY) + 10;
-    line(0.1, [200, 200, 200]);
-
-    // 2. Title & Parties
-    const startY = y;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('DIENSTLEISTER', margin, y);
-    y += 6;
-    doc.setFont('helvetica', 'normal');
-    doc.text(businessSettings?.business_name || 'Viktor Labs', margin, y);
-    y += 5;
-    doc.text(businessSettings?.business_address || '', margin, y);
-    
-    y = startY;
-    doc.setFont('helvetica', 'bold');
-    doc.text('AUFTRAGGEBER', pageWidth - 80, y);
-    y += 6;
-    doc.setFont('helvetica', 'normal');
-    doc.text(ct.customer_company || '', pageWidth - 80, y);
-    y += 5;
-    if (ct.customer_name) { doc.text(ct.customer_name, pageWidth - 80, y); y += 5; }
-    doc.text(`${ct.customer_zip || ''} ${ct.customer_city || ''}`, pageWidth - 80, y);
-    y += 5;
-    doc.text(ct.customer_street || '', pageWidth - 80, y);
-
-    y += 20;
-    line(0.1, [200, 200, 200]);
-
-    // 3. Sections
-    addSection('1. Gegenstand der Beilage', ct.description);
-    addSection('2. Leistungsumfang', ct.scope);
-    addSection('3. Zeitplan & Ablauf', ct.timeline);
-    addSection('4. Mitwirkungspflichten', ct.responsibilities);
-    addSection('5. Lieferumfang', ct.deliverables);
-    addSection('6. Konditionen', ct.payment_terms);
-    
-    if (ct.total_price) {
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Investition: ${formatCurrency(ct.total_price)}`, margin, y);
-      y += 15;
-    }
-
-    addSection('7. Gewährleistung', ct.warranty);
-    addSection('8. Schlussbestimmungen', ct.other_agreements);
-
-    // 4. Signatures
-    if (y > 230) { doc.addPage(); y = 30; }
-    y += 20;
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Ort, Datum:', margin, y);
-    doc.text('Ort, Datum:', pageWidth - 80, y);
-    y += 25;
-    
-    doc.line(margin, y, margin + 60, y);
-    doc.line(pageWidth - 80, y, pageWidth - 20, y);
-    y += 5;
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text(businessSettings?.business_name || 'Viktor Labs', margin, y);
-    doc.text(ct.customer_company || '', pageWidth - 80, y);
-
-    // 5. Footer
-    const footerY = doc.internal.pageSize.height - 10;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text(businessSettings?.business_name || 'Viktor Labs', margin, footerY);
-    const labWidth = doc.getTextWidth(businessSettings?.business_name || 'Viktor Labs');
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
-    doc.text(' · Digital Architecture', margin + labWidth, footerY);
-
-    doc.text(businessSettings?.website || '', pageWidth / 2 + 10, footerY, { align: 'right' });
-    doc.text(businessSettings?.business_phone || '', pageWidth / 2 + 50, footerY, { align: 'right' });
-    doc.text(businessSettings?.business_email || '', pageWidth - margin, footerY, { align: 'right' });
-
-    doc.save(`Vertrag_${ct.contract_number}.pdf`);
   };
 
-  const handleSave = async (downloadPDF = false) => {
+  const handleSave = async () => {
     setIsSaving(true);
     const finalContract = {
       ...contract,
@@ -410,16 +230,10 @@ export default function ContractEditor() {
       }
       localStorage.setItem('viktor_labs_contracts', JSON.stringify(contracts));
       
-      if (downloadPDF) {
-        await generatePDF(finalContract);
-      }
-      
       if (!isEditing) navigate('/admin/contracts');
       else alert('Vertrag gespeichert');
     } catch (err) {
       console.error(err);
-      try { handleFirestoreError(err, OperationType.UPDATE, 'contracts'); } catch(e) {}
-      // Local fallback
       const local = localStorage.getItem('viktor_labs_contracts');
       let contracts: Contract[] = local ? JSON.parse(local) : [];
       if (isEditing) {
@@ -428,8 +242,7 @@ export default function ContractEditor() {
         contracts.unshift(finalContract);
       }
       localStorage.setItem('viktor_labs_contracts', JSON.stringify(contracts));
-      if (downloadPDF) await generatePDF(finalContract);
-      alert('Lokal gespeichert (Datenbank fehlgeschlagen)');
+      alert('Lokal gespeichert');
       if (!isEditing) navigate('/admin/contracts');
     } finally {
       setIsSaving(false);
@@ -460,7 +273,7 @@ export default function ContractEditor() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => handleSave(false)} isLoading={isSaving} className="bg-cyan-500 text-dark-950 font-bold px-8">
+          <Button onClick={() => handleSave()} isLoading={isSaving} className="bg-cyan-500 text-dark-950 font-bold px-8">
             <Save className="w-4 h-4 mr-2" />
             Speichern
           </Button>
@@ -587,6 +400,24 @@ export default function ContractEditor() {
                     onChange={e => updateField('warranty', e.target.value)}
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">5. Lieferumfang / Deliverables</label>
+                <textarea 
+                  className="w-full bg-dark-950 border border-white/10 rounded-xl py-3 px-4 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 min-h-[100px]"
+                  value={contract.deliverables}
+                  onChange={e => updateField('deliverables', e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">6. Sonstige Vereinbarungen</label>
+                <textarea 
+                  className="w-full bg-dark-950 border border-white/10 rounded-xl py-3 px-4 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 min-h-[100px]"
+                  value={contract.other_agreements}
+                  onChange={e => updateField('other_agreements', e.target.value)}
+                />
               </div>
             </CardContent>
           </Card>

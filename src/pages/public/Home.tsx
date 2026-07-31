@@ -37,7 +37,7 @@ const BentoCard = ({
 }) => {
   const navigate = useNavigate();
   return (
-    <motion.div 
+    <motion.article 
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -56,7 +56,7 @@ const BentoCard = ({
           <div className="space-y-4">
             {Icon && (
               <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-cyan-500 group-hover:scale-110 transition-all duration-700">
-                <Icon size={24} />
+                <Icon size={24} aria-hidden="true" />
               </div>
             )}
             <div>
@@ -68,11 +68,11 @@ const BentoCard = ({
             <div className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-400 group-hover:text-cyan-500 transition-colors">
               Details
             </div>
-            <ArrowUpRight size={16} className="text-slate-300 group-hover:text-cyan-500 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+            <ArrowUpRight size={16} className="text-slate-300 group-hover:text-cyan-500 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" aria-hidden="true" />
           </div>
         </>
       )}
-    </motion.div>
+    </motion.article>
   );
 };
 

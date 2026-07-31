@@ -1,29 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
-import { collection, query, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { Invoice } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
+import { collection, query, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { Invoice, BusinessSettings } from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Plus, Search, FileText, Download, Trash2, Edit, ExternalLink, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Plus, Search, FileText, Download, Trash2, Edit, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { de } from 'date-fns/locale';
 import { formatCurrency } from '@/lib/utils';
+import { generateInvoicePDF } from '@/lib/pdf';
 
 export default function InvoicesView() {
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [businessSettings, setBusinessSettings] = useState<BusinessSettings | null>(null);
 
   const fetchInvoices = async () => {
     setIsLoading(true);
     try {
-      const q = query(collection(db, 'invoices')); // Remove orderBy to avoid index issues
+      // Fetch settings first
+      const settingsDoc = await getDoc(doc(db, 'settings', 'business'));
+      if (settingsDoc.exists()) {
+        setBusinessSettings(settingsDoc.data() as BusinessSettings);
+      }
+
+      const q = query(collection(db, 'invoices'));
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Invoice));
       
-      // Sort in memory
       data.sort((a, b) => {
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
         const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -33,8 +40,7 @@ export default function InvoicesView() {
       setInvoices(data);
       localStorage.setItem('viktor_labs_invoices', JSON.stringify(data));
     } catch (err) {
-      console.warn("Invoices fetch failed, using local storage", err);
-      // Don't throw for index errors, just use local
+      console.warn("Invoices fetch failed", err);
       const local = localStorage.getItem('viktor_labs_invoices');
       if (local) setInvoices(JSON.parse(local));
     } finally {
@@ -45,6 +51,18 @@ export default function InvoicesView() {
   useEffect(() => {
     fetchInvoices();
   }, []);
+
+  const handleDownload = async (invoice: Invoice) => {
+    setIsDownloading(invoice.id);
+    try {
+      await generateInvoicePDF(invoice, businessSettings);
+    } catch (err) {
+      console.error("Download failed", err);
+      alert("Download fehlgeschlagen. Bitte versuchen Sie es erneut.");
+    } finally {
+      setIsDownloading(null);
+    }
+  };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Möchten Sie diese Rechnung wirklich löschen?')) return;
@@ -57,7 +75,7 @@ export default function InvoicesView() {
       localStorage.setItem('viktor_labs_invoices', JSON.stringify(updated));
     } catch (err) {
       console.error("Delete failed", err);
-      handleFirestoreError(err, OperationType.DELETE, `invoices/${id}`);
+      // Even if firestore fails, we update local state for better UX
       const updated = invoices.filter(inv => inv.id !== id);
       setInvoices(updated);
       localStorage.setItem('viktor_labs_invoices', JSON.stringify(updated));
@@ -189,10 +207,11 @@ export default function InvoicesView() {
                             variant="ghost" 
                             size="sm" 
                             className="h-8 w-8 p-0 text-slate-400 hover:text-emerald-500"
-                            onClick={() => navigate(`/admin/invoices/edit/${invoice.id}?download=true`)}
+                            onClick={() => handleDownload(invoice)}
+                            disabled={isDownloading === invoice.id}
                             title="PDF Herunterladen"
                           >
-                            <Download className="w-4 h-4" />
+                            <Download className={`w-4 h-4 ${isDownloading === invoice.id ? 'animate-bounce' : ''}`} />
                           </Button>
                           <Button 
                             variant="ghost" 

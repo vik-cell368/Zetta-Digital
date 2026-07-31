@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
-import { collection, query, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { Contract } from '@/lib/types';
+import { collection, query, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { Contract, BusinessSettings } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -10,7 +10,6 @@ import {
   Plus, 
   Search, 
   FileText, 
-  MoreVertical, 
   Download, 
   Trash2, 
   ExternalLink,
@@ -20,24 +19,31 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
+import { generateContractPDF } from '@/lib/pdf';
 
 export default function ContractsView() {
   const navigate = useNavigate();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [businessSettings, setBusinessSettings] = useState<BusinessSettings | null>(null);
 
   useEffect(() => {
     const fetchContracts = async () => {
       setIsLoading(true);
       try {
-        const q = query(collection(db, 'contracts')); // Remove orderBy to avoid index issues
+        const settingsDoc = await getDoc(doc(db, 'settings', 'business'));
+        if (settingsDoc.exists()) {
+          setBusinessSettings(settingsDoc.data() as BusinessSettings);
+        }
+
+        const q = query(collection(db, 'contracts')); 
         const querySnapshot = await getDocs(q);
         const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
 
-        // Sort in memory
         data.sort((a, b) => {
           const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
           const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -48,14 +54,12 @@ export default function ContractsView() {
         localStorage.setItem('viktor_labs_contracts', JSON.stringify(data));
       } catch (err) {
         console.error("Fetch failed", err);
-        // Fallback
         const local = localStorage.getItem('viktor_labs_contracts');
         if (local) setContracts(JSON.parse(local));
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchContracts();
   }, []);
 
@@ -86,6 +90,18 @@ export default function ContractsView() {
     }
   };
 
+  const handleDownload = async (contract: Contract) => {
+    setIsDownloading(contract.id);
+    try {
+      await generateContractPDF(contract, businessSettings);
+    } catch (err) {
+      console.error("Download failed", err);
+      alert("Download fehlgeschlagen.");
+    } finally {
+      setIsDownloading(null);
+    }
+  };
+
   const deleteContract = async (id: string) => {
     if (!confirm('Vertrag wirklich löschen?')) return;
     
@@ -96,7 +112,10 @@ export default function ContractsView() {
       localStorage.setItem('viktor_labs_contracts', JSON.stringify(updated));
     } catch (e) {
       console.error(e);
-      handleFirestoreError(e, OperationType.DELETE, `contracts/${id}`);
+      // Fallback update
+      const updated = contracts.filter(c => c.id !== id);
+      setContracts(updated);
+      localStorage.setItem('viktor_labs_contracts', JSON.stringify(updated));
     }
   };
 
@@ -201,11 +220,12 @@ export default function ContractsView() {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={() => navigate(`/admin/contracts/edit/${contract.id}?download=true`)}
+                            onClick={() => handleDownload(contract)}
+                            disabled={isDownloading === contract.id}
                             className="text-slate-400 hover:text-emerald-500"
                             title="PDF Herunterladen"
                           >
-                            <Download className="w-4 h-4" />
+                            <Download className={`w-4 h-4 ${isDownloading === contract.id ? 'animate-bounce' : ''}`} />
                           </Button>
                           <Button 
                             variant="ghost" 

@@ -30,6 +30,8 @@ const DEFAULT_VAT_RATE = 19;
 
 import { CALCULATOR_OPTIONS } from '@/lib/constants';
 
+import { generateInvoicePDF } from '@/lib/pdf';
+
 export default function InvoiceEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -43,7 +45,7 @@ export default function InvoiceEditor() {
   const [services, setServices] = useState<any[]>([]);
 
   const [invoice, setInvoice] = useState<Partial<Invoice>>({
-    invoice_number: '',
+    invoice_number: 'Laden...',
     invoice_date: format(new Date(), 'yyyy-MM-dd'),
     service_date: format(new Date(), 'yyyy-MM-dd'),
     due_date_days: 14,
@@ -90,22 +92,20 @@ export default function InvoiceEditor() {
         }
 
         if (isEditing) {
-          const invDoc = await getDoc(doc(db, 'invoices', id));
-          if (invDoc.exists()) {
-            const data = { id: invDoc.id, ...invDoc.data() } as Invoice;
-            setInvoice(prev => ({ ...prev, ...data }));
-            
-            // Check for auto-download
-            const params = new URLSearchParams(location.search);
-            if (params.get('download') === 'true') {
-              // Wait a bit for state to settle
-              setTimeout(() => {
-                generatePDF(data);
-                // Clear param
-                navigate(location.pathname, { replace: true });
-              }, 1000);
+          try {
+            const invDoc = await getDoc(doc(db, 'invoices', id));
+            if (invDoc.exists()) {
+              const data = { id: invDoc.id, ...invDoc.data() } as Invoice;
+              setInvoice(prev => ({ ...prev, ...data }));
+            } else {
+              const local = localStorage.getItem('viktor_labs_invoices');
+              if (local) {
+                const invoices = JSON.parse(local) as Invoice[];
+                const found = invoices.find(inv => inv.id === id);
+                if (found) setInvoice(prev => ({ ...prev, ...found }));
+              }
             }
-          } else {
+          } catch (e) {
             const local = localStorage.getItem('viktor_labs_invoices');
             if (local) {
               const invoices = JSON.parse(local) as Invoice[];
@@ -116,7 +116,6 @@ export default function InvoiceEditor() {
         } else {
           // New Invoice
           if (leadId) {
-            // Pre-fill from lead
             let lead: any = null;
             try {
               const leadDoc = await getDoc(doc(db, 'appointments', leadId));
@@ -166,14 +165,14 @@ export default function InvoiceEditor() {
             const local = localStorage.getItem('viktor_labs_invoices');
             if (local) allInvoices = JSON.parse(local);
           }
-
+          
           const currentYear = new Date().getFullYear();
           const yearInvoices = allInvoices.filter(inv => inv.invoice_number?.startsWith(`VL-${currentYear}-`));
           
           let nextNumber = 1;
           if (yearInvoices.length > 0) {
             const numbers = yearInvoices.map(inv => {
-              const parts = inv.invoice_number.split('-');
+              const parts = (inv.invoice_number || '').split('-');
               const num = parseInt(parts[parts.length - 1], 10);
               return isNaN(num) ? 0 : num;
             });
@@ -294,7 +293,7 @@ export default function InvoiceEditor() {
     setInvoice(prev => ({ ...prev, items: newItems }));
   };
 
-  const handleSave = async (downloadPDFAfter = false) => {
+  const handleSave = async () => {
     setIsSaving(true);
     const finalInvoice = {
       ...invoice,
@@ -306,7 +305,6 @@ export default function InvoiceEditor() {
     try {
       await setDoc(doc(db, 'invoices', finalInvoice.id), finalInvoice);
       
-      // Update local storage
       const local = localStorage.getItem('viktor_labs_invoices');
       let invoices: Invoice[] = local ? JSON.parse(local) : [];
       if (isEditing) {
@@ -315,19 +313,11 @@ export default function InvoiceEditor() {
         invoices.unshift(finalInvoice);
       }
       localStorage.setItem('viktor_labs_invoices', JSON.stringify(invoices));
-      
-      if (downloadPDFAfter) {
-        await generatePDF(finalInvoice);
-      }
       
       if (!isEditing) navigate('/admin/invoices');
       else alert('Rechnung gespeichert');
     } catch (err) {
       console.error("Save failed", err);
-      // Inform the system about the error but catch it so fallback continues
-      try { handleFirestoreError(err, OperationType.UPDATE, 'invoices'); } catch(e) {}
-
-      // Fallback local save
       const local = localStorage.getItem('viktor_labs_invoices');
       let invoices: Invoice[] = local ? JSON.parse(local) : [];
       if (isEditing) {
@@ -337,271 +327,20 @@ export default function InvoiceEditor() {
       }
       localStorage.setItem('viktor_labs_invoices', JSON.stringify(invoices));
       
-      if (downloadPDFAfter) {
-        await generatePDF(finalInvoice);
-      }
-      
-      alert('Lokal gespeichert (Datenbank fehlgeschlagen)');
+      alert('Lokal gespeichert');
       if (!isEditing) navigate('/admin/invoices');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const getBase64ImageFromUrl = async (url: string): Promise<string> => {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
-
   const generatePDF = async (inv: Invoice) => {
-    const doc = new jsPDF();
-    const margin = 20;
-    const pageWidth = doc.internal.pageSize.width;
-    let y = 20;
-
-    // Design: White background, black text
-    doc.setFillColor(255, 255, 255);
-    doc.rect(0, 0, pageWidth, doc.internal.pageSize.height, 'F');
-
-    // Load Logo
-    let logoBase64 = '';
     try {
-      logoBase64 = await getBase64ImageFromUrl('/logo.png');
+      await generateInvoicePDF(inv, businessSettings);
     } catch (e) {
-      console.warn("Logo could not be loaded for PDF", e);
+      console.error("PDF gen failed", e);
+      alert("PDF konnte nicht generiert werden.");
     }
-
-    // Helper functions
-    const line = (thickness = 0.2, color = [0, 0, 0]) => {
-      doc.setDrawColor(color[0], color[1], color[2]);
-      doc.setLineWidth(thickness);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 10;
-    };
-
-    // 1. Header (Logo & Company Info)
-    if (logoBase64) {
-      doc.addImage(logoBase64, 'PNG', margin, y, 30, 30);
-      y += 5;
-    } else {
-      // Manual Logo Recreation
-      doc.setFontSize(24);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 0, 0);
-      doc.text('VIKTOR', margin, y + 10);
-      const viktorWidth = doc.getTextWidth('VIKTOR ');
-      doc.setTextColor(59, 130, 246); // Blue equivalent
-      doc.text('LABS', margin + viktorWidth, y + 10);
-      
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100, 100, 100);
-      doc.text('DIGITAL ARCHITECTURE', margin, y + 15, { charSpace: 2 });
-      y += 20;
-    }
-
-    // Left Contact Info
-    doc.setFontSize(9);
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'normal');
-    const contactX = margin;
-    let contactY = y + 10;
-    
-    const contactDetails = [
-      { label: 'E-Mail:', value: businessSettings?.business_email || '' },
-      { label: 'Tel:', value: businessSettings?.business_phone || '' },
-      { label: 'Web:', value: businessSettings?.website || '' },
-      { label: 'USt-IdNr:', value: businessSettings?.vat_id || '' }
-    ];
-
-    contactDetails.forEach(detail => {
-      if (detail.value) {
-        doc.setFont('helvetica', 'normal');
-        doc.text(detail.label, contactX, contactY);
-        doc.text(detail.value, contactX + 20, contactY);
-        contactY += 6;
-      }
-    });
-
-    // Right Meta Info (Table style)
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text('RECHNUNG', pageWidth - margin, y + 10, { align: 'right' });
-    
-    let metaY = y + 25;
-    doc.setFontSize(9);
-    const metaLabels = [
-      ['Rechnungsnummer:', inv.invoice_number],
-      ['Datum:', format(parseISO(inv.invoice_date), 'dd.MM.yyyy')],
-      ['Leistungsdatum:', format(parseISO(inv.service_date), 'dd.MM.yyyy')],
-      ['Zahlungsziel:', `${inv.due_date_days} Tage (${format(parseISO(inv.due_date), 'dd.MM.yyyy')})`]
-    ];
-
-    metaLabels.forEach(([label, value]) => {
-      doc.setFont('helvetica', 'normal');
-      doc.text(label, pageWidth - 80, metaY);
-      doc.setFont('helvetica', 'bold');
-      doc.text(value, pageWidth - margin, metaY, { align: 'right' });
-      metaY += 6;
-    });
-
-    y = Math.max(contactY, metaY) + 10;
-    line(0.1, [200, 200, 200]);
-
-    // 2. Customer Info
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
-    doc.text('RECHNUNGSEMPFÄNGER', margin, y);
-    y += 10;
-
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text(inv.customer_company || '', margin, y);
-    y += 6;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    if (inv.customer_name) {
-      doc.text(inv.customer_name, margin, y);
-      y += 5;
-    }
-    doc.text(inv.customer_street || '', margin, y);
-    y += 5;
-    doc.text(`${inv.customer_zip || ''} ${inv.customer_city || ''}`, margin, y);
-    y += 5;
-    doc.text(inv.customer_country || '', margin, y);
-    y += 20;
-
-    // 3. Table
-    // Header
-    doc.setFillColor(249, 250, 251);
-    doc.rect(margin, y, pageWidth - (margin * 2), 10, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.text('Pos.', margin + 5, y + 6);
-    doc.text('Beschreibung', margin + 25, y + 6);
-    doc.text('Menge', pageWidth - 85, y + 6, { align: 'right' });
-    doc.text('Einzelpreis', pageWidth - 50, y + 6, { align: 'right' });
-    doc.text('Gesamt', pageWidth - margin - 5, y + 6, { align: 'right' });
-    y += 10;
-
-    // Items
-    doc.setFont('helvetica', 'normal');
-    inv.items.forEach((item, i) => {
-      const descLines = doc.splitTextToSize(item.description, 80);
-      const rowHeight = Math.max(10, (descLines.length * 5) + 5);
-      
-      // Separator line
-      doc.setDrawColor(243, 244, 246);
-      doc.line(margin, y, pageWidth - margin, y);
-      
-      doc.text((i + 1).toString(), margin + 5, y + 7);
-      doc.text(descLines, margin + 25, y + 7);
-      doc.text(`${item.quantity} ${item.unit}`, pageWidth - 85, y + 7, { align: 'right' });
-      doc.text(formatCurrency(item.price_per_unit), pageWidth - 50, y + 7, { align: 'right' });
-      doc.setFont('helvetica', 'bold');
-      doc.text(formatCurrency(item.total_price), pageWidth - margin - 5, y + 7, { align: 'right' });
-      doc.setFont('helvetica', 'normal');
-      
-      y += rowHeight;
-      
-      if (y > 250) {
-        doc.addPage();
-        y = 20;
-      }
-    });
-
-    line(0.1, [200, 200, 200]);
-    y -= 5;
-
-    // 4. Totals
-    const totalsX = pageWidth - 80;
-    doc.setFontSize(9);
-    doc.text('Zwischensumme', totalsX, y);
-    doc.text(formatCurrency(inv.subtotal), pageWidth - margin - 5, y, { align: 'right' });
-    y += 6;
-    doc.text(`MwSt. (${inv.vat_rate}%)`, totalsX, y);
-    doc.text(formatCurrency(inv.vat_amount), pageWidth - margin - 5, y, { align: 'right' });
-    y += 10;
-    
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Gesamtbetrag', totalsX, y);
-    doc.setFontSize(16);
-    doc.text(formatCurrency(inv.total_amount), pageWidth - margin - 5, y, { align: 'right' });
-    y += 15;
-
-    line(0.1, [230, 230, 230]);
-
-    // 5. Payment Info
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
-    doc.text('ZAHLUNGSINFORMATIONEN', margin, y);
-    y += 8;
-    
-    doc.setFontSize(9);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Bitte überweisen Sie den Betrag bis zum ${format(parseISO(inv.due_date), 'dd.MM.yyyy')} auf folgendes Konto:`, margin, y);
-    y += 10;
-
-    // Grid for Bank Details
-    const colWidth = (pageWidth - (margin * 2)) / 4;
-    const drawBankDetail = (label: string, value: string, x: number) => {
-      doc.setFontSize(8);
-      doc.setTextColor(100, 100, 100);
-      doc.text(label, x, y);
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 0, 0);
-      doc.text(value, x, y + 6);
-      // Vertical separator
-      doc.setDrawColor(229, 231, 235);
-      doc.line(x + colWidth - 5, y, x + colWidth - 5, y + 8);
-    };
-
-    drawBankDetail('Bank', businessSettings?.bank_name || '', margin);
-    drawBankDetail('IBAN', businessSettings?.iban || '', margin + colWidth);
-    drawBankDetail('BIC', businessSettings?.bic || '', margin + (colWidth * 2));
-    drawBankDetail('Verwendungszweck', inv.invoice_number, margin + (colWidth * 3));
-    
-    y += 25;
-    line(0.1, [230, 230, 230]);
-
-    // 6. Final Greeting
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Vielen Dank für das entgegengebrachte Vertrauen!', margin, y);
-    y += 10;
-    doc.text('Mit freundlichen Grüßen', margin, y);
-    y += 6;
-    doc.setFont('helvetica', 'bold');
-    doc.text(businessSettings?.business_name || 'Viktor Labs', margin, y);
-
-    // 7. Footer
-    const footerY = doc.internal.pageSize.height - 10;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text(businessSettings?.business_name || 'Viktor Labs', margin, footerY);
-    const labWidth = doc.getTextWidth(businessSettings?.business_name || 'Viktor Labs');
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
-    doc.text(' · Digital Architecture', margin + labWidth, footerY);
-
-    doc.text(businessSettings?.website || '', pageWidth / 2 + 10, footerY, { align: 'right' });
-    doc.text(businessSettings?.business_phone || '', pageWidth / 2 + 50, footerY, { align: 'right' });
-    doc.text(businessSettings?.business_email || '', pageWidth - margin, footerY, { align: 'right' });
-
-    doc.save(`Rechnung_${inv.invoice_number}.pdf`);
   };
 
   if (isLoading) {
@@ -628,7 +367,7 @@ export default function InvoiceEditor() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => handleSave(false)} isLoading={isSaving} className="bg-cyan-500 text-dark-950 font-bold px-8">
+          <Button onClick={() => handleSave()} isLoading={isSaving} className="bg-cyan-500 text-dark-950 font-bold px-8">
             <Save className="w-4 h-4 mr-2" />
             Speichern
           </Button>

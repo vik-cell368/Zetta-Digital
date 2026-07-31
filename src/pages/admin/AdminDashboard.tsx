@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { 
   LayoutDashboard, 
@@ -88,19 +88,19 @@ export default function AdminDashboard() {
     fetchData();
   }, []);
 
-  const greeting = () => {
+  const greetingText = useMemo(() => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Guten Morgen';
     if (hour < 18) return 'Guten Tag';
     return 'Guten Abend';
-  };
+  }, []);
 
   return (
     <div className="space-y-10">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-50 mb-2">{greeting()}, Admin</h1>
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-50 mb-2">{greetingText}, Admin</h1>
           <p className="text-slate-500 text-xs md:text-sm">Hier ist die Übersicht über Ihre digitale Infrastruktur.</p>
         </div>
         <div className="flex items-center gap-3">

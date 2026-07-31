@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 
 import PriceConfigurator from '@/components/pricing/PriceConfigurator';
+import SEO from '@/components/SEO';
 
 export default function Services() {
   const { slug } = useParams();
@@ -125,6 +126,10 @@ export default function Services() {
 
       return (
         <div className="min-h-screen bg-white">
+          <SEO 
+            title={service.title}
+            description={service.description}
+          />
           <div className="pt-44 md:pt-48 lg:pt-52 pb-32 px-6 bg-dark-900">
             <div className="max-w-7xl mx-auto">
               <motion.div
@@ -209,6 +214,10 @@ export default function Services() {
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
+      <SEO 
+        title="Unsere Leistungen"
+        description="Entdecken Sie unsere High-End-Services: Webdesign, 3D Animationen, Motion Design und digitale Strategie."
+      />
       <div className="pt-48 pb-32 bg-dark-900 relative">
         <div className="absolute inset-0 bg-grid-white pointer-events-none opacity-40" />
         <div className="absolute inset-0 bg-noise opacity-20 pointer-events-none" />
