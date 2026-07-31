@@ -207,7 +207,9 @@ export default function ContractEditor() {
     let logoBase64 = '';
     try {
       logoBase64 = await getBase64ImageFromUrl('/logo.png');
-    } catch (e) {}
+    } catch (e) {
+      console.warn("Logo could not be loaded for PDF", e);
+    }
 
     // Helper functions
     const line = (thickness = 0.2, color = [0, 0, 0]) => {
@@ -235,41 +237,74 @@ export default function ContractEditor() {
 
     // 1. Header (Logo & Company Info)
     if (logoBase64) {
-      doc.addImage(logoBase64, 'PNG', margin, y, 25, 25);
+      doc.addImage(logoBase64, 'PNG', margin, y, 30, 30);
+      y += 5;
+    } else {
+      // Manual Logo Recreation
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text('VIKTOR', margin, y + 10);
+      const viktorWidth = doc.getTextWidth('VIKTOR ');
+      doc.setTextColor(59, 130, 246); // Blue equivalent
+      doc.text('LABS', margin + viktorWidth, y + 10);
+      
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('DIGITAL ARCHITECTURE', margin, y + 15, { charSpace: 2 });
+      y += 20;
     }
 
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
+    // Left Contact Info
+    doc.setFontSize(9);
     doc.setTextColor(0, 0, 0);
-    const companyInfo = [
-      businessSettings?.business_name || 'Viktor Labs',
-      businessSettings?.business_address || '',
-      `E-Mail: ${businessSettings?.business_email || ''}`,
-      `Web: ${businessSettings?.website || ''}`,
-      `USt-IdNr: ${businessSettings?.vat_id || ''}`
-    ];
+    doc.setFont('helvetica', 'normal');
+    const contactX = margin;
+    let contactY = y + 10;
     
-    let infoY = y + 5;
-    companyInfo.forEach(text => {
-      if (text) {
-        doc.text(text, pageWidth - margin, infoY, { align: 'right' });
-        infoY += 4;
+    const contactDetails = [
+      { label: 'E-Mail:', value: businessSettings?.business_email || '' },
+      { label: 'Tel:', value: businessSettings?.business_phone || '' },
+      { label: 'Web:', value: businessSettings?.website || '' },
+      { label: 'USt-IdNr:', value: businessSettings?.vat_id || '' }
+    ];
+
+    contactDetails.forEach(detail => {
+      if (detail.value) {
+        doc.setFont('helvetica', 'normal');
+        doc.text(detail.label, contactX, contactY);
+        doc.text(detail.value, contactX + 20, contactY);
+        contactY += 6;
       }
     });
 
-    y = Math.max(y + 35, infoY + 5);
+    // Right Meta Info (Table style)
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text('VERTRAGSBEILAGE', pageWidth - margin, y + 10, { align: 'right' });
+    
+    let metaY = y + 25;
+    doc.setFontSize(9);
+    const metaLabels = [
+      ['Vertragsnummer:', ct.contract_number],
+      ['Datum:', format(parseISO(ct.contract_date), 'dd.MM.yyyy')],
+      ['Projekt:', ct.project_name]
+    ];
+
+    metaLabels.forEach(([label, value]) => {
+      doc.setFont('helvetica', 'normal');
+      doc.text(label, pageWidth - 80, metaY);
+      doc.setFont('helvetica', 'bold');
+      doc.text(value || '', pageWidth - margin, metaY, { align: 'right' });
+      metaY += 6;
+    });
+
+    y = Math.max(contactY, metaY) + 10;
+    line(0.1, [200, 200, 200]);
 
     // 2. Title & Parties
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('VERTRAGSBEILAGE', margin, y);
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Vertrags-Nr: ${ct.contract_number}`, pageWidth - margin, y, { align: 'right' });
-    y += 10;
-    line(0.5);
-
     const startY = y;
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
@@ -295,13 +330,7 @@ export default function ContractEditor() {
     y += 20;
     line(0.1, [200, 200, 200]);
 
-    // 3. Project Header
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Projekt: ${ct.project_name}`, margin, y);
-    y += 8;
-    
-    // 4. Sections
+    // 3. Sections
     addSection('1. Gegenstand der Beilage', ct.description);
     addSection('2. Leistungsumfang', ct.scope);
     addSection('3. Zeitplan & Ablauf', ct.timeline);
@@ -318,7 +347,7 @@ export default function ContractEditor() {
     addSection('7. Gewährleistung', ct.warranty);
     addSection('8. Schlussbestimmungen', ct.other_agreements);
 
-    // 5. Signatures
+    // 4. Signatures
     if (y > 230) { doc.addPage(); y = 30; }
     y += 20;
     
@@ -336,11 +365,20 @@ export default function ContractEditor() {
     doc.text(businessSettings?.business_name || 'Viktor Labs', margin, y);
     doc.text(ct.customer_company || '', pageWidth - 80, y);
 
-    // Footer
+    // 5. Footer
     const footerY = doc.internal.pageSize.height - 10;
-    doc.setFontSize(7);
-    doc.setTextColor(150, 150, 150);
-    doc.text(`${businessSettings?.business_name} | ${businessSettings?.business_address} | ${businessSettings?.business_email} | ${businessSettings?.website}`, pageWidth / 2, footerY, { align: 'center' });
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text(businessSettings?.business_name || 'Viktor Labs', margin, footerY);
+    const labWidth = doc.getTextWidth(businessSettings?.business_name || 'Viktor Labs');
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text(' · Digital Architecture', margin + labWidth, footerY);
+
+    doc.text(businessSettings?.website || '', pageWidth / 2 + 10, footerY, { align: 'right' });
+    doc.text(businessSettings?.business_phone || '', pageWidth / 2 + 50, footerY, { align: 'right' });
+    doc.text(businessSettings?.business_email || '', pageWidth - margin, footerY, { align: 'right' });
 
     doc.save(`Vertrag_${ct.contract_number}.pdf`);
   };
@@ -415,11 +453,7 @@ export default function ContractEditor() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => handleSave(true)} isLoading={isSaving}>
-            <Download className="w-4 h-4 mr-2" />
-            Speichern & PDF
-          </Button>
-          <Button onClick={() => handleSave(false)} isLoading={isSaving} className="bg-cyan-500 text-dark-950 font-bold">
+          <Button onClick={() => handleSave(false)} isLoading={isSaving} className="bg-cyan-500 text-dark-950 font-bold px-8">
             <Save className="w-4 h-4 mr-2" />
             Speichern
           </Button>

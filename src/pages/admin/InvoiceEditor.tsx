@@ -380,43 +380,87 @@ export default function InvoiceEditor() {
 
     // 1. Header (Logo & Company Info)
     if (logoBase64) {
-      doc.addImage(logoBase64, 'PNG', margin, y, 25, 25);
+      doc.addImage(logoBase64, 'PNG', margin, y, 30, 30);
+      y += 5;
+    } else {
+      // Manual Logo Recreation
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text('VIKTOR', margin, y + 10);
+      const viktorWidth = doc.getTextWidth('VIKTOR ');
+      doc.setTextColor(59, 130, 246); // Blue equivalent
+      doc.text('LABS', margin + viktorWidth, y + 10);
+      
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('DIGITAL ARCHITECTURE', margin, y + 15, { charSpace: 2 });
+      y += 20;
     }
 
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
+    // Left Contact Info
+    doc.setFontSize(9);
     doc.setTextColor(0, 0, 0);
-    const companyInfo = [
-      businessSettings?.business_name || 'Viktor Labs',
-      businessSettings?.business_address || '',
-      `E-Mail: ${businessSettings?.business_email || ''}`,
-      `Tel: ${businessSettings?.business_phone || ''}`,
-      `Web: ${businessSettings?.website || ''}`,
-      `USt-IdNr: ${businessSettings?.vat_id || ''}`
-    ];
+    doc.setFont('helvetica', 'normal');
+    const contactX = margin;
+    let contactY = y + 10;
     
-    let infoY = y + 5;
-    companyInfo.forEach(text => {
-      if (text) {
-        doc.text(text, pageWidth - margin, infoY, { align: 'right' });
-        infoY += 4;
+    const contactDetails = [
+      { label: 'E-Mail:', value: businessSettings?.business_email || '' },
+      { label: 'Tel:', value: businessSettings?.business_phone || '' },
+      { label: 'Web:', value: businessSettings?.website || '' },
+      { label: 'USt-IdNr:', value: businessSettings?.vat_id || '' }
+    ];
+
+    contactDetails.forEach(detail => {
+      if (detail.value) {
+        doc.setFont('helvetica', 'normal');
+        doc.text(detail.label, contactX, contactY);
+        doc.text(detail.value, contactX + 20, contactY);
+        contactY += 6;
       }
     });
 
-    y = Math.max(y + 35, infoY + 5);
-
-    // 2. Customer Address
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`${businessSettings?.business_name} - ${businessSettings?.business_address}`, margin, y - 5);
-    line(0.1, [150, 150, 150]);
-    y -= 5;
-
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
+    // Right Meta Info (Table style)
+    doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text('RECHNUNG', pageWidth - margin, y + 10, { align: 'right' });
+    
+    let metaY = y + 25;
+    doc.setFontSize(9);
+    const metaLabels = [
+      ['Rechnungsnummer:', inv.invoice_number],
+      ['Datum:', format(parseISO(inv.invoice_date), 'dd.MM.yyyy')],
+      ['Leistungsdatum:', format(parseISO(inv.service_date), 'dd.MM.yyyy')],
+      ['Zahlungsziel:', `${inv.due_date_days} Tage (${format(parseISO(inv.due_date), 'dd.MM.yyyy')})`]
+    ];
+
+    metaLabels.forEach(([label, value]) => {
+      doc.setFont('helvetica', 'normal');
+      doc.text(label, pageWidth - 80, metaY);
+      doc.setFont('helvetica', 'bold');
+      doc.text(value, pageWidth - margin, metaY, { align: 'right' });
+      metaY += 6;
+    });
+
+    y = Math.max(contactY, metaY) + 10;
+    line(0.1, [200, 200, 200]);
+
+    // 2. Customer Info
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text('RECHNUNGSEMPFÄNGER', margin, y);
+    y += 10;
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
     doc.text(inv.customer_company || '', margin, y);
-    y += 5;
+    y += 6;
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     if (inv.customer_name) {
       doc.text(inv.customer_name, margin, y);
@@ -427,100 +471,128 @@ export default function InvoiceEditor() {
     doc.text(`${inv.customer_zip || ''} ${inv.customer_city || ''}`, margin, y);
     y += 5;
     doc.text(inv.customer_country || '', margin, y);
-
-    // 3. Invoice Title & Meta
     y += 20;
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('RECHNUNG', margin, y);
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Rechnungs-Nr: ${inv.invoice_number}`, pageWidth - margin, y - 5, { align: 'right' });
-    doc.text(`Datum: ${format(parseISO(inv.invoice_date), 'dd.MM.yyyy')}`, pageWidth - margin, y, { align: 'right' });
-    doc.text(`Fällig am: ${format(parseISO(inv.due_date), 'dd.MM.yyyy')}`, pageWidth - margin, y + 5, { align: 'right' });
-    
-    y += 15;
-    line(0.5, [0, 0, 0]);
 
-    // 4. Table Header
-    doc.setFontSize(9);
+    // 3. Table
+    // Header
+    doc.setFillColor(249, 250, 251);
+    doc.rect(margin, y, pageWidth - (margin * 2), 10, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.text('Pos.', margin, y);
-    doc.text('Beschreibung', margin + 15, y);
-    doc.text('Menge', pageWidth - 80, y, { align: 'right' });
-    doc.text('Einzelpreis', pageWidth - 45, y, { align: 'right' });
-    doc.text('Gesamt', pageWidth - margin, y, { align: 'right' });
-    y += 4;
-    line(0.2, [0, 0, 0]);
-    y -= 5;
+    doc.setFontSize(9);
+    doc.text('Pos.', margin + 5, y + 6);
+    doc.text('Beschreibung', margin + 25, y + 6);
+    doc.text('Menge', pageWidth - 85, y + 6, { align: 'right' });
+    doc.text('Einzelpreis', pageWidth - 50, y + 6, { align: 'right' });
+    doc.text('Gesamt', pageWidth - margin - 5, y + 6, { align: 'right' });
+    y += 10;
 
     // Items
     doc.setFont('helvetica', 'normal');
     inv.items.forEach((item, i) => {
       const descLines = doc.splitTextToSize(item.description, 80);
-      doc.text((i + 1).toString(), margin, y);
-      doc.text(descLines, margin + 15, y);
+      const rowHeight = Math.max(10, (descLines.length * 5) + 5);
       
-      doc.text(`${item.quantity} ${item.unit}`, pageWidth - 80, y, { align: 'right' });
-      doc.text(formatCurrency(item.price_per_unit), pageWidth - 45, y, { align: 'right' });
-      doc.text(formatCurrency(item.total_price), pageWidth - margin, y, { align: 'right' });
+      // Separator line
+      doc.setDrawColor(243, 244, 246);
+      doc.line(margin, y, pageWidth - margin, y);
       
-      y += (descLines.length * 5) + 3;
+      doc.text((i + 1).toString(), margin + 5, y + 7);
+      doc.text(descLines, margin + 25, y + 7);
+      doc.text(`${item.quantity} ${item.unit}`, pageWidth - 85, y + 7, { align: 'right' });
+      doc.text(formatCurrency(item.price_per_unit), pageWidth - 50, y + 7, { align: 'right' });
+      doc.setFont('helvetica', 'bold');
+      doc.text(formatCurrency(item.total_price), pageWidth - margin - 5, y + 7, { align: 'right' });
+      doc.setFont('helvetica', 'normal');
       
-      if (y > 270) {
+      y += rowHeight;
+      
+      if (y > 250) {
         doc.addPage();
         y = 20;
       }
     });
 
-    y += 5;
     line(0.1, [200, 200, 200]);
+    y -= 5;
 
-    // 5. Totals
-    const totalsX = pageWidth - 60;
-    doc.setFontSize(10);
-    doc.text('Zwischensumme:', totalsX, y);
-    doc.text(formatCurrency(inv.subtotal), pageWidth - margin, y, { align: 'right' });
+    // 4. Totals
+    const totalsX = pageWidth - 80;
+    doc.setFontSize(9);
+    doc.text('Zwischensumme', totalsX, y);
+    doc.text(formatCurrency(inv.subtotal), pageWidth - margin - 5, y, { align: 'right' });
     y += 6;
-    doc.text(`MwSt. (${inv.vat_rate}%):`, totalsX, y);
-    doc.text(formatCurrency(inv.vat_amount), pageWidth - margin, y, { align: 'right' });
+    doc.text(`MwSt. (${inv.vat_rate}%)`, totalsX, y);
+    doc.text(formatCurrency(inv.vat_amount), pageWidth - margin - 5, y, { align: 'right' });
+    y += 10;
+    
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Gesamtbetrag', totalsX, y);
+    doc.setFontSize(16);
+    doc.text(formatCurrency(inv.total_amount), pageWidth - margin - 5, y, { align: 'right' });
+    y += 15;
+
+    line(0.1, [230, 230, 230]);
+
+    // 5. Payment Info
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text('ZAHLUNGSINFORMATIONEN', margin, y);
     y += 8;
     
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Gesamtbetrag:', totalsX, y);
-    doc.text(formatCurrency(inv.total_amount), pageWidth - margin, y, { align: 'right' });
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Bitte überweisen Sie den Betrag bis zum ${format(parseISO(inv.due_date), 'dd.MM.yyyy')} auf folgendes Konto:`, margin, y);
+    y += 10;
+
+    // Grid for Bank Details
+    const colWidth = (pageWidth - (margin * 2)) / 4;
+    const drawBankDetail = (label: string, value: string, x: number) => {
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text(label, x, y);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text(value, x, y + 6);
+      // Vertical separator
+      doc.setDrawColor(229, 231, 235);
+      doc.line(x + colWidth - 5, y, x + colWidth - 5, y + 8);
+    };
+
+    drawBankDetail('Bank', businessSettings?.bank_name || '', margin);
+    drawBankDetail('IBAN', businessSettings?.iban || '', margin + colWidth);
+    drawBankDetail('BIC', businessSettings?.bic || '', margin + (colWidth * 2));
+    drawBankDetail('Verwendungszweck', inv.invoice_number, margin + (colWidth * 3));
     
-    // 6. Payment Info & Footer
-    y += 30;
+    y += 25;
+    line(0.1, [230, 230, 230]);
+
+    // 6. Final Greeting
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Vielen Dank für das entgegengebrachte Vertrauen!', margin, y);
+    y += 10;
+    doc.text('Mit freundlichen Grüßen', margin, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.text(businessSettings?.business_name || 'Viktor Labs', margin, y);
+
+    // 7. Footer
+    const footerY = doc.internal.pageSize.height - 10;
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text('Zahlungsinformationen', margin, y);
-    y += 6;
+    doc.setTextColor(0, 0, 0);
+    doc.text(businessSettings?.business_name || 'Viktor Labs', margin, footerY);
+    const labWidth = doc.getTextWidth(businessSettings?.business_name || 'Viktor Labs');
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    const paymentText = [
-      `Bitte überweisen Sie den Gesamtbetrag bis zum ${format(parseISO(inv.due_date), 'dd.MM.yyyy')} auf unser Konto.`,
-      `Bank: ${businessSettings?.bank_name || ''}`,
-      `IBAN: ${businessSettings?.iban || ''}`,
-      `BIC: ${businessSettings?.bic || ''}`,
-      `Verwendungszweck: ${inv.invoice_number}`
-    ];
-    
-    paymentText.forEach(text => {
-      doc.text(text, margin, y);
-      y += 4;
-    });
-
-    y += 10;
-    doc.text('Vielen Dank für Ihren Auftrag!', margin, y);
-
-    // Footer
-    const footerY = doc.internal.pageSize.height - 10;
-    doc.setFontSize(7);
     doc.setTextColor(100, 100, 100);
-    doc.text(`${businessSettings?.business_name} | ${businessSettings?.business_address} | HRB: ${businessSettings?.hrb || ''} | StNr: ${businessSettings?.tax_number || ''}`, pageWidth / 2, footerY, { align: 'center' });
+    doc.text(' · Digital Architecture', margin + labWidth, footerY);
+
+    doc.text(businessSettings?.website || '', pageWidth / 2 + 10, footerY, { align: 'right' });
+    doc.text(businessSettings?.business_phone || '', pageWidth / 2 + 50, footerY, { align: 'right' });
+    doc.text(businessSettings?.business_email || '', pageWidth - margin, footerY, { align: 'right' });
 
     doc.save(`Rechnung_${inv.invoice_number}.pdf`);
   };
@@ -549,11 +621,7 @@ export default function InvoiceEditor() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => handleSave(true)} isLoading={isSaving}>
-            <Download className="w-4 h-4 mr-2" />
-            Speichern & PDF
-          </Button>
-          <Button onClick={() => handleSave(false)} isLoading={isSaving} className="bg-cyan-500 text-dark-950 font-bold">
+          <Button onClick={() => handleSave(false)} isLoading={isSaving} className="bg-cyan-500 text-dark-950 font-bold px-8">
             <Save className="w-4 h-4 mr-2" />
             Speichern
           </Button>
