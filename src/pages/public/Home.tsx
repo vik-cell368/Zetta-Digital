@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { 
   ArrowRight, 
@@ -8,10 +8,16 @@ import {
   Layers,
   ArrowUpRight,
   Sparkles,
+  Layout,
+  Globe,
   ArrowUpRight as ArrowIcon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { cn, getTranslatedText } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
+import { Service } from '@/lib/types';
+import { useTranslation } from 'react-i18next';
+import SEO from '@/components/SEO';
 
 const BentoCard = ({ 
   className, 
@@ -112,8 +118,35 @@ const DEFAULT_CONFIG = {
 
 export default function Home() {
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
+  const currentLang = i18n.language.split('-')[0] || 'de';
   const containerRef = useRef(null);
   const [config, setConfig] = useState(DEFAULT_CONFIG);
+  const [dbServices, setDbServices] = useState<Service[]>([]);
+
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        const { data, error } = await supabase
+          .from('services')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: true });
+        
+        if (data && data.length > 0) {
+          setDbServices(data);
+        } else {
+          const local = localStorage.getItem('viktor_labs_services');
+          if (local) {
+            setDbServices(JSON.parse(local).filter((s: Service) => s.is_active));
+          }
+        }
+      } catch (e) {
+        console.warn("Home: Services fetch failed", e);
+      }
+    }
+    fetchServices();
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem('viktor_labs_site_config');
@@ -281,6 +314,20 @@ export default function Home() {
     }
 
     if (sectionId === 'expertise') {
+      const getDynamicIcon = (id: string) => {
+        const idLower = id.toLowerCase();
+        if (idLower.includes('webdesign') || idLower.includes('website')) return Globe;
+        if (idLower.includes('animation') || idLower.includes('3d')) return Sparkles;
+        if (idLower.includes('management') || idLower.includes('verwaltung')) return Layout;
+        if (idLower.includes('add-on') || idLower.includes('zusatz')) return Zap;
+        return Zap;
+      };
+
+      const topServices = dbServices.slice(0, 3);
+      const s1 = topServices[0];
+      const s2 = topServices[1];
+      const s3 = topServices[2];
+
       return (
         <section key="expertise" className="py-40 relative z-10 bg-slate-50 border-y border-slate-200 overflow-hidden">
           <div className="absolute inset-0 bg-grid-dark pointer-events-none opacity-40" />
@@ -297,16 +344,16 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 grid-rows-2 gap-6 auto-rows-[400px]">
               <BentoCard 
                 className="md:col-span-4 lg:col-span-4 row-span-2 !p-0 bg-dark-900 group border-none shadow-2xl overflow-hidden"
-                to="/services/webdesign"
+                to={s1 ? `/services/${s1.id}` : "/services"}
               >
                 <div className="relative h-full w-full flex flex-col">
                   <div className="p-12 pb-0 relative z-10">
                     <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-4">Core Craft</div>
                     <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-medium text-white mb-6 tracking-tight leading-none uppercase break-words">
-                      {config.expertise.card1Title}
+                      {s1 ? getTranslatedText(s1.name, currentLang) : config.expertise.card1Title}
                     </h3>
                     <p className="text-slate-400 text-lg max-w-md font-light leading-relaxed">
-                      {config.expertise.card1Desc}
+                      {s1 ? getTranslatedText(s1.description, currentLang) : config.expertise.card1Desc}
                     </p>
                   </div>
                   <div className="mt-auto relative h-[400px]">
@@ -327,18 +374,18 @@ export default function Home() {
 
               <BentoCard 
                 className="md:col-span-2 lg:col-span-2 shadow-lg"
-                title={config.expertise.card2Title}
-                subtitle={config.expertise.card2Desc}
-                icon={Box}
-                to="/services/animation"
+                title={s2 ? getTranslatedText(s2.name, currentLang) : config.expertise.card2Title}
+                subtitle={s2 ? getTranslatedText(s2.description, currentLang) : config.expertise.card2Desc}
+                icon={s2 ? getDynamicIcon(s2.id) : Box}
+                to={s2 ? `/services/${s2.id}` : "/services"}
               />
 
               <BentoCard 
                 className="md:col-span-2 lg:col-span-2 shadow-lg"
-                title={config.expertise.card3Title}
-                subtitle={config.expertise.card3Desc}
-                icon={Zap}
-                to="/services/management"
+                title={s3 ? getTranslatedText(s3.name, currentLang) : config.expertise.card3Title}
+                subtitle={s3 ? getTranslatedText(s3.description, currentLang) : config.expertise.card3Desc}
+                icon={s3 ? getDynamicIcon(s3.id) : Zap}
+                to={s3 ? `/services/${s3.id}` : "/services"}
               />
             </div>
           </div>
@@ -411,6 +458,10 @@ export default function Home() {
 
   return (
     <div ref={containerRef} className="relative bg-white overflow-hidden">
+      <SEO 
+        title="Home"
+        description="High-End Webdesign, 3D Animationen & digitale Performance-Architektur von Viktor Labs. Wir definieren die Zukunft des Web neu."
+      />
       {visibleSections.map(section => renderSection(section.id))}
 
       {/* Floating Action Button */}

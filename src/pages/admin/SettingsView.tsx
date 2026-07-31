@@ -362,6 +362,30 @@ export default function SettingsView() {
                 <label className="block text-sm font-medium text-gray-100 mb-1">Adresse</label>
                 <Input {...registerSettings('business_address')} />
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-white/10 pt-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Steuernummer / USt-IdNr.</label>
+                  <Input {...registerSettings('vat_id')} placeholder="DE123456789" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Website</label>
+                  <Input {...registerSettings('website')} placeholder="www.viktor-labs.de" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-white/10 pt-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-100 mb-1">IBAN</label>
+                  <Input {...registerSettings('iban')} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-100 mb-1">BIC</label>
+                  <Input {...registerSettings('bic')} />
+                </div>
+                <div className="md:col-span-3">
+                  <label className="block text-sm font-medium text-gray-100 mb-1">Bank Name</label>
+                  <Input {...registerSettings('bank_name')} />
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4 mt-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-100 mb-1">Termin-Intervall (Min)</label>

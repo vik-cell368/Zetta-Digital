@@ -13,7 +13,8 @@ import {
   CheckCircle2, 
   MessageSquare, 
   Layout, 
-  Zap
+  Zap,
+  Box
 } from 'lucide-react';
 
 import PriceConfigurator from '@/components/pricing/PriceConfigurator';
@@ -32,15 +33,25 @@ export default function Services() {
         const { data, error } = await supabase
           .from('services')
           .select('*')
-          .eq('is_active', true);
+          .eq('is_active', true)
+          .order('created_at', { ascending: true });
+        
         if (error) throw error;
-        if (data) setDbServices(data);
+        if (data && data.length > 0) {
+          setDbServices(data);
+        } else {
+          throw new Error("No services found in Supabase");
+        }
       } catch (err) {
         console.warn("Failed to fetch services from Supabase, checking localStorage:", err);
         const localData = localStorage.getItem('viktor_labs_services');
         if (localData) {
-          const parsed = JSON.parse(localData);
-          setDbServices(parsed.filter((s: any) => s.is_active));
+          try {
+            const parsed = JSON.parse(localData);
+            setDbServices(parsed.filter((s: Service) => s.is_active));
+          } catch (e) {
+            console.error("Failed to parse local services", e);
+          }
         }
       } finally {
         setIsLoading(false);
@@ -50,75 +61,50 @@ export default function Services() {
   }, []);
 
   const getServiceIcon = (id: string) => {
-    if (id === 'webdesign') return Globe;
-    if (id === 'animation') return Sparkles;
-    if (id === 'management') return Layout;
-    if (id === 'add-ons') return Zap;
-    return Globe;
+    const idLower = id.toLowerCase();
+    if (idLower.includes('webdesign') || idLower.includes('website')) return Globe;
+    if (idLower.includes('animation') || idLower.includes('3d')) return Sparkles;
+    if (idLower.includes('management') || idLower.includes('verwaltung')) return Layout;
+    if (idLower.includes('add-on') || idLower.includes('zusatz')) return Zap;
+    if (idLower.includes('beratung') || idLower.includes('session')) return MessageSquare;
+    return Box;
   };
 
   const displayServices = React.useMemo(() => {
-    const services = [
-      {
-        id: 'webdesign',
-        title: 'High-End Webdesign',
-        description: 'Von minimalistischem Schwarz-Weiß bis hin zu lebendigen, interaktiven Markenwelten. Maßgeschneidert auf Ihre Zielgruppe.',
-        features: [
-          'Standard (Schwarz-Weiß) ab 550 €',
-          'Buntes Design ab 250 € Zusatz',
-          'Responsive Design für alle Geräte',
-          'SEO-Optimierung inklusive'
-        ],
-        process: ['Zielanalyse', 'Konzeption', 'High-End Design', 'Go-Live'],
-        tech: ['React', 'Tailwind CSS', 'Framer Motion'],
-        icon: Globe
-      },
-      {
-        id: 'animation',
-        title: 'Motion & 3D',
-        description: 'Hochwertige Animationen, die Ihre Produkte greifbar machen und die Verweildauer drastisch erhöhen.',
-        features: [
-          'Animation 2D ab 80 €',
-          'Personalisierte 2D-Animation ab 200 €',
-          'Animation 3D ab 180 €',
-          'Personalisierte 3D-Animation ab 299 €'
-        ],
-        process: ['Storyboard', '3D Modeling', 'Animation', 'Integration'],
-        tech: ['Three.js', 'Lottie', 'WebGL'],
-        icon: Sparkles
-      },
-      {
-        id: 'management',
-        title: 'Rundum-Sorglos-Verwaltung',
-        description: 'Laufende Pflege, Performance-Optimierung und Aktualisierung. Ihre Website bleibt schnell und sicher.',
-        features: [
-          'Standard-Verwaltung ab 59,99 € / Monat',
-          'Voll-Verwaltung ab 99,99 € / Monat',
-          'Terminpflege & Arbeitszeiten',
-          'Inhaltsaktualisierungen'
-        ],
-        process: ['Sicherheits-Check', 'Updates', 'Performance', 'Support'],
-        tech: ['Managed Hosting', 'Security Suite', 'Analytics'],
-        icon: Layout
-      },
-      {
-        id: 'add-ons',
-        title: 'Zusatzleistungen',
-        description: 'Intelligente Prozesse für nahtlose Terminbuchungen und Bewertungen. Automatisieren Sie Ihren Vertrieb.',
-        features: [
-          'Terminvereinbarung ab 74,99 €',
-          'Social Media Connection ab 79 €',
-          'Nachrichten-Page ab 170 €',
-          'Google Maps Bewertungen ab 99 €'
-        ],
-        process: ['Anforderungs-Check', 'Integration', 'Automation', 'Testlauf'],
-        tech: ['API Integration', 'Automation Tools', 'Review Widgets'],
-        icon: Zap
-      }
-    ];
+    return dbServices.map(s => {
+      let features: string[] = [];
+      let process: string[] = [];
+      let tech: string[] = [];
 
-    return services;
-  }, []);
+      try {
+        const featData = JSON.parse(s.features || '{}');
+        features = featData[currentLang] || featData['de'] || featData['en'] || [];
+        if (!Array.isArray(features)) features = [];
+      } catch (e) { features = []; }
+
+      try {
+        const procData = JSON.parse(s.process || '{}');
+        process = procData[currentLang] || procData['de'] || procData['en'] || [];
+        if (!Array.isArray(process)) process = [];
+      } catch (e) { process = []; }
+
+      try {
+        const techData = JSON.parse(s.tech || '[]');
+        tech = Array.isArray(techData) ? techData : [];
+      } catch (e) { tech = []; }
+
+      return {
+        id: s.id,
+        title: getTranslatedText(s.name, currentLang),
+        description: getTranslatedText(s.description, currentLang),
+        features,
+        process,
+        tech,
+        price: s.price,
+        icon: getServiceIcon(s.id)
+      };
+    });
+  }, [dbServices, currentLang]);
 
   if (isLoading) {
     return (

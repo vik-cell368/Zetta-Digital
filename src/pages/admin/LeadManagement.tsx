@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Link } from 'react-router-dom';
 import { 
   Users, 
   Search, 
@@ -23,7 +24,8 @@ import {
   Check,
   X,
   Copy,
-  UserPlus
+  UserPlus,
+  Calculator
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -659,6 +661,27 @@ export default function LeadManagement() {
                         Notiz Verfassen
                       </button>
                     )}
+                  </div>
+                  
+                  {/* Create Invoice Action */}
+                  <div className="pt-3">
+                    <Link
+                      to={`/admin/invoices/new?leadId=${selectedLead.id}`}
+                      className="w-full h-12 md:h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-[10px] uppercase tracking-widest font-bold text-emerald-400 hover:bg-emerald-500 hover:text-dark-950 transition-all flex items-center justify-center gap-2 active:scale-95"
+                    >
+                      <Calculator size={14} />
+                      Rechnung erstellen
+                    </Link>
+                  </div>
+
+                  <div className="pt-2">
+                    <Link
+                      to={`/admin/contracts/new?leadId=${selectedLead.id}`}
+                      className="w-full h-12 md:h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-[10px] uppercase tracking-widest font-bold text-cyan-400 hover:bg-cyan-500 hover:text-dark-950 transition-all flex items-center justify-center gap-2 active:scale-95"
+                    >
+                      <FileText size={14} />
+                      Vertrag erstellen
+                    </Link>
                   </div>
                 </div>
               </motion.div>

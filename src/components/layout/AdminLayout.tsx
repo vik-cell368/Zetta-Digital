@@ -1,7 +1,7 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
-import { LayoutDashboard, Users, Settings, Package, LogOut, Layers, Menu, X, Hexagon } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Package, LogOut, Layers, Menu, X, Hexagon, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -69,6 +69,8 @@ export default function AdminLayout() {
   const navItems = [
     { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/admin/leads', icon: Users, label: 'Leads' },
+    { path: '/admin/invoices', icon: FileText, label: 'Rechnungen' },
+    { path: '/admin/contracts', icon: FileText, label: 'Verträge' },
     { path: '/admin/services', icon: Package, label: 'Leistungen' },
     { path: '/admin/cms', icon: Layers, label: 'CMS' },
     { path: '/admin/settings', icon: Settings, label: 'Einstellungen' },

@@ -1,0 +1,834 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
+import { Invoice, InvoiceItem, BusinessSettings } from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { 
+  ArrowLeft, 
+  Save, 
+  Download, 
+  Plus, 
+  Trash2, 
+  Calculator, 
+  User, 
+  Building2, 
+  Calendar as CalendarIcon,
+  FileText,
+  Percent
+} from 'lucide-react';
+import { format, addDays, parseISO } from 'date-fns';
+import { formatCurrency, cn } from '@/lib/utils';
+import { jsPDF } from 'jspdf';
+
+const DEFAULT_VAT_RATE = 19;
+
+import { CALCULATOR_OPTIONS } from '@/lib/constants';
+
+export default function InvoiceEditor() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isEditing = !!id;
+  const leadId = new URLSearchParams(location.search).get('leadId');
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [businessSettings, setBusinessSettings] = useState<BusinessSettings | null>(null);
+  const [services, setServices] = useState<any[]>([]);
+
+  const [invoice, setInvoice] = useState<Partial<Invoice>>({
+    invoice_number: '',
+    invoice_date: format(new Date(), 'yyyy-MM-dd'),
+    service_date: format(new Date(), 'yyyy-MM-dd'),
+    due_date_days: 14,
+    due_date: format(addDays(new Date(), 14), 'yyyy-MM-dd'),
+    customer_company: '',
+    customer_name: '',
+    customer_email: '',
+    customer_phone: '',
+    customer_street: '',
+    customer_zip: '',
+    customer_city: '',
+    customer_country: 'Deutschland',
+    items: [
+      { id: '1', description: '', quantity: 1, unit: 'Stk', price_per_unit: 0, total_price: 0 }
+    ],
+    vat_rate: DEFAULT_VAT_RATE,
+    status: 'draft',
+    notes: ''
+  });
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        // Load settings first
+        const { data: settings } = await supabase.from('business_settings').select('*').limit(1).single();
+        if (settings) {
+          setBusinessSettings(settings);
+        } else {
+          const local = localStorage.getItem('viktor_labs_business_settings');
+          if (local) setBusinessSettings(JSON.parse(local));
+        }
+
+        // Load services
+        const { data: dbServices } = await supabase.from('services').select('*');
+        if (dbServices) {
+          setServices(dbServices);
+        } else {
+          const localServices = localStorage.getItem('viktor_labs_services');
+          if (localServices) setServices(JSON.parse(localServices));
+        }
+
+        if (isEditing) {
+          const { data, error } = await supabase.from('invoices').select('*').eq('id', id).single();
+          if (data) {
+            setInvoice(data);
+          } else {
+            const local = localStorage.getItem('viktor_labs_invoices');
+            if (local) {
+              const invoices = JSON.parse(local) as Invoice[];
+              const found = invoices.find(inv => inv.id === id);
+              if (found) setInvoice(found);
+            }
+          }
+        } else if (leadId) {
+          // Pre-fill from lead
+          let lead: any = null;
+          try {
+            const { data } = await supabase.from('appointments').select('*').eq('id', leadId).single();
+            if (data) lead = data;
+          } catch (e) {}
+
+          if (!lead) {
+            const local = localStorage.getItem('viktor_labs_appointments');
+            if (local) {
+              const leads = JSON.parse(local);
+              lead = leads.find((l: any) => l.id === leadId);
+            }
+          }
+
+          if (lead) {
+            setInvoice(prev => ({
+              ...prev,
+              customer_company: lead.company || '',
+              customer_name: lead.full_name || '',
+              customer_email: lead.email || '',
+              customer_phone: lead.phone || '',
+              items: [
+                { 
+                  id: '1', 
+                  description: lead.service_id ? `Service: ${lead.service_id}` : 'Beratung & Service', 
+                  quantity: 1, 
+                  unit: 'Stk', 
+                  price_per_unit: 0, 
+                  total_price: 0 
+                }
+              ]
+            }));
+          }
+        }
+
+        if (!isEditing) {
+          // Generate new invoice number
+          let allInvoices: Invoice[] = [];
+          const { data } = await supabase.from('invoices').select('invoice_number');
+          if (data) {
+            allInvoices = data as Invoice[];
+          } else {
+            const local = localStorage.getItem('viktor_labs_invoices');
+            if (local) allInvoices = JSON.parse(local);
+          }
+
+          const currentYear = new Date().getFullYear();
+          const yearInvoices = allInvoices.filter(inv => inv.invoice_number.startsWith(`VL-${currentYear}-`));
+          
+          let nextNumber = 1;
+          if (yearInvoices.length > 0) {
+            const numbers = yearInvoices.map(inv => {
+              const parts = inv.invoice_number.split('-');
+              return parseInt(parts[parts.length - 1], 10);
+            });
+            nextNumber = Math.max(...numbers) + 1;
+          }
+          
+          const newNumber = `VL-${currentYear}-${nextNumber.toString().padStart(4, '0')}`;
+          setInvoice(prev => ({ ...prev, invoice_number: newNumber }));
+        }
+      } catch (err) {
+        console.error("Load failed", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [id, isEditing, leadId]);
+
+  // Calculations
+  const totals = useMemo(() => {
+    const subtotal = (invoice.items || []).reduce((sum, item) => sum + item.total_price, 0);
+    const vat_rate = invoice.vat_rate || 0;
+    const vat_amount = (subtotal * vat_rate) / 100;
+    const total_amount = subtotal + vat_amount;
+    return { subtotal, vat_amount, total_amount };
+  }, [invoice.items, invoice.vat_rate]);
+
+  const updateField = (field: keyof Invoice, value: any) => {
+    setInvoice(prev => {
+      const updated = { ...prev, [field]: value };
+      
+      // Auto-calculate due date if date or days change
+      if (field === 'invoice_date' || field === 'due_date_days') {
+        const date = field === 'invoice_date' ? parseISO(value as string) : parseISO(prev.invoice_date!);
+        const days = field === 'due_date_days' ? (value as number) : prev.due_date_days!;
+        updated.due_date = format(addDays(date, days), 'yyyy-MM-dd');
+      }
+      
+      return updated;
+    });
+  };
+
+  const allAvailableServices = useMemo(() => {
+    const dbS = services.map(s => {
+      let name = s.name;
+      if (typeof s.name === 'string' && (s.name.startsWith('{') || s.name.startsWith('['))) {
+        try {
+          const parsed = JSON.parse(s.name);
+          name = parsed.de || parsed.en || s.name;
+        } catch (e) {}
+      }
+      return { title: name, price: s.price };
+    });
+
+    const calcS = CALCULATOR_OPTIONS.map(o => ({
+      title: o.title,
+      price: o.price
+    }));
+
+    return [...dbS, ...calcS];
+  }, [services]);
+
+  const updateItem = (index: number, field: keyof InvoiceItem, value: any) => {
+    const newItems = [...(invoice.items || [])];
+    const item = { ...newItems[index], [field]: value };
+    
+    // Auto-fill price if description matches a service
+    if (field === 'description') {
+      const foundService = allAvailableServices.find(s => s.title === value);
+      if (foundService) {
+        item.price_per_unit = foundService.price;
+      }
+    }
+
+    item.total_price = (item.quantity || 0) * (item.price_per_unit || 0);
+    newItems[index] = item;
+    setInvoice(prev => ({ ...prev, items: newItems }));
+  };
+
+  const addItem = () => {
+    setInvoice(prev => ({
+      ...prev,
+      items: [
+        ...(prev.items || []),
+        { id: crypto.randomUUID(), description: '', quantity: 1, unit: 'Stk', price_per_unit: 0, total_price: 0 }
+      ]
+    }));
+  };
+
+  const removeItem = (index: number) => {
+    const newItems = (invoice.items || []).filter((_, i) => i !== index);
+    if (newItems.length === 0) {
+      newItems.push({ id: crypto.randomUUID(), description: '', quantity: 1, unit: 'Stk', price_per_unit: 0, total_price: 0 });
+    }
+    setInvoice(prev => ({ ...prev, items: newItems }));
+  };
+
+  const handleSave = async (downloadPDFAfter = false) => {
+    setIsSaving(true);
+    const finalInvoice = {
+      ...invoice,
+      ...totals,
+      id: invoice.id || crypto.randomUUID(),
+      created_at: invoice.created_at || new Date().toISOString()
+    } as Invoice;
+
+    try {
+      const { error } = await supabase.from('invoices').upsert(finalInvoice);
+      if (error) throw error;
+      
+      // Update local storage
+      const local = localStorage.getItem('viktor_labs_invoices');
+      let invoices: Invoice[] = local ? JSON.parse(local) : [];
+      if (isEditing) {
+        invoices = invoices.map(inv => inv.id === finalInvoice.id ? finalInvoice : inv);
+      } else {
+        invoices.unshift(finalInvoice);
+      }
+      localStorage.setItem('viktor_labs_invoices', JSON.stringify(invoices));
+      
+      if (downloadPDFAfter) {
+        generatePDF(finalInvoice);
+      }
+      
+      if (!isEditing) navigate('/admin/invoices');
+      else alert('Rechnung gespeichert');
+    } catch (err) {
+      console.error("Save failed", err);
+      // Fallback local save
+      const local = localStorage.getItem('viktor_labs_invoices');
+      let invoices: Invoice[] = local ? JSON.parse(local) : [];
+      if (isEditing) {
+        invoices = invoices.map(inv => inv.id === finalInvoice.id ? finalInvoice : inv);
+      } else {
+        invoices.unshift(finalInvoice);
+      }
+      localStorage.setItem('viktor_labs_invoices', JSON.stringify(invoices));
+      
+      if (downloadPDFAfter) {
+        generatePDF(finalInvoice);
+      }
+      
+      alert('Lokal gespeichert (Datenbank fehlgeschlagen)');
+      if (!isEditing) navigate('/admin/invoices');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const getBase64ImageFromUrl = async (url: string): Promise<string> => {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const generatePDF = async (inv: Invoice) => {
+    const doc = new jsPDF();
+    const margin = 20;
+    const pageWidth = doc.internal.pageSize.width;
+    let y = 20;
+
+    // Load Logo
+    let logoBase64 = '';
+    try {
+      logoBase64 = await getBase64ImageFromUrl('/logo.png');
+    } catch (e) {
+      console.warn("Logo could not be loaded for PDF", e);
+    }
+
+    // Helper functions
+    const line = (thickness = 0.2) => {
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(thickness);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 10;
+    };
+
+    // 1. Header (Company Info & Logo)
+    if (logoBase64) {
+      doc.addImage(logoBase64, 'PNG', margin, y, 30, 30, undefined, 'FAST');
+      y += 35;
+    } else {
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text(businessSettings?.business_name || 'Viktor Labs', margin, y);
+      y += 15;
+    }
+    
+    // Right-aligned company contact details
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    const companyInfo = [
+      businessSettings?.business_name || 'Viktor Labs',
+      businessSettings?.business_address || '',
+      `E-Mail: ${businessSettings?.business_email || ''}`,
+      `Tel: ${businessSettings?.business_phone || ''}`,
+      `Web: ${businessSettings?.website || ''}`,
+      `USt-IdNr: ${businessSettings?.vat_id || ''}`
+    ];
+    
+    let infoY = 25;
+    companyInfo.forEach(text => {
+      if (text) {
+        doc.text(text, pageWidth - margin, infoY, { align: 'right' });
+        infoY += 4;
+      }
+    });
+
+    if (!logoBase64) y = infoY + 10;
+    else y = Math.max(y, infoY + 10);
+
+    // 2. Customer Info (Left) & Invoice Meta (Right)
+    const startY = y;
+    
+    // Customer
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(120, 120, 120);
+    doc.text('RECHNUNGSEMPFÄNGER', margin, y);
+    y += 6;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text(inv.customer_company, margin, y);
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+    if (inv.customer_name) {
+      doc.text(inv.customer_name, margin, y);
+      y += 5;
+    }
+    doc.text(inv.customer_street, margin, y);
+    y += 5;
+    doc.text(`${inv.customer_zip} ${inv.customer_city}`, margin, y);
+    y += 5;
+    doc.text(inv.customer_country, margin, y);
+    
+    // Meta (Right side)
+    y = startY;
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('RECHNUNG', pageWidth - margin, y, { align: 'right' });
+    y += 8;
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    const metaData = [
+      ['Rechnungsnummer:', inv.invoice_number],
+      ['Datum:', format(parseISO(inv.invoice_date), 'dd.MM.yyyy')],
+      ['Leistungsdatum:', format(parseISO(inv.service_date), 'dd.MM.yyyy')],
+      ['Zahlungsziel:', `${inv.due_date_days} Tage`]
+    ];
+
+    metaData.forEach(([label, value]) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label, pageWidth - 70, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(value, pageWidth - margin, y, { align: 'right' });
+      y += 5;
+    });
+
+    y += 15;
+    line(0.5);
+
+    // 4. Items Table
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text('Pos.', margin, y);
+    doc.text('Beschreibung', margin + 15, y);
+    doc.text('Menge', pageWidth - 80, y, { align: 'right' });
+    doc.text('Einzelpreis', pageWidth - 45, y, { align: 'right' });
+    doc.text('Gesamt', pageWidth - margin, y, { align: 'right' });
+    y += 5;
+    line(0.1);
+    y -= 5;
+
+    doc.setFont('helvetica', 'normal');
+    inv.items.forEach((item, i) => {
+      const splitDesc = doc.splitTextToSize(item.description, 80);
+      doc.text((i + 1).toString(), margin, y);
+      doc.text(splitDesc, margin + 15, y);
+      
+      const lines = splitDesc.length;
+      doc.text(`${item.quantity} ${item.unit}`, pageWidth - 80, y, { align: 'right' });
+      doc.text(formatCurrency(item.price_per_unit), pageWidth - 45, y, { align: 'right' });
+      doc.text(formatCurrency(item.total_price), pageWidth - margin, y, { align: 'right' });
+      
+      y += Math.max(8, lines * 5);
+      
+      if (y > 260) {
+        doc.addPage();
+        y = 20;
+      }
+    });
+
+    y += 5;
+    line(0.5);
+
+    // 5. Totals (Right aligned box)
+    const totalsX = pageWidth - 80;
+    doc.setFontSize(10);
+    doc.text('Zwischensumme:', totalsX, y);
+    doc.text(formatCurrency(inv.subtotal), pageWidth - margin, y, { align: 'right' });
+    y += 6;
+    doc.text(`MwSt. (${inv.vat_rate}%):`, totalsX, y);
+    doc.text(formatCurrency(inv.vat_amount), pageWidth - margin, y, { align: 'right' });
+    y += 8;
+    
+    doc.setFillColor(245, 245, 245);
+    doc.rect(totalsX - 5, y - 5, 80 + 5 - margin + (pageWidth - 80) - (pageWidth - margin), 12, 'F');
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('GESAMTBETRAG:', totalsX, y + 3);
+    doc.text(formatCurrency(inv.total_amount), pageWidth - margin, y + 3, { align: 'right' });
+    y += 25;
+
+    // 6. Payment & Footer
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Zahlungsinformationen', margin, y);
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(80, 80, 80);
+    doc.text(`Bitte überweisen Sie den Betrag bis zum ${format(parseISO(inv.due_date), 'dd.MM.yyyy')} auf folgendes Konto:`, margin, y);
+    y += 8;
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Bank:', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(businessSettings?.bank_name || '', margin + 15, y);
+    y += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.text('IBAN:', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(businessSettings?.iban || '', margin + 15, y);
+    y += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.text('BIC:', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(businessSettings?.bic || '', margin + 15, y);
+    y += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Verwendungszweck:', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(inv.invoice_number, margin + 40, y);
+    y += 15;
+
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Vielen Dank für das entgegengebrachte Vertrauen!', margin, y);
+    y += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.text('Mit freundlichen Grüßen,', margin, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.text(businessSettings?.business_name || 'Viktor Labs', margin, y);
+
+    // Footer at the bottom of the page
+    const footerY = doc.internal.pageSize.height - 15;
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(150, 150, 150);
+    const footerText = `${businessSettings?.business_name} | ${businessSettings?.business_address} | ${businessSettings?.business_email} | ${businessSettings?.website}`;
+    doc.text(footerText, pageWidth / 2, footerY, { align: 'center' });
+
+    // Save
+    doc.save(`Rechnung_${inv.invoice_number}.pdf`);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 pb-20">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/admin/invoices')} className="text-slate-400">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Zurück
+          </Button>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-50">
+              {isEditing ? 'Rechnung bearbeiten' : 'Neue Rechnung'}
+            </h2>
+            <p className="text-slate-400">{invoice.invoice_number}</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => handleSave(true)} isLoading={isSaving}>
+            <Download className="w-4 h-4 mr-2" />
+            Speichern & PDF
+          </Button>
+          <Button onClick={() => handleSave(false)} isLoading={isSaving} className="bg-cyan-500 text-dark-950 font-bold">
+            <Save className="w-4 h-4 mr-2" />
+            Speichern
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Left Column: Form */}
+        <div className="lg:col-span-2 space-y-8">
+          
+          {/* Customer Data */}
+          <Card className="border-white/10 bg-dark-900/50">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-cyan-500" />
+                <CardTitle className="text-lg">Kundendaten</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Firmenname</label>
+                  <Input 
+                    value={invoice.customer_company} 
+                    onChange={e => updateField('customer_company', e.target.value)} 
+                    placeholder="Beispiel GmbH"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Ansprechpartner</label>
+                  <Input 
+                    value={invoice.customer_name} 
+                    onChange={e => updateField('customer_name', e.target.value)} 
+                    placeholder="Max Mustermann"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500">E-Mail</label>
+                  <Input 
+                    type="email" 
+                    value={invoice.customer_email} 
+                    onChange={e => updateField('customer_email', e.target.value)} 
+                    placeholder="kunde@beispiel.de"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Telefon</label>
+                  <Input 
+                    value={invoice.customer_phone} 
+                    onChange={e => updateField('customer_phone', e.target.value)} 
+                    placeholder="+49 123 456789"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Straße & Hausnummer</label>
+                <Input 
+                  value={invoice.customer_street} 
+                  onChange={e => updateField('customer_street', e.target.value)} 
+                  placeholder="Musterstraße 123"
+                />
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500">PLZ</label>
+                  <Input 
+                    value={invoice.customer_zip} 
+                    onChange={e => updateField('customer_zip', e.target.value)} 
+                    placeholder="12345"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Ort</label>
+                  <Input 
+                    value={invoice.customer_city} 
+                    onChange={e => updateField('customer_city', e.target.value)} 
+                    placeholder="Musterstadt"
+                  />
+                </div>
+                <div className="space-y-2 col-span-2 md:col-span-1">
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Land</label>
+                  <Input 
+                    value={invoice.customer_country} 
+                    onChange={e => updateField('customer_country', e.target.value)} 
+                    placeholder="Deutschland"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Line Items */}
+          <Card className="border-white/10 bg-dark-900/50">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calculator className="w-4 h-4 text-cyan-500" />
+                <CardTitle className="text-lg">Leistungen</CardTitle>
+              </div>
+              <Button variant="ghost" size="sm" onClick={addItem} className="text-cyan-500 hover:bg-cyan-500/10">
+                <Plus className="w-4 h-4 mr-2" />
+                Position hinzufügen
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                {invoice.items?.map((item, index) => (
+                  <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 bg-dark-950/50 border border-white/5 rounded-2xl relative group">
+                    <div className="md:col-span-5 space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Beschreibung</label>
+                      <Input 
+                        value={item.description} 
+                        onChange={e => updateItem(index, 'description', e.target.value)} 
+                        placeholder="Webdesign & Entwicklung"
+                        list={`services-list-${index}`}
+                      />
+                      <datalist id={`services-list-${index}`}>
+                        {allAvailableServices.map((s, si) => (
+                          <option key={`${s.title}-${si}`} value={s.title}>
+                            {formatCurrency(s.price)}
+                          </option>
+                        ))}
+                      </datalist>
+                    </div>
+                    <div className="md:col-span-2 space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Menge</label>
+                      <Input 
+                        type="number" 
+                        value={item.quantity} 
+                        onChange={e => updateItem(index, 'quantity', parseFloat(e.target.value))} 
+                      />
+                    </div>
+                    <div className="md:col-span-2 space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Einheit</label>
+                      <Input 
+                        value={item.unit} 
+                        onChange={e => updateItem(index, 'unit', e.target.value)} 
+                        placeholder="Stk"
+                      />
+                    </div>
+                    <div className="md:col-span-2 space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Einzelpreis</label>
+                      <Input 
+                        type="number" 
+                        step="0.01" 
+                        value={item.price_per_unit} 
+                        onChange={e => updateItem(index, 'price_per_unit', parseFloat(e.target.value))} 
+                      />
+                    </div>
+                    <div className="md:col-span-1 flex items-end justify-center pb-2">
+                      <button 
+                        onClick={() => removeItem(index)}
+                        className="text-slate-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-8 space-y-2 border-t border-white/5 pt-6">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Zwischensumme</span>
+                  <span className="text-slate-200 font-medium">{formatCurrency(totals.subtotal)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500">Mehrwertsteuer</span>
+                    <div className="flex items-center bg-dark-950 border border-white/10 rounded px-2 py-0.5">
+                      <input 
+                        type="number" 
+                        value={invoice.vat_rate} 
+                        onChange={e => updateField('vat_rate', parseFloat(e.target.value))}
+                        className="w-8 bg-transparent border-none text-[10px] text-cyan-500 focus:outline-none p-0 text-right"
+                      />
+                      <span className="text-[10px] text-cyan-500/50 ml-0.5">%</span>
+                    </div>
+                  </div>
+                  <span className="text-slate-200 font-medium">{formatCurrency(totals.vat_amount)}</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold border-t border-white/10 pt-4 mt-4">
+                  <span className="text-white">Gesamtbetrag</span>
+                  <span className="text-cyan-400">{formatCurrency(totals.total_amount)}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column: Settings */}
+        <div className="space-y-8">
+          
+          {/* Invoice Meta */}
+          <Card className="border-white/10 bg-dark-900/50">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-cyan-500" />
+                <CardTitle className="text-lg">Rechnungsdaten</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Rechnungsnummer</label>
+                <Input value={invoice.invoice_number} readOnly className="bg-dark-950/50 cursor-not-allowed font-mono text-cyan-500/50" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Rechnungsdatum</label>
+                <Input 
+                  type="date" 
+                  value={invoice.invoice_date} 
+                  onChange={e => updateField('invoice_date', e.target.value)} 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Leistungsdatum</label>
+                <Input 
+                  type="date" 
+                  value={invoice.service_date} 
+                  onChange={e => updateField('service_date', e.target.value)} 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Zahlungsziel (Tage)</label>
+                <Input 
+                  type="number" 
+                  value={invoice.due_date_days} 
+                  onChange={e => updateField('due_date_days', parseInt(e.target.value))} 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Fällig am</label>
+                <Input value={invoice.due_date ? format(parseISO(invoice.due_date), 'dd.MM.yyyy') : ''} readOnly className="bg-dark-950/50 cursor-not-allowed text-slate-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Status & Notes */}
+          <Card className="border-white/10 bg-dark-900/50">
+            <CardHeader>
+              <CardTitle className="text-lg">Status & Notizen</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Status</label>
+                <select 
+                  value={invoice.status}
+                  onChange={e => updateField('status', e.target.value)}
+                  className="w-full bg-dark-950 border border-white/10 rounded-xl py-2 px-4 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                >
+                  <option value="draft">Entwurf</option>
+                  <option value="sent">Gesendet</option>
+                  <option value="paid">Bezahlt</option>
+                  <option value="cancelled">Storniert</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Interne Notizen</label>
+                <textarea 
+                  value={invoice.notes}
+                  onChange={e => updateField('notes', e.target.value)}
+                  className="w-full bg-dark-950 border border-white/10 rounded-xl py-2 px-4 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 min-h-[100px]"
+                  placeholder="Zusätzliche Informationen..."
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+        </div>
+      </div>
+    </div>
+  );
+}

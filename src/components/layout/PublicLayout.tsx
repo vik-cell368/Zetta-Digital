@@ -1,10 +1,13 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ArrowRight, MessageSquare, Search as SearchIcon, Command, Globe, Hexagon, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import PageTransition from "../PageTransition";
 import { motion, AnimatePresence } from 'motion/react';
 import CookieConsent from '../ui/CookieConsent';
+import { supabase } from '@/lib/supabase';
+import { Service } from '@/lib/types';
+import { getTranslatedText } from '@/lib/utils';
 
 export default function PublicLayout() {
   const { t, i18n } = useTranslation();
@@ -14,7 +17,30 @@ export default function PublicLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeServices, setActiveServices] = useState<Service[]>([]);
   const currentLang = i18n.language.split('-')[0] || 'de';
+
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        const { data } = await supabase
+          .from('services')
+          .select('*')
+          .eq('is_active', true);
+        if (data && data.length > 0) {
+          setActiveServices(data);
+        } else {
+          const local = localStorage.getItem('viktor_labs_services');
+          if (local) {
+            setActiveServices(JSON.parse(local).filter((s: Service) => s.is_active));
+          }
+        }
+      } catch (e) {
+        console.warn("PublicLayout: Services fetch failed", e);
+      }
+    }
+    fetchServices();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -42,24 +68,30 @@ export default function PublicLayout() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const searchItems = [
-    { name: 'Home', path: '/', category: 'Seite' },
-    { name: 'Leistungen', path: '/services', category: 'Seite' },
-    { name: 'Website Erstellung', path: '/services/webdesign', category: 'Service' },
-    { name: 'Design & Animation', path: '/services/animation', category: 'Service' },
-    { name: 'Website Verwaltung', path: '/services/management', category: 'Service' },
-    { name: 'Zusatzleistungen', path: '/services/add-ons', category: 'Service' },
-    { name: 'Preise & Kalkulator', path: '/pricing', category: 'Tool' },
-    { name: 'Referenzen', path: '/portfolio', category: 'Seite' },
-    { name: 'Häufige Fragen (FAQ)', path: '/faq', category: 'Support' },
-    { name: 'Über uns', path: '/about', category: 'Agentur' },
-    { name: 'Unser Prozess', path: '/process', category: 'Agentur' },
-    { name: 'Kontakt', path: '/contact', category: 'Seite' },
-    { name: 'Anfrage starten', path: '/booking', category: 'Kontakt' },
-  ].filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    item.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const searchItems = useMemo(() => {
+    const baseItems = [
+      { name: 'Home', path: '/', category: 'Seite' },
+      { name: 'Leistungen', path: '/services', category: 'Seite' },
+      { name: 'Preise & Kalkulator', path: '/pricing', category: 'Tool' },
+      { name: 'Referenzen', path: '/portfolio', category: 'Seite' },
+      { name: 'Häufige Fragen (FAQ)', path: '/faq', category: 'Support' },
+      { name: 'Über uns', path: '/about', category: 'Agentur' },
+      { name: 'Unser Prozess', path: '/process', category: 'Agentur' },
+      { name: 'Kontakt', path: '/contact', category: 'Seite' },
+      { name: 'Anfrage starten', path: '/booking', category: 'Kontakt' },
+    ];
+
+    const serviceItems = activeServices.map(s => ({
+      name: getTranslatedText(s.name, currentLang),
+      path: `/services/${s.id}`,
+      category: 'Service'
+    }));
+
+    return [...baseItems, ...serviceItems].filter(item => 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      item.category.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [activeServices, searchQuery, currentLang]);
 
   const changeLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
@@ -67,7 +99,13 @@ export default function PublicLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-dark-950 text-gray-100 font-sans selection:bg-cyan-500/30">
-           {/* Navigation */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-6 focus:py-3 focus:bg-cyan-500 focus:text-white focus:rounded-full focus:font-black focus:uppercase focus:tracking-widest"
+      >
+        Zum Inhalt springen
+      </a>
+      {/* Navigation */}
       <header 
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           isScrolled ? 'py-3' : 'py-5 md:py-6'
@@ -81,11 +119,11 @@ export default function PublicLayout() {
           }`}>
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5 sm:gap-3.5 group shrink-0">
-              <div className="relative flex items-center justify-center rounded-full overflow-hidden shrink-0">
+              <div className="relative flex items-center justify-center px-1.5 py-1 rounded-2xl overflow-hidden shrink-0">
                 <img 
                   src="/logo.png" 
                   alt="Viktor Labs Logo" 
-                  className="h-9 sm:h-10 md:h-11 w-auto object-contain rounded-full group-hover:scale-105 transition-transform duration-500" 
+                  className="h-9 sm:h-10 md:h-11 w-auto object-contain rounded-xl group-hover:scale-105 transition-transform duration-500" 
                   referrerPolicy="no-referrer"
                 />
               </div>
@@ -311,12 +349,14 @@ export default function PublicLayout() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-20 mb-20">
             <div>
               <Link to="/" className="flex items-center gap-4 mb-8 group">
-                <img 
-                  src="/logo.png" 
-                  alt="Viktor Labs Logo" 
-                  className="h-14 w-auto object-contain rounded-full" 
-                  referrerPolicy="no-referrer"
-                />
+                <div className="p-2 rounded-2xl overflow-hidden shrink-0">
+                  <img 
+                    src="/logo.png" 
+                    alt="Viktor Labs Logo" 
+                    className="h-14 w-auto object-contain rounded-xl" 
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
                 <span className="font-display font-medium text-2xl tracking-tight text-white leading-none">
                   VIKTOR<span className="text-cyan-500">LABS</span>
                 </span>
@@ -336,9 +376,21 @@ export default function PublicLayout() {
             <div>
               <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-white mb-10 opacity-50">Leistungen</h4>
               <ul className="space-y-5">
-                <li><Link to="/services/webdesign" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Website Erstellung</Link></li>
-                <li><Link to="/services/animation" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Design & Animation</Link></li>
-                <li><Link to="/services/management" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Website Verwaltung</Link></li>
+                {activeServices.length > 0 ? (
+                  activeServices.slice(0, 4).map(s => (
+                    <li key={s.id}>
+                      <Link to={`/services/${s.id}`} className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">
+                        {getTranslatedText(s.name, currentLang)}
+                      </Link>
+                    </li>
+                  ))
+                ) : (
+                  <>
+                    <li><Link to="/services" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Website Erstellung</Link></li>
+                    <li><Link to="/services" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Design & Animation</Link></li>
+                    <li><Link to="/services" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Website Verwaltung</Link></li>
+                  </>
+                )}
                 <li><Link to="/pricing" className="text-sm text-slate-400 hover:text-cyan-500 transition-colors font-light">Preise & Optionen</Link></li>
               </ul>
             </div>

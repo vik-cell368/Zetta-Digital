@@ -1,5 +1,6 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 
 // Layouts
 const PublicLayout = lazy(() => import('./components/layout/PublicLayout'));
@@ -24,6 +25,10 @@ const LeadManagement = lazy(() => import('./pages/admin/LeadManagement'));
 const CMSView = lazy(() => import('./pages/admin/CMSView'));
 const ServicesView = lazy(() => import('./pages/admin/ServicesView'));
 const SettingsView = lazy(() => import('./pages/admin/SettingsView'));
+const InvoicesView = lazy(() => import('./pages/admin/InvoicesView'));
+const InvoiceEditor = lazy(() => import('./pages/admin/InvoiceEditor'));
+const ContractsView = lazy(() => import('./pages/admin/ContractsView'));
+const ContractEditor = lazy(() => import('./pages/admin/ContractEditor'));
 
 import SmoothScroll from './components/SmoothScroll';
 import ScrollToTop from './components/ScrollToTop';
@@ -42,42 +47,50 @@ export default function App() {
   }, []);
 
   return (
-    <Router>
-      <SmoothScroll>
-        <ScrollToTop />
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<PublicLayout />}>
-              <Route index element={<Home />} />
-              <Route path="booking" element={<Booking />} />
-              <Route path="services" element={<Services />} />
-              <Route path="services/:slug" element={<Services />} />
-              <Route path="pricing" element={<Configurator />} />
-              <Route path="portfolio" element={<Portfolio />} />
-              <Route path="faq" element={<FAQ />} />
-              <Route path="about" element={<About />} />
-              <Route path="process" element={<Process />} />
-              <Route path="contact" element={<Contact />} />
-              <Route path="imprint" element={<Legal />} />
-              <Route path="privacy" element={<Legal />} />
-            </Route>
+    <HelmetProvider>
+      <Router>
+        <SmoothScroll>
+          <ScrollToTop />
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<PublicLayout />}>
+                <Route index element={<Home />} />
+                <Route path="booking" element={<Booking />} />
+                <Route path="services" element={<Services />} />
+                <Route path="services/:slug" element={<Services />} />
+                <Route path="pricing" element={<Configurator />} />
+                <Route path="portfolio" element={<Portfolio />} />
+                <Route path="faq" element={<FAQ />} />
+                <Route path="about" element={<About />} />
+                <Route path="process" element={<Process />} />
+                <Route path="contact" element={<Contact />} />
+                <Route path="imprint" element={<Legal />} />
+                <Route path="privacy" element={<Legal />} />
+              </Route>
 
-            {/* Admin Auth Route */}
-            <Route path="/admin/login" element={<Login />} />
+              {/* Admin Auth Route */}
+              <Route path="/admin/login" element={<Login />} />
 
-            {/* Admin Protected Routes */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<Navigate to="/admin/dashboard" replace />} />
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="leads" element={<LeadManagement />} />
-              <Route path="services" element={<ServicesView />} />
-              <Route path="cms" element={<CMSView />} />
-              <Route path="settings" element={<SettingsView />} />
-            </Route>
-          </Routes>
-        </Suspense>
-      </SmoothScroll>
-    </Router>
+              {/* Admin Protected Routes */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="leads" element={<LeadManagement />} />
+                <Route path="services" element={<ServicesView />} />
+                <Route path="cms" element={<CMSView />} />
+                <Route path="invoices" element={<InvoicesView />} />
+                <Route path="invoices/new" element={<InvoiceEditor />} />
+                <Route path="invoices/edit/:id" element={<InvoiceEditor />} />
+                <Route path="contracts" element={<ContractsView />} />
+                <Route path="contracts/new" element={<ContractEditor />} />
+                <Route path="contracts/edit/:id" element={<ContractEditor />} />
+                <Route path="settings" element={<SettingsView />} />
+              </Route>
+            </Routes>
+          </Suspense>
+        </SmoothScroll>
+      </Router>
+    </HelmetProvider>
   );
 }

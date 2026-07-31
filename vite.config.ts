@@ -16,7 +16,15 @@ export default defineConfig(() => {
       target: 'esnext',
       minify: true,
       cssMinify: true,
-      rollupOptions: {},
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-motion': ['motion'],
+            'vendor-utils': ['date-fns', 'lucide-react', 'clsx', 'tailwind-merge'],
+          },
+        },
+      },
       chunkSizeWarningLimit: 1000,
       reportCompressedSize: false,
     },
