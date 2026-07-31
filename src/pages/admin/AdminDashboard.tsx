@@ -21,7 +21,8 @@ import {
   Plus
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { collection, query, getDocs, orderBy, limit } from 'firebase/firestore';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -37,16 +38,15 @@ export default function AdminDashboard() {
     const fetchData = async () => {
       let allLeads: any[] = [];
       
-      // Try Supabase
+      // Try Firebase
       try {
-        const { data: dbLeads } = await supabase
-          .from('appointments')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(5);
+        const q = query(collection(db, 'appointments'), orderBy('created_at', 'desc'), limit(5));
+        const querySnapshot = await getDocs(q);
+        const dbLeads = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         if (dbLeads) allLeads = [...dbLeads];
       } catch (e) {
-        console.warn("Supabase fetch failed", e);
+        console.warn("Firebase fetch failed", e);
+        handleFirestoreError(e, OperationType.LIST, 'appointments');
       }
 
       // Try LocalStorage

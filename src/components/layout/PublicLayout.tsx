@@ -5,7 +5,8 @@ import React, { useEffect, useState, useMemo } from 'react';
 import PageTransition from "../PageTransition";
 import { motion, AnimatePresence } from 'motion/react';
 import CookieConsent from '../ui/CookieConsent';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/firebase';
+import { collection, query, getDocs, where } from 'firebase/firestore';
 import { Service } from '@/lib/types';
 import { getTranslatedText } from '@/lib/utils';
 
@@ -23,11 +24,11 @@ export default function PublicLayout() {
   useEffect(() => {
     async function fetchServices() {
       try {
-        const { data } = await supabase
-          .from('services')
-          .select('*')
-          .eq('is_active', true);
-        if (data && data.length > 0) {
+        const q = query(collection(db, 'services'), where('is_active', '==', true));
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
+        
+        if (data.length > 0) {
           setActiveServices(data);
         } else {
           const local = localStorage.getItem('viktor_labs_services');

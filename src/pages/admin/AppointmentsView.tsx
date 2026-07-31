@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Appointment } from '@/lib/types';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { collection, query, getDocs, orderBy, where, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { Appointment, Service } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { format, parseISO } from 'date-fns';
@@ -20,19 +21,29 @@ export default function AppointmentsView() {
   const fetchAppointments = async () => {
     setIsLoading(true);
     try {
-      let query = supabase
-        .from('appointments')
-        .select('*, services(name)')
-        .order('start_time', { ascending: false });
+      let q = query(collection(db, 'appointments'), orderBy('start_time', 'desc'));
 
       if (filter !== 'all') {
-        query = query.eq('status', filter);
+        q = query(q, where('status', '==', filter));
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment));
       
-      let finalData = data || [];
+      // Fetch services for each appointment (since Firestore doesn't have joins)
+      const appointmentsWithServices = await Promise.all(data.map(async (apt) => {
+        if (apt.service_id) {
+          try {
+            const serviceDoc = await getDoc(doc(db, 'services', apt.service_id));
+            if (serviceDoc.exists()) {
+              return { ...apt, services: { id: serviceDoc.id, ...serviceDoc.data() } as Service };
+            }
+          } catch (e) {}
+        }
+        return apt;
+      }));
+
+      let finalData = appointmentsWithServices;
       // Filter out test bookings by default
       finalData = finalData.filter(apt => {
         const email = apt.email?.toLowerCase() || '';
@@ -41,7 +52,8 @@ export default function AppointmentsView() {
 
       setAppointments(finalData);
     } catch (err) {
-      console.warn("Supabase fetch failed, falling back to localStorage", err);
+      console.warn("Firebase fetch failed, falling back to localStorage", err);
+      handleFirestoreError(err, OperationType.LIST, 'appointments');
       const localData = localStorage.getItem('viktor_labs_appointments');
       if (localData) {
         let apps = JSON.parse(localData) as Appointment[];
@@ -70,11 +82,11 @@ export default function AppointmentsView() {
 
   const updateStatus = async (id: string, status: 'confirmed' | 'cancelled') => {
     try {
-      const { error } = await supabase.from('appointments').update({ status }).eq('id', id);
-      if (error) throw error;
+      await updateDoc(doc(db, 'appointments', id), { status });
       fetchAppointments();
     } catch (err) {
-      console.warn("Supabase status update failed, updating localStorage", err);
+      console.warn("Firebase status update failed, updating localStorage", err);
+      handleFirestoreError(err, OperationType.UPDATE, `appointments/${id}`);
       const localData = localStorage.getItem('viktor_labs_appointments');
       if (localData) {
         const apps = JSON.parse(localData) as Appointment[];

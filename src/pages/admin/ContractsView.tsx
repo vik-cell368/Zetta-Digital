@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { collection, query, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { Contract } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -32,20 +33,21 @@ export default function ContractsView() {
     const fetchContracts = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('contracts')
-          .select('*')
-          .order('created_at', { ascending: false });
+        const q = query(collection(db, 'contracts'), orderBy('created_at', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
 
-        if (data) {
+        if (data.length > 0) {
           setContracts(data);
+          localStorage.setItem('viktor_labs_contracts', JSON.stringify(data));
         } else {
-          // Fallback to local storage for demo
+          // Fallback to local storage
           const local = localStorage.getItem('viktor_labs_contracts');
           if (local) setContracts(JSON.parse(local));
         }
       } catch (err) {
         console.error("Fetch failed", err);
+        handleFirestoreError(err, OperationType.LIST, 'contracts');
         const local = localStorage.getItem('viktor_labs_contracts');
         if (local) setContracts(JSON.parse(local));
       } finally {
@@ -86,11 +88,13 @@ export default function ContractsView() {
     if (!confirm('Vertrag wirklich löschen?')) return;
     
     try {
-      await supabase.from('contracts').delete().eq('id', id);
-      setContracts(prev => prev.filter(c => c.id !== id));
-      localStorage.setItem('viktor_labs_contracts', JSON.stringify(contracts.filter(c => c.id !== id)));
+      await deleteDoc(doc(db, 'contracts', id));
+      const updated = contracts.filter(c => c.id !== id);
+      setContracts(updated);
+      localStorage.setItem('viktor_labs_contracts', JSON.stringify(updated));
     } catch (e) {
       console.error(e);
+      handleFirestoreError(e, OperationType.DELETE, `contracts/${id}`);
     }
   };
 

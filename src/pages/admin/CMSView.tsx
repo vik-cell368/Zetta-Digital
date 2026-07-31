@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Save, 
@@ -118,24 +120,45 @@ export default function CMSView() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedConfig = localStorage.getItem('viktor_labs_site_config');
-    if (savedConfig) {
+    const fetchConfig = async () => {
       try {
-        const parsed = JSON.parse(savedConfig);
-        setConfig({
-          ...DEFAULT_CONFIG,
-          ...parsed,
-          sections: parsed.sections && parsed.sections.length > 0 ? parsed.sections : DEFAULT_CONFIG.sections,
-          hero: { ...DEFAULT_CONFIG.hero, ...parsed.hero },
-          vision: { ...DEFAULT_CONFIG.vision, ...parsed.vision },
-          expertise: { ...DEFAULT_CONFIG.expertise, ...parsed.expertise },
-          cta: { ...DEFAULT_CONFIG.cta, ...parsed.cta },
-          customSections: parsed.customSections || {}
-        });
+        const configDoc = await getDoc(doc(db, 'settings', 'site_config'));
+        if (configDoc.exists()) {
+          const parsed = configDoc.data() as SiteConfig;
+          setConfig({
+            ...DEFAULT_CONFIG,
+            ...parsed,
+            sections: parsed.sections && parsed.sections.length > 0 ? parsed.sections : DEFAULT_CONFIG.sections,
+            hero: { ...DEFAULT_CONFIG.hero, ...parsed.hero },
+            vision: { ...DEFAULT_CONFIG.vision, ...parsed.vision },
+            expertise: { ...DEFAULT_CONFIG.expertise, ...parsed.expertise },
+            cta: { ...DEFAULT_CONFIG.cta, ...parsed.cta },
+            customSections: parsed.customSections || {}
+          });
+          localStorage.setItem('viktor_labs_site_config', JSON.stringify(parsed));
+        } else {
+          const savedConfig = localStorage.getItem('viktor_labs_site_config');
+          if (savedConfig) {
+            const parsed = JSON.parse(savedConfig);
+            setConfig({
+              ...DEFAULT_CONFIG,
+              ...parsed
+            });
+          }
+        }
       } catch (err) {
-        console.warn("Failed parsing saved site config", err);
+        console.warn("Failed fetching site config from Firebase", err);
+        handleFirestoreError(err, OperationType.GET, 'settings/site_config');
+        const savedConfig = localStorage.getItem('viktor_labs_site_config');
+        if (savedConfig) {
+          try {
+            const parsed = JSON.parse(savedConfig);
+            setConfig({ ...DEFAULT_CONFIG, ...parsed });
+          } catch (e) {}
+        }
       }
-    }
+    };
+    fetchConfig();
   }, []);
 
   const showToast = (msg: string) => {
@@ -143,10 +166,19 @@ export default function CMSView() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleSave = () => {
-    localStorage.setItem('viktor_labs_site_config', JSON.stringify(config));
-    setHasChanges(false);
-    showToast("Seitenstruktur & Inhalte gespeichert!");
+  const handleSave = async () => {
+    try {
+      await setDoc(doc(db, 'settings', 'site_config'), config);
+      localStorage.setItem('viktor_labs_site_config', JSON.stringify(config));
+      setHasChanges(false);
+      showToast("Seitenstruktur & Inhalte gespeichert!");
+    } catch (err) {
+      console.error("Save failed", err);
+      handleFirestoreError(err, OperationType.UPDATE, 'settings/site_config');
+      localStorage.setItem('viktor_labs_site_config', JSON.stringify(config));
+      setHasChanges(false);
+      showToast("Lokal gespeichert (Firebase fehlgeschlagen)");
+    }
   };
 
   const handleResetDefaults = () => {

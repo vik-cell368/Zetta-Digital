@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { collection, query, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { Invoice } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -18,12 +19,11 @@ export default function InvoicesView() {
   const fetchInvoices = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('invoices')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const q = query(collection(db, 'invoices'), orderBy('created_at', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Invoice));
       
-      if (data) {
+      if (data.length > 0) {
         setInvoices(data);
         localStorage.setItem('viktor_labs_invoices', JSON.stringify(data));
       } else {
@@ -32,6 +32,7 @@ export default function InvoicesView() {
       }
     } catch (err) {
       console.warn("Invoices fetch failed, using local storage", err);
+      handleFirestoreError(err, OperationType.LIST, 'invoices');
       const local = localStorage.getItem('viktor_labs_invoices');
       if (local) setInvoices(JSON.parse(local));
     } finally {
@@ -47,14 +48,14 @@ export default function InvoicesView() {
     if (!confirm('Möchten Sie diese Rechnung wirklich löschen?')) return;
 
     try {
-      const { error } = await supabase.from('invoices').delete().eq('id', id);
-      if (error) throw error;
+      await deleteDoc(doc(db, 'invoices', id));
       
       const updated = invoices.filter(inv => inv.id !== id);
       setInvoices(updated);
       localStorage.setItem('viktor_labs_invoices', JSON.stringify(updated));
     } catch (err) {
       console.error("Delete failed", err);
+      handleFirestoreError(err, OperationType.DELETE, `invoices/${id}`);
       const updated = invoices.filter(inv => inv.id !== id);
       setInvoices(updated);
       localStorage.setItem('viktor_labs_invoices', JSON.stringify(updated));

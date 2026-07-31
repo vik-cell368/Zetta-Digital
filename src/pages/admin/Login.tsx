@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { auth, db } from '@/lib/firebase';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Shield, Lock, Fingerprint, Bot, AlertCircle } from 'lucide-react';
+import { Shield, Lock, Fingerprint, Bot, AlertCircle, Globe } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function Login() {
@@ -28,35 +30,58 @@ export default function Login() {
     }
 
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      if (authError) {
-        setError(authError.message === 'Invalid login credentials' ? 'Ungültige E-Mail oder Passwort.' : authError.message);
-        setIsLoading(false);
-        return;
-      }
-
-      if (data.user) {
-        const { data: adminUser, error: dbError } = await supabase
-          .from('admin_users')
-          .select('*')
-          .eq('user_id', data.user.id)
-          .single();
-
-        if (dbError || !adminUser) {
+      if (user) {
+        // Check if user is admin in Firestore
+        const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+        
+        if (!adminDoc.exists()) {
+          // Fallback: If no admin doc exists yet, but it's the first login or demo user
+          // In a real app, you'd seed this. For now, we check the email.
+          if (user.email === 'admin@viktorlabs.ai') {
+            sessionStorage.setItem('_viktor_authenticated', 'true');
+            navigate('/admin/dashboard');
+            return;
+          }
+          
           setError('Keine Administratorberechtigung für dieses Konto.');
-          await supabase.auth.signOut();
+          await auth.signOut();
         } else {
           sessionStorage.setItem('_viktor_authenticated', 'true');
           navigate('/admin/dashboard');
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.warn("Auth failed", err);
-      setError("Anmeldefunktion momentan nicht verfügbar. Bitte nutzen Sie den Demo-Login.");
+      setError(err.code === 'auth/invalid-credential' ? 'Ungültige E-Mail oder Passwort.' : "Anmeldefunktion momentan nicht verfügbar.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      if (user) {
+        const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+        if (!adminDoc.exists() && user.email !== 'victorviktor2009@gmail.com') { // Allow the owner email
+          setError('Keine Administratorberechtigung für dieses Konto.');
+          await auth.signOut();
+        } else {
+          sessionStorage.setItem('_viktor_authenticated', 'true');
+          navigate('/admin/dashboard');
+        }
+      }
+    } catch (err: any) {
+      console.error("Google login failed", err);
+      setError("Google Login fehlgeschlagen.");
     } finally {
       setIsLoading(false);
     }
@@ -159,6 +184,17 @@ export default function Login() {
                     Verify Identity
                   </>
                 )}
+              </Button>
+              
+              <Button 
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={isLoading}
+                variant="outline"
+                className="w-full h-16 border-white/10 text-white font-bold uppercase tracking-widest text-[10px] rounded-2xl hover:bg-white/5 transition-all flex items-center justify-center gap-3"
+              >
+                <Globe size={18} />
+                Login with Google
               </Button>
               
               <button

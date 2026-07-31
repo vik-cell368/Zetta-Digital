@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { collection, query, getDocs, limit, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
 import { Contract, BusinessSettings } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -79,7 +80,8 @@ export default function ContractEditor() {
       setIsLoading(true);
       try {
         // Load settings first
-        const { data: settings } = await supabase.from('business_settings').select('*').limit(1).single();
+        const sSnapshot = await getDocs(query(collection(db, 'business_settings'), limit(1)));
+        const settings = sSnapshot.docs[0]?.data() as BusinessSettings;
         if (settings) {
           setBusinessSettings(settings);
         } else {
@@ -88,9 +90,9 @@ export default function ContractEditor() {
         }
 
         if (isEditing) {
-          const { data } = await supabase.from('contracts').select('*').eq('id', id).single();
-          if (data) {
-            setContract(data);
+          const ctDoc = await getDoc(doc(db, 'contracts', id));
+          if (ctDoc.exists()) {
+            setContract({ id: ctDoc.id, ...ctDoc.data() } as Contract);
           } else {
             const local = localStorage.getItem('viktor_labs_contracts');
             if (local) {
@@ -103,8 +105,8 @@ export default function ContractEditor() {
           // Pre-fill from lead
           let lead: any = null;
           try {
-            const { data } = await supabase.from('appointments').select('*').eq('id', leadId).single();
-            if (data) lead = data;
+            const leadDoc = await getDoc(doc(db, 'appointments', leadId));
+            if (leadDoc.exists()) lead = { id: leadDoc.id, ...leadDoc.data() };
           } catch (e) {}
 
           if (!lead) {
@@ -130,9 +132,9 @@ export default function ContractEditor() {
         if (!isEditing) {
           // Generate new contract number: CT-YYYY-XXXX
           let allContracts: Contract[] = [];
-          const { data } = await supabase.from('contracts').select('contract_number');
-          if (data) {
-            allContracts = data as Contract[];
+          const ctSnapshot = await getDocs(collection(db, 'contracts'));
+          if (!ctSnapshot.empty) {
+            allContracts = ctSnapshot.docs.map(doc => doc.data() as Contract);
           } else {
             const local = localStorage.getItem('viktor_labs_contracts');
             if (local) allContracts = JSON.parse(local);
@@ -188,6 +190,10 @@ export default function ContractEditor() {
     const pageWidth = doc.internal.pageSize.width;
     let y = 20;
 
+    // Design: White background, black text
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, pageWidth, doc.internal.pageSize.height, 'F');
+
     // Load Logo
     let logoBase64 = '';
     try {
@@ -195,8 +201,8 @@ export default function ContractEditor() {
     } catch (e) {}
 
     // Helper functions
-    const line = (thickness = 0.2) => {
-      doc.setDrawColor(220, 220, 220);
+    const line = (thickness = 0.2, color = [0, 0, 0]) => {
+      doc.setDrawColor(color[0], color[1], color[2]);
       doc.setLineWidth(thickness);
       doc.line(margin, y, pageWidth - margin, y);
       y += 10;
@@ -212,58 +218,50 @@ export default function ContractEditor() {
       
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.setTextColor(50, 50, 50);
+      doc.setTextColor(0, 0, 0);
       const splitContent = doc.splitTextToSize(content, pageWidth - (margin * 2));
       doc.text(splitContent, margin, y);
       y += (splitContent.length * 5) + 10;
     };
 
-    // 1. Header
+    // 1. Header (Logo & Company Info)
     if (logoBase64) {
       doc.addImage(logoBase64, 'PNG', margin, y, 25, 25);
-      y += 30;
-    } else {
-      doc.setFontSize(22);
-      doc.setFont('helvetica', 'bold');
-      doc.text(businessSettings?.business_name || 'Viktor Labs', margin, y);
-      y += 15;
     }
 
-    // Company Info (Right)
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
+    doc.setTextColor(0, 0, 0);
     const companyInfo = [
-      businessSettings?.business_name,
-      businessSettings?.business_address,
-      businessSettings?.business_email,
-      businessSettings?.website,
-      `USt-IdNr: ${businessSettings?.vat_id}`
-    ].filter(Boolean);
+      businessSettings?.business_name || 'Viktor Labs',
+      businessSettings?.business_address || '',
+      `E-Mail: ${businessSettings?.business_email || ''}`,
+      `Web: ${businessSettings?.website || ''}`,
+      `USt-IdNr: ${businessSettings?.vat_id || ''}`
+    ];
     
-    let infoY = 25;
+    let infoY = y + 5;
     companyInfo.forEach(text => {
-      doc.text(text!, pageWidth - margin, infoY, { align: 'right' });
-      infoY += 4;
+      if (text) {
+        doc.text(text, pageWidth - margin, infoY, { align: 'right' });
+        infoY += 4;
+      }
     });
 
-    // 2. Title & Meta
+    y = Math.max(y + 35, infoY + 5);
+
+    // 2. Title & Parties
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text('DIENSTLEISTUNGSVERTRAG', margin, y);
-    y += 10;
+    doc.text('VERTRAGSBEILAGE', margin, y);
     
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Vertragsnummer: ${ct.contract_number}`, margin, y);
-    doc.text(`Datum: ${format(parseISO(ct.contract_date), 'dd.MM.yyyy')}`, pageWidth - margin, y, { align: 'right' });
-    y += 15;
-
+    doc.text(`Vertrags-Nr: ${ct.contract_number}`, pageWidth - margin, y, { align: 'right' });
+    y += 10;
     line(0.5);
 
-    // 3. Parties
-    const partiesY = y;
+    const startY = y;
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.text('DIENSTLEISTER', margin, y);
@@ -273,87 +271,67 @@ export default function ContractEditor() {
     y += 5;
     doc.text(businessSettings?.business_address || '', margin, y);
     
-    y = partiesY;
+    y = startY;
     doc.setFont('helvetica', 'bold');
     doc.text('AUFTRAGGEBER', pageWidth - 80, y);
     y += 6;
     doc.setFont('helvetica', 'normal');
-    doc.text(ct.customer_company, pageWidth - 80, y);
+    doc.text(ct.customer_company || '', pageWidth - 80, y);
     y += 5;
     if (ct.customer_name) { doc.text(ct.customer_name, pageWidth - 80, y); y += 5; }
-    doc.text(`${ct.customer_zip} ${ct.customer_city}`, pageWidth - 80, y);
+    doc.text(`${ct.customer_zip || ''} ${ct.customer_city || ''}`, pageWidth - 80, y);
     y += 5;
-    doc.text(ct.customer_street, pageWidth - 80, y);
-    y += 5;
-    doc.text(ct.customer_country, pageWidth - 80, y);
-    
-    y += 15;
-    line(0.2);
+    doc.text(ct.customer_street || '', pageWidth - 80, y);
 
-    // 4. Project Header
+    y += 20;
+    line(0.1, [200, 200, 200]);
+
+    // 3. Project Header
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.text(`Projekt: ${ct.project_name}`, margin, y);
-    y += 6;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Vertragsart: ${ct.contract_type}`, margin, y);
-    y += 5;
-    doc.text(`Beginn: ${format(parseISO(ct.start_date), 'dd.MM.yyyy')}`, margin, y);
-    if (ct.end_date) {
-      doc.text(`Voraussichtliches Ende: ${format(parseISO(ct.end_date), 'dd.MM.yyyy')}`, margin + 60, y);
-    }
-    y += 15;
-
-    // 5. Sections
-    addSection('1. Gegenstand des Vertrags', ct.description);
+    y += 8;
+    
+    // 4. Sections
+    addSection('1. Gegenstand der Beilage', ct.description);
     addSection('2. Leistungsumfang', ct.scope);
     addSection('3. Zeitplan & Ablauf', ct.timeline);
-    addSection('4. Mitwirkungspflichten des Auftraggebers', ct.responsibilities);
+    addSection('4. Mitwirkungspflichten', ct.responsibilities);
     addSection('5. Lieferumfang', ct.deliverables);
-    addSection('6. Zahlungsbedingungen', ct.payment_terms);
+    addSection('6. Konditionen', ct.payment_terms);
     
     if (ct.total_price) {
       doc.setFont('helvetica', 'bold');
-      doc.text(`Gesamtpreis: ${formatCurrency(ct.total_price)}`, margin, y);
-      y += 10;
+      doc.text(`Investition: ${formatCurrency(ct.total_price)}`, margin, y);
+      y += 15;
     }
 
     addSection('7. Gewährleistung', ct.warranty);
-    addSection('8. Kündigungsbedingungen', ct.cancellation_terms);
-    addSection('9. Sonstige Vereinbarungen', ct.other_agreements);
+    addSection('8. Schlussbestimmungen', ct.other_agreements);
 
-    // 6. Signatures
-    if (y > 220) { doc.addPage(); y = 30; }
+    // 5. Signatures
+    if (y > 230) { doc.addPage(); y = 30; }
     y += 20;
-    
-    const sigWidth = 70;
-    line(0.1);
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text('Ort, Datum', margin, y);
-    doc.text('Ort, Datum', pageWidth - margin - sigWidth, y);
+    doc.text('Ort, Datum:', margin, y);
+    doc.text('Ort, Datum:', pageWidth - 80, y);
     y += 25;
     
-    doc.line(margin, y, margin + sigWidth, y);
-    doc.line(pageWidth - margin - sigWidth, y, pageWidth - margin, y);
+    doc.line(margin, y, margin + 60, y);
+    doc.line(pageWidth - 80, y, pageWidth - 20, y);
     y += 5;
     
     doc.setFont('helvetica', 'bold');
     doc.text(businessSettings?.business_name || 'Viktor Labs', margin, y);
-    doc.text(ct.customer_company, pageWidth - margin - sigWidth, y);
-    y += 5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.text('Unterschrift Dienstleister', margin, y);
-    doc.text('Unterschrift Auftraggeber', pageWidth - margin - sigWidth, y);
+    doc.text(ct.customer_company || '', pageWidth - 80, y);
 
     // Footer
-    const footerY = doc.internal.pageSize.height - 15;
+    const footerY = doc.internal.pageSize.height - 10;
     doc.setFontSize(7);
-    doc.setTextColor(180, 180, 180);
-    doc.text(`${businessSettings?.business_name} | ${businessSettings?.business_address} | ${businessSettings?.business_email}`, pageWidth / 2, footerY, { align: 'center' });
+    doc.setTextColor(150, 150, 150);
+    doc.text(`${businessSettings?.business_name} | ${businessSettings?.business_address} | ${businessSettings?.business_email} | ${businessSettings?.website}`, pageWidth / 2, footerY, { align: 'center' });
 
     doc.save(`Vertrag_${ct.contract_number}.pdf`);
   };
@@ -367,8 +345,11 @@ export default function ContractEditor() {
     } as Contract;
 
     try {
-      const { error } = await supabase.from('contracts').upsert(finalContract);
-      if (error) throw error;
+      if (isEditing && contract.id) {
+        await setDoc(doc(db, 'contracts', contract.id), finalContract);
+      } else {
+        await addDoc(collection(db, 'contracts'), finalContract);
+      }
       
       const local = localStorage.getItem('viktor_labs_contracts');
       let contracts: Contract[] = local ? JSON.parse(local) : [];
@@ -387,6 +368,7 @@ export default function ContractEditor() {
       else alert('Vertrag gespeichert');
     } catch (err) {
       console.error(err);
+      handleFirestoreError(err, OperationType.UPDATE, 'contracts');
       // Local fallback
       const local = localStorage.getItem('viktor_labs_contracts');
       let contracts: Contract[] = local ? JSON.parse(local) : [];

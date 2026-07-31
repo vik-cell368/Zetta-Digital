@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { collection, query, getDocs, orderBy, limit, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
 import { Invoice, InvoiceItem, BusinessSettings } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -16,11 +17,14 @@ import {
   Building2, 
   Calendar as CalendarIcon,
   FileText,
-  Percent
+  Percent,
+  Search
 } from 'lucide-react';
 import { format, addDays, parseISO } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
+import { AnimatePresence } from 'motion/react';
+import CalculatorPicker from '@/components/admin/CalculatorPicker';
 
 const DEFAULT_VAT_RATE = 19;
 
@@ -60,12 +64,15 @@ export default function InvoiceEditor() {
     notes: ''
   });
 
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       try {
         // Load settings first
-        const { data: settings } = await supabase.from('business_settings').select('*').limit(1).single();
+        const sSnapshot = await getDocs(query(collection(db, 'business_settings'), limit(1)));
+        const settings = sSnapshot.docs[0]?.data() as BusinessSettings;
         if (settings) {
           setBusinessSettings(settings);
         } else {
@@ -74,8 +81,9 @@ export default function InvoiceEditor() {
         }
 
         // Load services
-        const { data: dbServices } = await supabase.from('services').select('*');
-        if (dbServices) {
+        const svcSnapshot = await getDocs(collection(db, 'services'));
+        const dbServices = svcSnapshot.docs.map(doc => doc.data());
+        if (dbServices.length > 0) {
           setServices(dbServices);
         } else {
           const localServices = localStorage.getItem('viktor_labs_services');
@@ -83,9 +91,9 @@ export default function InvoiceEditor() {
         }
 
         if (isEditing) {
-          const { data, error } = await supabase.from('invoices').select('*').eq('id', id).single();
-          if (data) {
-            setInvoice(data);
+          const invDoc = await getDoc(doc(db, 'invoices', id));
+          if (invDoc.exists()) {
+            setInvoice({ id: invDoc.id, ...invDoc.data() } as Invoice);
           } else {
             const local = localStorage.getItem('viktor_labs_invoices');
             if (local) {
@@ -98,8 +106,8 @@ export default function InvoiceEditor() {
           // Pre-fill from lead
           let lead: any = null;
           try {
-            const { data } = await supabase.from('appointments').select('*').eq('id', leadId).single();
-            if (data) lead = data;
+            const leadDoc = await getDoc(doc(db, 'appointments', leadId));
+            if (leadDoc.exists()) lead = { id: leadDoc.id, ...leadDoc.data() };
           } catch (e) {}
 
           if (!lead) {
@@ -134,9 +142,9 @@ export default function InvoiceEditor() {
         if (!isEditing) {
           // Generate new invoice number
           let allInvoices: Invoice[] = [];
-          const { data } = await supabase.from('invoices').select('invoice_number');
-          if (data) {
-            allInvoices = data as Invoice[];
+          const invSnapshot = await getDocs(collection(db, 'invoices'));
+          if (!invSnapshot.empty) {
+            allInvoices = invSnapshot.docs.map(doc => doc.data() as Invoice);
           } else {
             const local = localStorage.getItem('viktor_labs_invoices');
             if (local) allInvoices = JSON.parse(local);
@@ -228,6 +236,28 @@ export default function InvoiceEditor() {
     setInvoice(prev => ({ ...prev, items: newItems }));
   };
 
+  const addCalculatorItem = (option: any) => {
+    const newItem: InvoiceItem = {
+      id: crypto.randomUUID(),
+      description: option.title,
+      quantity: 1,
+      unit: 'Stk',
+      price_per_unit: option.price,
+      total_price: option.price
+    };
+
+    setInvoice(prev => {
+      // Remove first item if it's empty
+      const currentItems = prev.items || [];
+      const filteredItems = currentItems.filter(item => item.description !== '' || item.price_per_unit !== 0);
+      return {
+        ...prev,
+        items: [...filteredItems, newItem]
+      };
+    });
+    setIsCalculatorOpen(false);
+  };
+
   const addItem = () => {
     setInvoice(prev => ({
       ...prev,
@@ -256,8 +286,11 @@ export default function InvoiceEditor() {
     } as Invoice;
 
     try {
-      const { error } = await supabase.from('invoices').upsert(finalInvoice);
-      if (error) throw error;
+      if (isEditing && invoice.id) {
+        await setDoc(doc(db, 'invoices', invoice.id), finalInvoice);
+      } else {
+        await addDoc(collection(db, 'invoices'), finalInvoice);
+      }
       
       // Update local storage
       const local = localStorage.getItem('viktor_labs_invoices');
@@ -277,6 +310,7 @@ export default function InvoiceEditor() {
       else alert('Rechnung gespeichert');
     } catch (err) {
       console.error("Save failed", err);
+      handleFirestoreError(err, OperationType.UPDATE, 'invoices');
       // Fallback local save
       const local = localStorage.getItem('viktor_labs_invoices');
       let invoices: Invoice[] = local ? JSON.parse(local) : [];
@@ -315,6 +349,10 @@ export default function InvoiceEditor() {
     const pageWidth = doc.internal.pageSize.width;
     let y = 20;
 
+    // Design: White background, black text
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, pageWidth, doc.internal.pageSize.height, 'F');
+
     // Load Logo
     let logoBase64 = '';
     try {
@@ -324,29 +362,21 @@ export default function InvoiceEditor() {
     }
 
     // Helper functions
-    const line = (thickness = 0.2) => {
-      doc.setDrawColor(200, 200, 200);
+    const line = (thickness = 0.2, color = [0, 0, 0]) => {
+      doc.setDrawColor(color[0], color[1], color[2]);
       doc.setLineWidth(thickness);
       doc.line(margin, y, pageWidth - margin, y);
       y += 10;
     };
 
-    // 1. Header (Company Info & Logo)
+    // 1. Header (Logo & Company Info)
     if (logoBase64) {
-      doc.addImage(logoBase64, 'PNG', margin, y, 30, 30, undefined, 'FAST');
-      y += 35;
-    } else {
-      doc.setFontSize(24);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 0, 0);
-      doc.text(businessSettings?.business_name || 'Viktor Labs', margin, y);
-      y += 15;
+      doc.addImage(logoBase64, 'PNG', margin, y, 25, 25);
     }
-    
-    // Right-aligned company contact details
+
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
+    doc.setTextColor(0, 0, 0);
     const companyInfo = [
       businessSettings?.business_name || 'Viktor Labs',
       businessSettings?.business_address || '',
@@ -356,7 +386,7 @@ export default function InvoiceEditor() {
       `USt-IdNr: ${businessSettings?.vat_id || ''}`
     ];
     
-    let infoY = 25;
+    let infoY = y + 5;
     companyInfo.forEach(text => {
       if (text) {
         doc.text(text, pageWidth - margin, infoY, { align: 'right' });
@@ -364,98 +394,82 @@ export default function InvoiceEditor() {
       }
     });
 
-    if (!logoBase64) y = infoY + 10;
-    else y = Math.max(y, infoY + 10);
+    y = Math.max(y + 35, infoY + 5);
 
-    // 2. Customer Info (Left) & Invoice Meta (Right)
-    const startY = y;
-    
-    // Customer
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(120, 120, 120);
-    doc.text('RECHNUNGSEMPFÄNGER', margin, y);
-    y += 6;
+    // 2. Customer Address
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`${businessSettings?.business_name} - ${businessSettings?.business_address}`, margin, y - 5);
+    line(0.1, [150, 150, 150]);
+    y -= 5;
+
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
-    doc.text(inv.customer_company, margin, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(inv.customer_company || '', margin, y);
     y += 5;
     doc.setFont('helvetica', 'normal');
     if (inv.customer_name) {
       doc.text(inv.customer_name, margin, y);
       y += 5;
     }
-    doc.text(inv.customer_street, margin, y);
+    doc.text(inv.customer_street || '', margin, y);
     y += 5;
-    doc.text(`${inv.customer_zip} ${inv.customer_city}`, margin, y);
+    doc.text(`${inv.customer_zip || ''} ${inv.customer_city || ''}`, margin, y);
     y += 5;
-    doc.text(inv.customer_country, margin, y);
-    
-    // Meta (Right side)
-    y = startY;
-    doc.setFontSize(16);
+    doc.text(inv.customer_country || '', margin, y);
+
+    // 3. Invoice Title & Meta
+    y += 20;
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text('RECHNUNG', pageWidth - margin, y, { align: 'right' });
-    y += 8;
+    doc.text('RECHNUNG', margin, y);
     
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    const metaData = [
-      ['Rechnungsnummer:', inv.invoice_number],
-      ['Datum:', format(parseISO(inv.invoice_date), 'dd.MM.yyyy')],
-      ['Leistungsdatum:', format(parseISO(inv.service_date), 'dd.MM.yyyy')],
-      ['Zahlungsziel:', `${inv.due_date_days} Tage`]
-    ];
-
-    metaData.forEach(([label, value]) => {
-      doc.setFont('helvetica', 'bold');
-      doc.text(label, pageWidth - 70, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(value, pageWidth - margin, y, { align: 'right' });
-      y += 5;
-    });
-
+    doc.text(`Rechnungs-Nr: ${inv.invoice_number}`, pageWidth - margin, y - 5, { align: 'right' });
+    doc.text(`Datum: ${format(parseISO(inv.invoice_date), 'dd.MM.yyyy')}`, pageWidth - margin, y, { align: 'right' });
+    doc.text(`Fällig am: ${format(parseISO(inv.due_date), 'dd.MM.yyyy')}`, pageWidth - margin, y + 5, { align: 'right' });
+    
     y += 15;
-    line(0.5);
+    line(0.5, [0, 0, 0]);
 
-    // 4. Items Table
+    // 4. Table Header
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
     doc.text('Pos.', margin, y);
     doc.text('Beschreibung', margin + 15, y);
     doc.text('Menge', pageWidth - 80, y, { align: 'right' });
     doc.text('Einzelpreis', pageWidth - 45, y, { align: 'right' });
     doc.text('Gesamt', pageWidth - margin, y, { align: 'right' });
-    y += 5;
-    line(0.1);
+    y += 4;
+    line(0.2, [0, 0, 0]);
     y -= 5;
 
+    // Items
     doc.setFont('helvetica', 'normal');
     inv.items.forEach((item, i) => {
-      const splitDesc = doc.splitTextToSize(item.description, 80);
+      const descLines = doc.splitTextToSize(item.description, 80);
       doc.text((i + 1).toString(), margin, y);
-      doc.text(splitDesc, margin + 15, y);
+      doc.text(descLines, margin + 15, y);
       
-      const lines = splitDesc.length;
       doc.text(`${item.quantity} ${item.unit}`, pageWidth - 80, y, { align: 'right' });
       doc.text(formatCurrency(item.price_per_unit), pageWidth - 45, y, { align: 'right' });
       doc.text(formatCurrency(item.total_price), pageWidth - margin, y, { align: 'right' });
       
-      y += Math.max(8, lines * 5);
+      y += (descLines.length * 5) + 3;
       
-      if (y > 260) {
+      if (y > 270) {
         doc.addPage();
         y = 20;
       }
     });
 
     y += 5;
-    line(0.5);
+    line(0.1, [200, 200, 200]);
 
-    // 5. Totals (Right aligned box)
-    const totalsX = pageWidth - 80;
+    // 5. Totals
+    const totalsX = pageWidth - 60;
     doc.setFontSize(10);
     doc.text('Zwischensumme:', totalsX, y);
     doc.text(formatCurrency(inv.subtotal), pageWidth - margin, y, { align: 'right' });
@@ -464,67 +478,41 @@ export default function InvoiceEditor() {
     doc.text(formatCurrency(inv.vat_amount), pageWidth - margin, y, { align: 'right' });
     y += 8;
     
-    doc.setFillColor(245, 245, 245);
-    doc.rect(totalsX - 5, y - 5, 80 + 5 - margin + (pageWidth - 80) - (pageWidth - margin), 12, 'F');
-    
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text('GESAMTBETRAG:', totalsX, y + 3);
-    doc.text(formatCurrency(inv.total_amount), pageWidth - margin, y + 3, { align: 'right' });
-    y += 25;
-
-    // 6. Payment & Footer
+    doc.text('Gesamtbetrag:', totalsX, y);
+    doc.text(formatCurrency(inv.total_amount), pageWidth - margin, y, { align: 'right' });
+    
+    // 6. Payment Info & Footer
+    y += 30;
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.text('Zahlungsinformationen', margin, y);
     y += 6;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.setTextColor(80, 80, 80);
-    doc.text(`Bitte überweisen Sie den Betrag bis zum ${format(parseISO(inv.due_date), 'dd.MM.yyyy')} auf folgendes Konto:`, margin, y);
-    y += 8;
+    const paymentText = [
+      `Bitte überweisen Sie den Gesamtbetrag bis zum ${format(parseISO(inv.due_date), 'dd.MM.yyyy')} auf unser Konto.`,
+      `Bank: ${businessSettings?.bank_name || ''}`,
+      `IBAN: ${businessSettings?.iban || ''}`,
+      `BIC: ${businessSettings?.bic || ''}`,
+      `Verwendungszweck: ${inv.invoice_number}`
+    ];
     
-    doc.setFont('helvetica', 'bold');
-    doc.text('Bank:', margin, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(businessSettings?.bank_name || '', margin + 15, y);
-    y += 5;
-    doc.setFont('helvetica', 'bold');
-    doc.text('IBAN:', margin, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(businessSettings?.iban || '', margin + 15, y);
-    y += 5;
-    doc.setFont('helvetica', 'bold');
-    doc.text('BIC:', margin, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(businessSettings?.bic || '', margin + 15, y);
-    y += 8;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Verwendungszweck:', margin, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(inv.invoice_number, margin + 40, y);
-    y += 15;
+    paymentText.forEach(text => {
+      doc.text(text, margin, y);
+      y += 4;
+    });
 
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
-    doc.text('Vielen Dank für das entgegengebrachte Vertrauen!', margin, y);
     y += 10;
-    doc.setFont('helvetica', 'normal');
-    doc.text('Mit freundlichen Grüßen,', margin, y);
-    y += 6;
-    doc.setFont('helvetica', 'bold');
-    doc.text(businessSettings?.business_name || 'Viktor Labs', margin, y);
+    doc.text('Vielen Dank für Ihren Auftrag!', margin, y);
 
-    // Footer at the bottom of the page
-    const footerY = doc.internal.pageSize.height - 15;
+    // Footer
+    const footerY = doc.internal.pageSize.height - 10;
     doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(150, 150, 150);
-    const footerText = `${businessSettings?.business_name} | ${businessSettings?.business_address} | ${businessSettings?.business_email} | ${businessSettings?.website}`;
-    doc.text(footerText, pageWidth / 2, footerY, { align: 'center' });
+    doc.setTextColor(100, 100, 100);
+    doc.text(`${businessSettings?.business_name} | ${businessSettings?.business_address} | HRB: ${businessSettings?.hrb || ''} | StNr: ${businessSettings?.tax_number || ''}`, pageWidth / 2, footerY, { align: 'center' });
 
-    // Save
     doc.save(`Rechnung_${inv.invoice_number}.pdf`);
   };
 
@@ -658,10 +646,16 @@ export default function InvoiceEditor() {
                 <Calculator className="w-4 h-4 text-cyan-500" />
                 <CardTitle className="text-lg">Leistungen</CardTitle>
               </div>
-              <Button variant="ghost" size="sm" onClick={addItem} className="text-cyan-500 hover:bg-cyan-500/10">
-                <Plus className="w-4 h-4 mr-2" />
-                Position hinzufügen
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setIsCalculatorOpen(true)} className="text-cyan-500 hover:bg-cyan-500/10">
+                  <Calculator className="w-4 h-4 mr-2" />
+                  Aus Kalkulator wählen
+                </Button>
+                <Button variant="ghost" size="sm" onClick={addItem} className="text-slate-400 hover:bg-white/5">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Eigene Position
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-4">
@@ -829,6 +823,15 @@ export default function InvoiceEditor() {
 
         </div>
       </div>
+      {/* Calculator Picker Overlay */}
+      <AnimatePresence>
+        {isCalculatorOpen && (
+          <CalculatorPicker 
+            onSelect={addCalculatorItem} 
+            onClose={() => setIsCalculatorOpen(false)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { collection, query, where, getDocs, orderBy, limit, addDoc, getDoc, doc } from 'firebase/firestore';
 import { Service, BusinessSettings, BusinessHours, BlockedDate } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -91,17 +92,18 @@ export default function Booking() {
     async function fetchInitialData() {
       try {
         const [
-          { data: sData }, 
-          { data: bSettings },
-          { data: bHours },
-          { data: bBlocked }
+          sSnapshot,
+          bSnapshot,
+          hSnapshot,
+          dSnapshot
         ] = await Promise.all([
-          supabase.from('services').select('*').eq('is_active', true).order('price', { ascending: false }),
-          supabase.from('business_settings').select('*').limit(1).single(),
-          supabase.from('business_hours').select('*').order('weekday'),
-          supabase.from('blocked_dates').select('*')
+          getDocs(query(collection(db, 'services'), where('is_active', '==', true), orderBy('price', 'desc'))),
+          getDocs(query(collection(db, 'business_settings'), limit(1))),
+          getDocs(query(collection(db, 'business_hours'), orderBy('weekday'))),
+          getDocs(collection(db, 'blocked_dates'))
         ]);
         
+        const bSettings = bSnapshot.docs[0]?.data() as BusinessSettings;
         if (bSettings) {
           const s = {
             ...bSettings,
@@ -117,14 +119,14 @@ export default function Booking() {
           if (local) setSettings(JSON.parse(local));
         }
 
-        if (bHours && bHours.length > 0) {
+        const bHours = hSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BusinessHours));
+        if (bHours.length > 0) {
           setBusinessHours(bHours);
           localStorage.setItem('viktor_labs_business_hours', JSON.stringify(bHours));
         } else {
           const local = localStorage.getItem('viktor_labs_business_hours');
           if (local) setBusinessHours(JSON.parse(local));
           else {
-            // Default hours if nothing exists
             const defaults = Array.from({ length: 7 }, (_, i) => ({
               weekday: i,
               is_open: i > 0 && i < 6,
@@ -136,7 +138,8 @@ export default function Booking() {
           }
         }
 
-        if (bBlocked) {
+        const bBlocked = dSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlockedDate));
+        if (bBlocked.length > 0) {
           setBlockedDates(bBlocked);
           localStorage.setItem('viktor_labs_blocked_dates', JSON.stringify(bBlocked));
         } else {
@@ -144,10 +147,8 @@ export default function Booking() {
           if (local) setBlockedDates(JSON.parse(local));
         }
 
-        let activeServices: Service[] = [];
-        if (sData && sData.length > 0) {
-          activeServices = sData.filter(s => s.is_active);
-        } else {
+        let activeServices = sSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
+        if (activeServices.length === 0) {
           const local = localStorage.getItem('viktor_labs_services');
           if (local) {
             try {
@@ -211,18 +212,16 @@ export default function Booking() {
       let fetchedAppointments: Array<{ start_time: string; end_time: string; status?: string }> = [];
 
       try {
-        const { data: dbData, error } = await supabase
-          .from('appointments')
-          .select('start_time, end_time, status')
-          .in('status', ['confirmed', 'pending'])
-          .gte('start_time', rangeStart)
-          .lt('start_time', rangeEnd);
-
-        if (!error && dbData) {
-          fetchedAppointments = dbData;
-        }
+        const q = query(
+          collection(db, 'appointments'),
+          where('status', 'in', ['confirmed', 'pending']),
+          where('start_time', '>=', rangeStart),
+          where('start_time', '<', rangeEnd)
+        );
+        const querySnapshot = await getDocs(q);
+        fetchedAppointments = querySnapshot.docs.map(doc => doc.data() as any);
       } catch (err) {
-        console.warn("Supabase fetch failed", err);
+        console.warn("Firebase appointments fetch failed", err);
       }
 
       // 2. Fetch appointments from localStorage to merge
@@ -351,11 +350,14 @@ export default function Booking() {
       leads.push({ ...payload, id: crypto.randomUUID(), created_at: new Date().toISOString() });
       localStorage.setItem('viktor_labs_appointments', JSON.stringify(leads));
 
-      const { error } = await supabase.from('appointments').insert(payload);
-      if (error) throw error;
+      await addDoc(collection(db, 'appointments'), {
+        ...payload,
+        created_at: new Date().toISOString()
+      });
       setStep('success');
     } catch (err) {
-      console.warn("Supabase booking failed, saved to local lead management", err);
+      console.warn("Firebase booking failed, saved to local lead management", err);
+      handleFirestoreError(err, OperationType.CREATE, 'appointments');
       setStep('success');
     } finally {
       setIsSubmitting(false);

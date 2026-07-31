@@ -1,0 +1,153 @@
+{
+  "entities": {
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Customer lead or appointment request",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "full_name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "company": { "type": "string" },
+        "service_id": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["full_name", "email", "status", "created_at"]
+    },
+    "Service": {
+      "title": "Service",
+      "description": "A service offered by Viktor Labs",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "icon": { "type": "string" }
+      },
+      "required": ["name", "price"]
+    },
+    "BusinessSettings": {
+      "title": "BusinessSettings",
+      "description": "Settings for the business",
+      "type": "object",
+      "properties": {
+        "business_name": { "type": "string" },
+        "business_address": { "type": "string" },
+        "business_email": { "type": "string" },
+        "website": { "type": "string" },
+        "vat_id": { "type": "string" },
+        "bank_name": { "type": "string" },
+        "iban": { "type": "string" },
+        "bic": { "type": "string" },
+        "tax_office": { "type": "string" }
+      }
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Customer invoice",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "invoice_number": { "type": "string" },
+        "invoice_date": { "type": "string" },
+        "service_date": { "type": "string" },
+        "due_date": { "type": "string" },
+        "customer_company": { "type": "string" },
+        "customer_name": { "type": "string" },
+        "customer_email": { "type": "string" },
+        "customer_street": { "type": "string" },
+        "customer_zip": { "type": "string" },
+        "customer_city": { "type": "string" },
+        "customer_country": { "type": "string" },
+        "items": { "type": "array" },
+        "total_net": { "type": "number" },
+        "vat_rate": { "type": "number" },
+        "vat_amount": { "type": "number" },
+        "total_gross": { "type": "number" },
+        "status": { "type": "string" },
+        "created_at": { "type": "string" }
+      }
+    },
+    "Contract": {
+      "title": "Contract",
+      "description": "Project contract",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "contract_number": { "type": "string" },
+        "contract_date": { "type": "string" },
+        "start_date": { "type": "string" },
+        "end_date": { "type": "string" },
+        "contract_type": { "type": "string" },
+        "project_name": { "type": "string" },
+        "customer_company": { "type": "string" },
+        "customer_name": { "type": "string" },
+        "customer_email": { "type": "string" },
+        "customer_street": { "type": "string" },
+        "customer_zip": { "type": "string" },
+        "customer_city": { "type": "string" },
+        "customer_country": { "type": "string" },
+        "description": { "type": "string" },
+        "scope": { "type": "string" },
+        "responsibilities": { "type": "string" },
+        "timeline": { "type": "string" },
+        "deliverables": { "type": "string" },
+        "payment_terms": { "type": "string" },
+        "cancellation_terms": { "type": "string" },
+        "warranty": { "type": "string" },
+        "other_agreements": { "type": "string" },
+        "total_price": { "type": "number" },
+        "hourly_rate": { "type": "number" },
+        "estimated_hours": { "type": "number" },
+        "payment_interval": { "type": "string" },
+        "currency": { "type": "string" },
+        "status": { "type": "string" },
+        "created_at": { "type": "string" }
+      }
+    },
+    "CMSContent": {
+      "title": "CMSContent",
+      "description": "Website content",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "section": { "type": "string" },
+        "content": { "type": "object" },
+        "updated_at": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/appointments/{appointmentId}": {
+      "schema": "Appointment",
+      "description": "Customer leads"
+    },
+    "/services/{serviceId}": {
+      "schema": "Service",
+      "description": "Available services"
+    },
+    "/business_settings/{settingsId}": {
+      "schema": "BusinessSettings",
+      "description": "Business settings"
+    },
+    "/invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "Customer invoices"
+    },
+    "/contracts/{contractId}": {
+      "schema": "Contract",
+      "description": "Project contracts"
+    },
+    "/cms_content/{contentId}": {
+      "schema": "CMSContent",
+      "description": "Website content sections"
+    }
+  }
+}

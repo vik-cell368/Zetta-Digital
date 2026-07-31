@@ -14,7 +14,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn, getTranslatedText } from '@/lib/utils';
-import { supabase } from '@/lib/supabase';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { Service } from '@/lib/types';
 import { useTranslation } from 'react-i18next';
 import SEO from '@/components/SEO';
@@ -127,11 +128,14 @@ export default function Home() {
   useEffect(() => {
     async function fetchServices() {
       try {
-        const { data, error } = await supabase
-          .from('services')
-          .select('*')
-          .eq('is_active', true)
-          .order('created_at', { ascending: true });
+        const servicesRef = collection(db, 'services');
+        const q = query(
+          servicesRef, 
+          where('is_active', '==', true),
+          orderBy('created_at', 'asc')
+        );
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
         
         if (data && data.length > 0) {
           setDbServices(data);
@@ -143,6 +147,7 @@ export default function Home() {
         }
       } catch (e) {
         console.warn("Home: Services fetch failed", e);
+        handleFirestoreError(e, OperationType.LIST, 'services');
       }
     }
     fetchServices();

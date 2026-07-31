@@ -27,7 +27,8 @@ import {
   UserPlus,
   Calculator
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { collection, query, getDocs, orderBy, doc, updateDoc, deleteDoc, addDoc } from 'firebase/firestore';
 
 const FileText = ({ size, className }: any) => <FileTextIcon size={size} className={className} />;
 const Globe = ({ size, className }: any) => <GlobeIcon size={size} className={className} />;
@@ -71,13 +72,13 @@ export default function LeadManagement() {
     let allLeads: any[] = [];
     
     try {
-      const { data: dbLeads } = await supabase
-        .from('appointments')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const q = query(collection(db, 'appointments'), orderBy('created_at', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const dbLeads = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       if (dbLeads) allLeads = [...dbLeads];
     } catch (e) {
-      console.warn("Supabase fetch failed", e);
+      console.warn("Firebase fetch failed", e);
+      handleFirestoreError(e, OperationType.LIST, 'appointments');
     }
 
     try {
@@ -125,14 +126,13 @@ export default function LeadManagement() {
   const handleUpdateStatus = async (leadId: string, newStatus: string) => {
     setShowStatusMenu(false);
 
-    // Update in Supabase
+    // Update in Firebase
     try {
-      await supabase
-        .from('appointments')
-        .update({ status: newStatus })
-        .eq('id', leadId);
+      const leadRef = doc(db, 'appointments', leadId);
+      await updateDoc(leadRef, { status: newStatus });
     } catch (err) {
-      console.warn("Supabase update failed", err);
+      console.warn("Firebase update failed", err);
+      handleFirestoreError(err, OperationType.UPDATE, `appointments/${leadId}`);
     }
 
     // Update in LocalStorage
@@ -161,12 +161,11 @@ export default function LeadManagement() {
     if (!selectedLead) return;
 
     try {
-      await supabase
-        .from('appointments')
-        .update({ notes: editedNotes })
-        .eq('id', selectedLead.id);
+      const leadRef = doc(db, 'appointments', selectedLead.id);
+      await updateDoc(leadRef, { notes: editedNotes });
     } catch (err) {
-      console.warn("Supabase notes update failed", err);
+      console.warn("Firebase notes update failed", err);
+      handleFirestoreError(err, OperationType.UPDATE, `appointments/${selectedLead.id}`);
     }
 
     try {
@@ -193,12 +192,11 @@ export default function LeadManagement() {
     setShowMoreMenu(false);
 
     try {
-      await supabase
-        .from('appointments')
-        .delete()
-        .eq('id', leadId);
+      const leadRef = doc(db, 'appointments', leadId);
+      await deleteDoc(leadRef);
     } catch (err) {
-      console.warn("Supabase delete failed", err);
+      console.warn("Firebase delete failed", err);
+      handleFirestoreError(err, OperationType.DELETE, `appointments/${leadId}`);
     }
 
     try {
@@ -240,11 +238,12 @@ export default function LeadManagement() {
       end_time: new Date(Date.now() + 30 * 60000).toISOString()
     };
 
-    // Try Supabase insert
+    // Try Firebase insert
     try {
-      await supabase.from('appointments').insert([createdLead]);
+      await addDoc(collection(db, 'appointments'), createdLead);
     } catch (err) {
-      console.warn("Supabase insert lead failed", err);
+      console.warn("Firebase insert lead failed", err);
+      handleFirestoreError(err, OperationType.CREATE, 'appointments');
     }
 
     // LocalStorage insert

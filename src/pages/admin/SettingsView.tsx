@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { auth, db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { collection, query, getDocs, orderBy, limit, doc, getDoc, updateDoc, setDoc, deleteDoc, addDoc, writeBatch } from 'firebase/firestore';
+import { updatePassword } from 'firebase/auth';
 import { BusinessSettings, BusinessHours, BlockedDate } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -36,15 +38,19 @@ export default function SettingsView() {
 
   const fetchData = async () => {
     try {
-      const [{ data: s, error: sErr }, { data: h, error: hErr }, { data: b, error: bErr }] = await Promise.all([
-        supabase.from('business_settings').select('*').limit(1).single(),
-        supabase.from('business_hours').select('*').order('weekday'),
-        supabase.from('blocked_dates').select('*').order('blocked_date', { ascending: true })
+      const [sSnapshot, hSnapshot, bSnapshot] = await Promise.all([
+        getDocs(query(collection(db, 'business_settings'), limit(1))),
+        getDocs(query(collection(db, 'business_hours'), orderBy('weekday'))),
+        getDocs(query(collection(db, 'blocked_dates'), orderBy('blocked_date', 'asc')))
       ]);
       
+      const s = sSnapshot.docs[0]?.data() as BusinessSettings;
+      const sId = sSnapshot.docs[0]?.id;
+
       if (s) {
         const settingsWithDefaults = {
           ...s,
+          id: sId,
           booking_phone_required: s.booking_phone_required ?? true,
           booking_phone_visible: s.booking_phone_visible ?? true,
           booking_email_required: s.booking_email_required ?? true,
@@ -66,6 +72,7 @@ export default function SettingsView() {
         }
       }
       
+      const h = hSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BusinessHours));
       if (h && h.length > 0) {
         // Ensure all 7 days exist in local state
         const allDays = Array.from({ length: 7 }, (_, i) => {
@@ -90,9 +97,11 @@ export default function SettingsView() {
         }
       }
       
+      const b = bSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlockedDate));
       if (b) setBlockedDates(b);
     } catch (err) {
-      console.warn("Error fetching data from Supabase, checking local storage", err);
+      console.warn("Error fetching data from Firebase, checking local storage", err);
+      handleFirestoreError(err, OperationType.LIST, 'settings');
       // Fallback logic for complete failure
       const localSettings = localStorage.getItem('viktor_labs_business_settings');
       if (localSettings) {
@@ -129,14 +138,21 @@ export default function SettingsView() {
     localStorage.setItem('viktor_labs_enabled_languages', updatedData.enabled_languages);
     localStorage.setItem('viktor_labs_business_settings', JSON.stringify(updatedData));
     
-    if (settings?.id) {
-      await supabase.from('business_settings').update(updatedData).eq('id', settings.id);
-    } else {
-      await supabase.from('business_settings').insert(updatedData);
+    try {
+      if (settings?.id) {
+        await updateDoc(doc(db, 'business_settings', settings.id), updatedData as any);
+      } else {
+        await addDoc(collection(db, 'business_settings'), updatedData);
+      }
+      alert('Einstellungen erfolgreich gespeichert');
+    } catch (err) {
+      console.warn("Firebase settings update failed", err);
+      handleFirestoreError(err, OperationType.UPDATE, 'business_settings');
+      alert('Fehler beim Speichern in der Cloud. Lokal gespeichert.');
+    } finally {
+      setIsSaving(false);
+      fetchData();
     }
-    setIsSaving(false);
-    alert('Einstellungen erfolgreich gespeichert');
-    fetchData();
   };
 
   const handleHourChange = (index: number, field: keyof BusinessHours, value: any) => {
@@ -150,21 +166,26 @@ export default function SettingsView() {
     try {
       localStorage.setItem('viktor_labs_business_hours', JSON.stringify(hours));
       
-      const { data: existing } = await supabase.from('business_hours').select('id');
-      if (existing && existing.length > 0) {
-        await supabase.from('business_hours').delete().in('id', existing.map(e => e.id));
-      }
+      const hSnapshot = await getDocs(collection(db, 'business_hours'));
+      const batch = writeBatch(db);
       
-      const toInsert = hours.map(({ id, ...rest }) => rest);
-      if (toInsert.length > 0) {
-        const { error } = await supabase.from('business_hours').insert(toInsert);
-        if (error) throw error;
-      }
+      // Delete existing
+      hSnapshot.docs.forEach(d => batch.delete(d.ref));
+      
+      // Insert new
+      hours.forEach(h => {
+        const { id, ...rest } = h;
+        const newRef = doc(collection(db, 'business_hours'));
+        batch.set(newRef, rest);
+      });
+      
+      await batch.commit();
       
       alert('Öffnungszeiten erfolgreich gespeichert');
       fetchData();
     } catch (err: any) {
-      console.warn("Hours save to Supabase failed, kept in local storage", err);
+      console.warn("Hours save to Firebase failed, kept in local storage", err);
+      handleFirestoreError(err, OperationType.UPDATE, 'business_hours');
       alert('Öffnungszeiten lokal gespeichert (Datenbank-Verbindung fehlgeschlagen)');
       fetchData();
     } finally {
@@ -202,9 +223,10 @@ export default function SettingsView() {
     localStorage.setItem('viktor_labs_blocked_dates', JSON.stringify(blocked));
     
     try {
-      await supabase.from('blocked_dates').insert(newBlocked);
+      await addDoc(collection(db, 'blocked_dates'), newBlocked);
     } catch (e) {
-      console.warn("Blocked date save to Supabase failed", e);
+      console.warn("Blocked date save to Firebase failed", e);
+      handleFirestoreError(e, OperationType.CREATE, 'blocked_dates');
     }
     
     setNewBlockedDate('');
@@ -220,9 +242,10 @@ export default function SettingsView() {
     }
 
     try {
-      await supabase.from('blocked_dates').delete().eq('id', id);
+      await deleteDoc(doc(db, 'blocked_dates', id));
     } catch (e) {
-      console.warn("Blocked date delete from Supabase failed", e);
+      console.warn("Blocked date delete from Firebase failed", e);
+      handleFirestoreError(e, OperationType.DELETE, `blocked_dates/${id}`);
     }
     fetchData();
   };
@@ -244,13 +267,14 @@ export default function SettingsView() {
 
     setIsChangingPassword(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) throw error;
-      alert('Password updated successfully');
+      const user = auth.currentUser;
+      if (!user) throw new Error('Nicht angemeldet');
+      await updatePassword(user, newPassword);
+      alert('Passwort erfolgreich aktualisiert');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
-      alert(err.message || 'Failed to update password. Note: If you are logged in with emergency credentials, this action is restricted.');
+      alert(err.message || 'Passwort-Update fehlgeschlagen.');
     } finally {
       setIsChangingPassword(false);
     }

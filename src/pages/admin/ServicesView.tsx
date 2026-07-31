@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { collection, query, getDocs, orderBy, doc, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Service } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -45,13 +46,15 @@ export default function ServicesView() {
   const fetchServices = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.from('services').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
+      const q = query(collection(db, 'services'), orderBy('created_at', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
+      
       if (data && data.length > 0) {
         setServices(data);
         localStorage.setItem('viktor_labs_services', JSON.stringify(data));
       } else {
-        // If Supabase is empty, check localStorage
+        // If Firebase is empty, check localStorage
         const localData = localStorage.getItem('viktor_labs_services');
         if (localData) {
           setServices(JSON.parse(localData));
@@ -60,7 +63,8 @@ export default function ServicesView() {
         }
       }
     } catch (err) {
-      console.warn("Supabase fetch failed, falling back to localStorage", err);
+      console.warn("Firebase fetch failed, falling back to localStorage", err);
+      handleFirestoreError(err, OperationType.LIST, 'services');
       const localData = localStorage.getItem('viktor_labs_services');
       if (localData) {
         setServices(JSON.parse(localData));
@@ -133,31 +137,26 @@ export default function ServicesView() {
     try {
       let updatedServices = [...services];
       if (isEditing) {
-        const { error } = await supabase.from('services').update(payload).eq('id', isEditing);
-        if (error) {
-          console.error("Supabase update error:", error);
-          throw error;
-        }
+        const serviceRef = doc(db, 'services', isEditing);
+        await updateDoc(serviceRef, payload as any);
         updatedServices = updatedServices.map(s => s.id === isEditing ? { ...s, ...payload } : s);
         setIsEditing(null);
         setStatusMessage("Service updated successfully");
       } else {
-        // Try to insert with a generated ID just in case the table doesn't auto-generate it
-        const id = crypto.randomUUID();
-        const { data, error } = await supabase.from('services').insert({ ...payload, id }).select().single();
+        const newService = {
+          ...payload,
+          created_at: new Date().toISOString()
+        };
+        const docRef = await addDoc(collection(db, 'services'), newService);
         
-        if (error) {
-          console.error("Supabase insert error:", error);
-          throw error;
-        }
-        
-        updatedServices = [data, ...updatedServices];
+        updatedServices = [{ id: docRef.id, ...newService } as Service, ...updatedServices];
         setIsAdding(false);
         setStatusMessage("Service added successfully");
       }
       saveToLocal(updatedServices);
     } catch (err: any) {
-      console.warn("Supabase operation failed:", err);
+      console.warn("Firebase operation failed:", err);
+      handleFirestoreError(err, OperationType.UPDATE, 'services');
       const errorMessage = err?.message || "Unknown error";
       
       // Fallback to local storage if it's truly a connection/database error
@@ -177,11 +176,6 @@ export default function ServicesView() {
         setStatusMessage(`Added locally (Error: ${errorMessage})`);
       }
       saveToLocal(updatedServices);
-      
-      // Also show an alert so the user knows why it failed
-      if (errorMessage.includes("column") || errorMessage.includes("field")) {
-        alert("Datenbankfehler: Die Tabellenstruktur in Supabase scheint veraltet zu sein. Bitte kontaktieren Sie den Support.");
-      }
     }
     
     setTimeout(() => setStatusMessage(null), 3000);
@@ -209,11 +203,11 @@ export default function ServicesView() {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this service?')) {
       try {
-        const { error } = await supabase.from('services').delete().eq('id', id);
-        if (error) throw error;
+        await deleteDoc(doc(db, 'services', id));
         fetchServices();
       } catch (err) {
-        console.warn("Supabase delete failed, updating localStorage", err);
+        console.warn("Firebase delete failed, updating localStorage", err);
+        handleFirestoreError(err, OperationType.DELETE, `services/${id}`);
         const updatedServices = services.filter(s => s.id !== id);
         saveToLocal(updatedServices);
       }
@@ -222,11 +216,11 @@ export default function ServicesView() {
 
   const toggleActive = async (service: Service) => {
     try {
-      const { error } = await supabase.from('services').update({ is_active: !service.is_active }).eq('id', service.id);
-      if (error) throw error;
+      await updateDoc(doc(db, 'services', service.id), { is_active: !service.is_active });
       fetchServices();
     } catch (err) {
-      console.warn("Supabase toggle failed, updating localStorage", err);
+      console.warn("Firebase toggle failed, updating localStorage", err);
+      handleFirestoreError(err, OperationType.UPDATE, `services/${service.id}`);
       const updatedServices = services.map(s => s.id === service.id ? { ...s, is_active: !s.is_active } : s);
       saveToLocal(updatedServices);
     }

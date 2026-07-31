@@ -1,5 +1,7 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/Button';
 import { LayoutDashboard, Users, Settings, Package, LogOut, Layers, Menu, X, Hexagon, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -12,36 +14,35 @@ export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       // Check transient demo session
       if (sessionStorage.getItem('_viktor_authenticated') === 'true') {
         setIsChecking(false);
         return;
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!user) {
         navigate('/admin/login');
+        setIsChecking(false);
         return;
       }
 
-      // Check if user is an admin
-      const { data: adminUser } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single();
+      // Check if user is an admin in Firestore
+      const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+      
+      // Temporary check for owner email if admins collection isn't seeded yet
+      const isOwner = user.email === 'victorviktor2009@gmail.com' || user.email === 'admin@viktorlabs.ai';
 
-      if (!adminUser) {
-        await supabase.auth.signOut();
+      if (!adminDoc.exists() && !isOwner) {
+        await signOut(auth);
         navigate('/admin/login');
       } else {
         sessionStorage.setItem('_viktor_authenticated', 'true');
         setIsChecking(false);
       }
-    };
+    });
     
-    checkAuth();
+    return () => unsubscribe();
   }, [navigate]);
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export default function AdminLayout() {
 
   const handleLogout = async () => {
     sessionStorage.removeItem('_viktor_authenticated');
-    await supabase.auth.signOut();
+    await signOut(auth);
     navigate('/admin/login');
   };
 

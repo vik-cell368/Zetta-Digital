@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '@/lib/supabase';
+import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
+import { collection, query, getDocs, where, orderBy } from 'firebase/firestore';
 import { Service } from '@/lib/types';
 import { getTranslatedText } from '@/lib/utils';
 import { 
@@ -30,20 +31,23 @@ export default function Services() {
   useEffect(() => {
     async function fetchServices() {
       try {
-        const { data, error } = await supabase
-          .from('services')
-          .select('*')
-          .eq('is_active', true)
-          .order('created_at', { ascending: true });
+        const q = query(
+          collection(db, 'services'),
+          where('is_active', '==', true),
+          orderBy('created_at', 'asc')
+        );
         
-        if (error) throw error;
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
+        
         if (data && data.length > 0) {
           setDbServices(data);
         } else {
-          throw new Error("No services found in Supabase");
+          throw new Error("No services found in Firebase");
         }
       } catch (err) {
-        console.warn("Failed to fetch services from Supabase, checking localStorage:", err);
+        console.warn("Failed to fetch services from Firebase, checking localStorage:", err);
+        handleFirestoreError(err, OperationType.LIST, 'services');
         const localData = localStorage.getItem('viktor_labs_services');
         if (localData) {
           try {

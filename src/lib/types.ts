@@ -61,6 +61,8 @@ export type BusinessSettings = {
   tax_id?: string;
   vat_id?: string;
   website?: string;
+  hrb?: string;
+  tax_number?: string;
   created_at: string;
 };
 
