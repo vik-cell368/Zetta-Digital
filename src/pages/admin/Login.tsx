@@ -26,12 +26,11 @@ export default function Login() {
       try {
         const { signInAnonymously } = await import('firebase/auth');
         await signInAnonymously(auth);
+      } catch (err) {
+        console.warn("Anonymous auth failed, proceeding with session flag only", err);
+      } finally {
         sessionStorage.setItem('_viktor_authenticated', 'true');
         navigate('/admin/dashboard');
-      } catch (err) {
-        console.error("Demo login failed", err);
-        setError("Demo-Zugang momentan nicht verfügbar.");
-      } finally {
         setIsLoading(false);
       }
       return;
@@ -45,15 +44,10 @@ export default function Login() {
         // Check if user is admin in Firestore
         const adminDoc = await getDoc(doc(db, 'admins', user.uid));
         
-        if (!adminDoc.exists()) {
-          // Fallback: If no admin doc exists yet, but it's the first login or demo user
-          // In a real app, you'd seed this. For now, we check the email.
-          if (user.email === 'admin@viktorlabs.ai') {
-            sessionStorage.setItem('_viktor_authenticated', 'true');
-            navigate('/admin/dashboard');
-            return;
-          }
-          
+        // Whitelist owner emails
+        const isWhitelisted = user.email === 'admin@viktorlabs.ai' || user.email === 'victorviktor2009@gmail.com';
+        
+        if (!adminDoc.exists() && !isWhitelisted) {
           setError('Keine Administratorberechtigung für dieses Konto.');
           await auth.signOut();
         } else {

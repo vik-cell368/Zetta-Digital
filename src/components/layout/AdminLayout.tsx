@@ -15,15 +15,24 @@ export default function AdminLayout() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      // Check transient demo session
-      if (sessionStorage.getItem('_viktor_authenticated') === 'true') {
-        setIsChecking(false);
-        return;
-      }
-
       if (!user) {
-        navigate('/admin/login');
-        setIsChecking(false);
+        // Even if session storage says authenticated, we need a Firebase user for Firestore permissions
+        // If we have a session flag but no user, we might be in the middle of an async login
+        // But if it's been a while, redirect to login
+        if (sessionStorage.getItem('_viktor_authenticated') !== 'true') {
+          navigate('/admin/login');
+          setIsChecking(false);
+        } else {
+          // If we have the session flag but no user, we might still be loading or auth failed
+          // We'll give it a bit more time or just show the login if it persists
+          const timeout = setTimeout(() => {
+            if (!auth.currentUser && sessionStorage.getItem('_viktor_authenticated') === 'true') {
+              console.warn("Session authenticated but no Firebase user found after timeout");
+              setIsChecking(false); // Allow viewing but Firestore might fail
+            }
+          }, 3000);
+          return () => clearTimeout(timeout);
+        }
         return;
       }
 
@@ -40,6 +49,8 @@ export default function AdminLayout() {
       const isOwner = user.email === 'victorviktor2009@gmail.com' || user.email === 'admin@viktorlabs.ai';
 
       if (!adminDoc.exists() && !isOwner) {
+        console.warn("Access denied for user:", user.email || user.uid);
+        sessionStorage.removeItem('_viktor_authenticated');
         await signOut(auth);
         navigate('/admin/login');
       } else {
