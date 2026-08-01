@@ -130,13 +130,26 @@ export default function ContractEditor() {
             }
 
             if (lead) {
+              const projectTitle = lead.services_list?.length > 0 
+                ? lead.services_list.map((s: any) => s.description).join(' & ')
+                : (lead.service_id ? `Softwareentwicklung: ${lead.service_id}` : '');
+
+              const projectScope = lead.services_list?.length > 0
+                ? lead.services_list.map((s: any) => `* ${s.description}`).join('\n')
+                : DEFAULT_SCOPE;
+
               setContract(prev => ({
                 ...prev,
                 customer_company: lead.company || '',
                 customer_name: lead.full_name || '',
                 customer_email: lead.email || '',
                 customer_phone: lead.phone || '',
-                project_name: lead.service_id ? `Softwareentwicklung: ${lead.service_id}` : ''
+                customer_street: lead.street || '',
+                customer_zip: lead.zip || '',
+                customer_city: lead.city || '',
+                customer_country: lead.country || 'Deutschland',
+                project_name: projectTitle,
+                scope: projectScope
               }));
             }
           }

@@ -131,22 +131,37 @@ export default function InvoiceEditor() {
             }
 
             if (lead) {
+              const items = lead.services_list?.length > 0 
+                ? lead.services_list.map((s: any) => ({
+                    id: s.id || crypto.randomUUID(),
+                    description: s.description,
+                    quantity: 1,
+                    unit: 'Stk',
+                    price_per_unit: s.price,
+                    total_price: s.price
+                  }))
+                : [
+                    { 
+                      id: '1', 
+                      description: lead.service_id ? `Service: ${lead.service_id}` : 'Beratung & Service', 
+                      quantity: 1, 
+                      unit: 'Stk', 
+                      price_per_unit: 0, 
+                      total_price: 0 
+                    }
+                  ];
+
               setInvoice(prev => ({
                 ...prev,
                 customer_company: lead.company || '',
                 customer_name: lead.full_name || '',
                 customer_email: lead.email || '',
                 customer_phone: lead.phone || '',
-                items: [
-                  { 
-                    id: '1', 
-                    description: lead.service_id ? `Service: ${lead.service_id}` : 'Beratung & Service', 
-                    quantity: 1, 
-                    unit: 'Stk', 
-                    price_per_unit: 0, 
-                    total_price: 0 
-                  }
-                ]
+                customer_street: lead.street || '',
+                customer_zip: lead.zip || '',
+                customer_city: lead.city || '',
+                customer_country: lead.country || 'Deutschland',
+                items: items
               }));
             }
           }

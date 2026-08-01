@@ -50,14 +50,22 @@ export default function LeadManagement() {
 
   // New Lead Modal
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [newLead, setNewLead] = useState({
     full_name: '',
     email: '',
     phone: '',
     company: '',
+    street: '',
+    zip: '',
+    city: '',
+    country: 'Deutschland',
     notes: '',
-    status: 'pending'
+    status: 'pending',
+    services_list: [] as any[]
   });
+
+  const [editLeadData, setEditLeadData] = useState<any>(null);
 
   // Toast / Feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -231,8 +239,13 @@ export default function LeadManagement() {
       email: newLead.email,
       phone: newLead.phone,
       company: newLead.company,
+      street: newLead.street,
+      zip: newLead.zip,
+      city: newLead.city,
+      country: newLead.country,
       notes: newLead.notes,
       status: newLead.status,
+      services_list: newLead.services_list,
       created_at: new Date().toISOString(),
       start_time: new Date().toISOString(),
       end_time: new Date(Date.now() + 30 * 60000).toISOString()
@@ -258,8 +271,106 @@ export default function LeadManagement() {
     setLeads(prev => [createdLead, ...prev]);
     setSelectedLead(createdLead);
     setShowAddModal(false);
-    setNewLead({ full_name: '', email: '', phone: '', company: '', notes: '', status: 'pending' });
+    setNewLead({ 
+      full_name: '', 
+      email: '', 
+      phone: '', 
+      company: '', 
+      street: '', 
+      zip: '', 
+      city: '', 
+      country: 'Deutschland', 
+      notes: '', 
+      status: 'pending',
+      services_list: []
+    });
     showToast("Neuer Lead erfolgreich angelegt");
+  };
+
+  // Update Lead Details
+  const handleUpdateLeadDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editLeadData) return;
+
+    try {
+      const leadRef = doc(db, 'appointments', editLeadData.id);
+      await updateDoc(leadRef, editLeadData);
+    } catch (err) {
+      console.warn("Firebase update lead failed", err);
+    }
+
+    try {
+      const localApps = localStorage.getItem('viktor_labs_appointments');
+      if (localApps) {
+        const apps = JSON.parse(localApps);
+        const updated = apps.map((a: any) => a.id === editLeadData.id ? editLeadData : a);
+        localStorage.setItem('viktor_labs_appointments', JSON.stringify(updated));
+      }
+    } catch (err) {
+      console.warn("LocalStorage update lead failed", err);
+    }
+
+    setLeads(prev => prev.map(l => l.id === editLeadData.id ? editLeadData : l));
+    setSelectedLead(editLeadData);
+    setShowEditModal(false);
+    showToast("Lead-Daten aktualisiert");
+  };
+
+  // Add Service to Lead
+  const addServiceToLead = async (title: string, price: number) => {
+    if (!selectedLead) return;
+
+    const newService = {
+      id: crypto.randomUUID(),
+      description: title,
+      price: price
+    };
+
+    const updatedServices = [...(selectedLead.services_list || []), newService];
+    const updatedLead = { ...selectedLead, services_list: updatedServices };
+
+    try {
+      const leadRef = doc(db, 'appointments', selectedLead.id);
+      await updateDoc(leadRef, { services_list: updatedServices });
+    } catch (err) {}
+
+    try {
+      const localApps = localStorage.getItem('viktor_labs_appointments');
+      if (localApps) {
+        const apps = JSON.parse(localApps);
+        const updated = apps.map((a: any) => a.id === selectedLead.id ? updatedLead : a);
+        localStorage.setItem('viktor_labs_appointments', JSON.stringify(updated));
+      }
+    } catch (err) {}
+
+    setLeads(prev => prev.map(l => l.id === selectedLead.id ? updatedLead : l));
+    setSelectedLead(updatedLead);
+    showToast("Dienstleistung hinzugefügt");
+  };
+
+  const removeServiceFromLead = async (serviceId: string) => {
+    if (!selectedLead) return;
+
+    const updatedServices = (selectedLead.services_list || []).filter((s: any) => s.id !== serviceId);
+    const updatedLead = { ...selectedLead, services_list: updatedServices };
+
+    try {
+      const leadRef = doc(db, 'appointments', selectedLead.id);
+      await updateDoc(leadRef, { services_list: updatedServices });
+    } catch (err) {}
+
+    try {
+      const localApps = localStorage.getItem('viktor_labs_appointments');
+      if (localApps) {
+        const apps = JSON.parse(localApps);
+        const updated = apps.map((a: any) => a.id === selectedLead.id ? updatedLead : a);
+        localStorage.setItem('viktor_labs_appointments', JSON.stringify(updated));
+      }
+    } catch (err) {}
+
+    setLeads(prev => prev.map(l => l.id === selectedLead.id ? updatedLead : l));
+    setSelectedLead(updatedLead);
+    showToast("Dienstleistung entfernt");
   };
 
   // Copy to Clipboard
@@ -429,6 +540,18 @@ export default function LeadManagement() {
 
                     <div className="flex items-center gap-2 relative">
                       <button 
+                        onClick={() => {
+                          setEditLeadData({ ...selectedLead });
+                          setShowEditModal(true);
+                          setShowMoreMenu(false);
+                        }}
+                        className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-slate-50 hover:bg-white/10 transition-all"
+                        title="Lead bearbeiten"
+                      >
+                        <Edit3 size={18} />
+                      </button>
+
+                      <button 
                         onClick={() => setShowMoreMenu(!showMoreMenu)}
                         className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-slate-50 hover:bg-white/10 transition-all"
                         title="Mehr Optionen"
@@ -467,6 +590,34 @@ export default function LeadManagement() {
 
                 <div className="p-6 md:p-8 space-y-8">
                   {/* Status Badge & Selector */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Kunde / Firma</h4>
+                      <button 
+                        onClick={() => {
+                          setEditLeadData({ ...selectedLead });
+                          setShowEditModal(true);
+                        }}
+                        className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider hover:underline"
+                      >
+                        Bearbeiten
+                      </button>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1">
+                      <div className="text-sm font-bold text-white">{selectedLead.full_name}</div>
+                      {selectedLead.company && <div className="text-xs text-slate-400">{selectedLead.company}</div>}
+                      {(selectedLead.street || selectedLead.city) && (
+                        <div className="text-[10px] text-slate-500 pt-1">
+                          {selectedLead.street && <div>{selectedLead.street}</div>}
+                          {selectedLead.zip || selectedLead.city ? (
+                            <div>{selectedLead.zip} {selectedLead.city}</div>
+                          ) : null}
+                          {selectedLead.country && <div>{selectedLead.country}</div>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Status</h4>
@@ -511,6 +662,47 @@ export default function LeadManagement() {
                       >
                         Abgesagt
                       </button>
+                    </div>
+                  </div>
+
+                  {/* Services List */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Dienstleistungen</h4>
+                      <button 
+                        onClick={() => {
+                          const title = prompt("Dienstleistung Bezeichnung:");
+                          if (title) {
+                            const priceStr = prompt("Preis in €:", "0");
+                            const price = parseFloat(priceStr || "0");
+                            addServiceToLead(title, isNaN(price) ? 0 : price);
+                          }
+                        }}
+                        className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider hover:underline flex items-center gap-1"
+                      >
+                        <Plus size={12} />
+                        Hinzufügen
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      {selectedLead.services_list?.length > 0 ? (
+                        selectedLead.services_list.map((s: any) => (
+                          <div key={s.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                            <div className="flex flex-col">
+                              <span className="text-xs font-medium text-slate-200">{s.description}</span>
+                              <span className="text-[10px] text-cyan-500 font-bold">{new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(s.price)}</span>
+                            </div>
+                            <button 
+                              onClick={() => removeServiceFromLead(s.id)}
+                              className="text-slate-600 hover:text-rose-500 transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-[10px] text-slate-600 italic px-1">Keine spezifischen Leistungen hinterlegt.</div>
+                      )}
                     </div>
                   </div>
 
@@ -703,7 +895,7 @@ export default function LeadManagement() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-dark-900 border border-white/10 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-6"
+              className="bg-dark-900 border border-white/10 rounded-3xl p-6 md:p-8 max-w-2xl w-full shadow-2xl space-y-6 overflow-y-auto max-h-[90vh]"
             >
               <div className="flex justify-between items-center border-b border-white/5 pb-4">
                 <div className="flex items-center gap-3">
@@ -715,90 +907,132 @@ export default function LeadManagement() {
                 </button>
               </div>
 
-              <form onSubmit={handleCreateLead} className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    Vollständiger Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newLead.full_name}
-                    onChange={(e) => setNewLead({ ...newLead, full_name: e.target.value })}
-                    placeholder="z.B. Max Mustermann"
-                    className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                      E-Mail-Adresse *
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={newLead.email}
-                      onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
-                      placeholder="max@beispiel.de"
-                      className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none"
-                    />
+              <form onSubmit={handleCreateLead} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Basis-Informationen</h4>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Vollständiger Name *</label>
+                      <input type="text" required value={newLead.full_name} onChange={(e) => setNewLead({ ...newLead, full_name: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">E-Mail-Adresse *</label>
+                      <input type="email" required value={newLead.email} onChange={(e) => setNewLead({ ...newLead, email: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Telefonnummer</label>
+                      <input type="tel" value={newLead.phone} onChange={(e) => setNewLead({ ...newLead, phone: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Firma</label>
+                      <input type="text" value={newLead.company} onChange={(e) => setNewLead({ ...newLead, company: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                      Telefonnummer
-                    </label>
-                    <input
-                      type="tel"
-                      value={newLead.phone}
-                      onChange={(e) => setNewLead({ ...newLead, phone: e.target.value })}
-                      placeholder="+49 170 1234567"
-                      className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none"
-                    />
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Anschrift</h4>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Straße & Hausnr.</label>
+                      <input type="text" value={newLead.street} onChange={(e) => setNewLead({ ...newLead, street: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">PLZ</label>
+                        <input type="text" value={newLead.zip} onChange={(e) => setNewLead({ ...newLead, zip: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Ort</label>
+                        <input type="text" value={newLead.city} onChange={(e) => setNewLead({ ...newLead, city: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Land</label>
+                      <input type="text" value={newLead.country} onChange={(e) => setNewLead({ ...newLead, country: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                    </div>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    Firma
-                  </label>
-                  <input
-                    type="text"
-                    value={newLead.company}
-                    onChange={(e) => setNewLead({ ...newLead, company: e.target.value })}
-                    placeholder="z.B. Mustermann GmbH"
-                    className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    Notizen / Projektbeschreibung
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={newLead.notes}
-                    onChange={(e) => setNewLead({ ...newLead, notes: e.target.value })}
-                    placeholder="Details zum Interesse oder Anliegen..."
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-cyan-500 focus:outline-none"
-                  />
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Notizen / Projektbeschreibung</label>
+                  <textarea rows={3} value={newLead.notes} onChange={(e) => setNewLead({ ...newLead, notes: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-cyan-500 focus:outline-none" />
                 </div>
 
                 <div className="pt-4 flex justify-end gap-3 border-t border-white/5">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddModal(false)}
-                    className="px-5 h-11 rounded-xl bg-white/5 text-slate-300 font-bold text-xs hover:bg-white/10 transition-all"
-                  >
-                    Abbrechen
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 h-11 rounded-xl bg-cyan-500 text-dark-950 font-bold text-xs uppercase tracking-wider hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-500/20"
-                  >
-                    Lead Anlegen
-                  </button>
+                  <button type="button" onClick={() => setShowAddModal(false)} className="px-5 h-11 rounded-xl bg-white/5 text-slate-300 font-bold text-xs hover:bg-white/10 transition-all">Abbrechen</button>
+                  <button type="submit" className="px-6 h-11 rounded-xl bg-cyan-500 text-dark-950 font-bold text-xs uppercase tracking-wider hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-500/20">Lead Anlegen</button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Modal: Lead Bearbeiten */}
+        {showEditModal && editLeadData && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-dark-900 border border-white/10 rounded-3xl p-6 md:p-8 max-w-2xl w-full shadow-2xl space-y-6 overflow-y-auto max-h-[90vh]"
+            >
+              <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                <div className="flex items-center gap-3">
+                  <Edit3 className="text-cyan-400" size={20} />
+                  <h3 className="text-lg font-bold text-white">Lead-Daten bearbeiten</h3>
+                </div>
+                <button onClick={() => setShowEditModal(false)} className="text-slate-400 hover:text-white">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdateLeadDetails} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Basis-Informationen</h4>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Vollständiger Name</label>
+                      <input type="text" required value={editLeadData.full_name} onChange={(e) => setEditLeadData({ ...editLeadData, full_name: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">E-Mail-Adresse</label>
+                      <input type="email" required value={editLeadData.email} onChange={(e) => setEditLeadData({ ...editLeadData, email: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Telefonnummer</label>
+                      <input type="tel" value={editLeadData.phone || ''} onChange={(e) => setEditLeadData({ ...editLeadData, phone: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Firma</label>
+                      <input type="text" value={editLeadData.company || ''} onChange={(e) => setEditLeadData({ ...editLeadData, company: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Anschrift</h4>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Straße & Hausnr.</label>
+                      <input type="text" value={editLeadData.street || ''} onChange={(e) => setEditLeadData({ ...editLeadData, street: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">PLZ</label>
+                        <input type="text" value={editLeadData.zip || ''} onChange={(e) => setEditLeadData({ ...editLeadData, zip: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Ort</label>
+                        <input type="text" value={editLeadData.city || ''} onChange={(e) => setEditLeadData({ ...editLeadData, city: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Land</label>
+                      <input type="text" value={editLeadData.country || ''} onChange={(e) => setEditLeadData({ ...editLeadData, country: e.target.value })} className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:border-cyan-500 focus:outline-none" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-end gap-3 border-t border-white/5">
+                  <button type="button" onClick={() => setShowEditModal(false)} className="px-5 h-11 rounded-xl bg-white/5 text-slate-300 font-bold text-xs hover:bg-white/10 transition-all">Abbrechen</button>
+                  <button type="submit" className="px-6 h-11 rounded-xl bg-cyan-500 text-dark-950 font-bold text-xs uppercase tracking-wider hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-500/20">Änderungen speichern</button>
                 </div>
               </form>
             </motion.div>
