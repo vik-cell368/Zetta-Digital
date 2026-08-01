@@ -115,8 +115,8 @@ export default function InvoiceEditor() {
           }
         } else {
           // New Invoice
+          let lead: any = null;
           if (leadId) {
-            let lead: any = null;
             try {
               const leadDoc = await getDoc(doc(db, 'appointments', leadId));
               if (leadDoc.exists()) lead = { id: leadDoc.id, ...leadDoc.data() };
@@ -128,41 +128,6 @@ export default function InvoiceEditor() {
                 const leads = JSON.parse(local);
                 lead = leads.find((l: any) => l.id === leadId);
               }
-            }
-
-            if (lead) {
-              const items = lead.services_list?.length > 0 
-                ? lead.services_list.map((s: any) => ({
-                    id: s.id || crypto.randomUUID(),
-                    description: s.description,
-                    quantity: 1,
-                    unit: 'Stk',
-                    price_per_unit: s.price,
-                    total_price: s.price
-                  }))
-                : [
-                    { 
-                      id: '1', 
-                      description: lead.service_id ? `Service: ${lead.service_id}` : 'Beratung & Service', 
-                      quantity: 1, 
-                      unit: 'Stk', 
-                      price_per_unit: 0, 
-                      total_price: 0 
-                    }
-                  ];
-
-              setInvoice(prev => ({
-                ...prev,
-                customer_company: lead.company || '',
-                customer_name: lead.full_name || '',
-                customer_email: lead.email || '',
-                customer_phone: lead.phone || '',
-                customer_street: lead.street || '',
-                customer_zip: lead.zip || '',
-                customer_city: lead.city || '',
-                customer_country: lead.country || 'Deutschland',
-                items: items
-              }));
             }
           }
 
@@ -196,7 +161,48 @@ export default function InvoiceEditor() {
           }
           
           const newNumber = `VL-${currentYear}-${nextNumber.toString().padStart(4, '0')}`;
-          setInvoice(prev => ({ ...prev, invoice_number: newNumber }));
+          
+          // Apply everything at once
+          setInvoice(prev => {
+            const updated = { ...prev, invoice_number: newNumber };
+            
+            if (lead) {
+              const items = lead.services_list?.length > 0 
+                ? lead.services_list.map((s: any) => ({
+                    id: s.id || crypto.randomUUID(),
+                    description: s.description,
+                    quantity: 1,
+                    unit: 'Stk',
+                    price_per_unit: s.price,
+                    total_price: s.price
+                  }))
+                : [
+                    { 
+                      id: '1', 
+                      description: lead.service_id ? `Service: ${lead.service_id}` : 'Beratung & Service', 
+                      quantity: 1, 
+                      unit: 'Stk', 
+                      price_per_unit: 0, 
+                      total_price: 0 
+                    }
+                  ];
+
+              return {
+                ...updated,
+                customer_company: lead.company || '',
+                customer_name: lead.full_name || '',
+                customer_email: lead.email || '',
+                customer_phone: lead.phone || '',
+                customer_street: lead.street || '',
+                customer_zip: lead.zip || '',
+                customer_city: lead.city || '',
+                customer_country: lead.country || 'Deutschland',
+                items: items
+              };
+            }
+            
+            return updated;
+          });
         }
       } catch (err) {
         console.error("Load failed", err);

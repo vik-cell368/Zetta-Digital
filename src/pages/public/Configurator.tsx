@@ -32,6 +32,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import SEO from '@/components/SEO';
+import { db } from '@/lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 // --- Types ---
 interface Option {
@@ -273,12 +275,25 @@ export default function Configurator() {
     window.scrollTo(0, 0);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const servicesList = selectedOptions.map(o => ({
+      id: o.id,
+      description: o.name + (o.monthly ? ' (monatl.)' : ''),
+      price: o.price
+    }));
+
+    if (additionalPages > 0) {
+      servicesList.push({
+        id: 'pages_extra',
+        description: `${additionalPages} zusätzliche Seiten`,
+        price: additionalPages * 49
+      });
+    }
+
     // Create lead entry for Admin Dashboard
     const leadData = {
-      id: Math.random().toString(36).substr(2, 9),
       full_name: formData.name,
       email: formData.email,
       phone: formData.phone,
@@ -286,6 +301,13 @@ export default function Configurator() {
       industry: formData.industry,
       status: 'pending',
       created_at: new Date().toISOString(),
+      start_time: new Date().toISOString(),
+      end_time: new Date(Date.now() + 30 * 60000).toISOString(),
+      services_list: servicesList,
+      street: '',
+      zip: '',
+      city: '',
+      country: 'Deutschland',
       notes: `Konfiguration:\n` + 
              `${selectedOptions.map(o => `- ${o.name} (${o.price}€)`).join('\n')}\n` +
              `${additionalPages > 0 ? `- ${additionalPages} zusätzliche Seiten (${additionalPages * 49}€)\n` : ''}` +
@@ -297,9 +319,19 @@ export default function Configurator() {
              `Datei: ${formData.file ? formData.file.name : 'Keine'}`,
     };
 
-    // Save to LocalStorage
-    const existingLeads = JSON.parse(localStorage.getItem('viktor_labs_appointments') || '[]');
-    localStorage.setItem('viktor_labs_appointments', JSON.stringify([...existingLeads, leadData]));
+    try {
+      const docRef = await addDoc(collection(db, 'appointments'), leadData);
+      
+      // Save to LocalStorage with ID
+      const localLeads = JSON.parse(localStorage.getItem('viktor_labs_appointments') || '[]');
+      localStorage.setItem('viktor_labs_appointments', JSON.stringify([...localLeads, { ...leadData, id: docRef.id }]));
+    } catch (err) {
+      console.warn("Firebase config lead save failed", err);
+      // Fallback ID for local
+      const localId = Math.random().toString(36).substr(2, 9);
+      const localLeads = JSON.parse(localStorage.getItem('viktor_labs_appointments') || '[]');
+      localStorage.setItem('viktor_labs_appointments', JSON.stringify([...localLeads, { ...leadData, id: localId }]));
+    }
 
     setStep('result');
     window.scrollTo(0, 0);

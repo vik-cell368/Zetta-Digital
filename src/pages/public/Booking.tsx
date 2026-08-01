@@ -26,6 +26,7 @@ import { cn, formatCurrency, getTranslatedText } from '@/lib/utils';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
+import { useLocation } from 'react-router-dom';
 
 type Step = 'service' | 'date' | 'time' | 'details' | 'success';
 
@@ -61,7 +62,12 @@ interface TimeSlot {
 export default function Booking() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const currentLang = i18n.language.split('-')[0] || 'en';
+  
+  const queryParams = new URLSearchParams(location.search);
+  const initialServiceId = queryParams.get('serviceId');
+
   const [step, setStep] = useState<Step>('service');
   const [services, setServices] = useState<Service[]>([]);
   const [settings, setSettings] = useState<BusinessSettings | null>(null);
@@ -183,6 +189,15 @@ export default function Booking() {
         }
 
         setServices(activeServices);
+
+        // Pre-select service from URL if provided
+        if (initialServiceId) {
+          const found = activeServices.find(s => s.id === initialServiceId);
+          if (found) {
+            setSelectedService(found);
+            setStep('date');
+          }
+        }
       } catch (e) {
         console.warn("Booking data fetch failed", e);
       } finally {
@@ -332,6 +347,13 @@ export default function Booking() {
     const payload = {
       service_id: selectedService.id,
       services: { name: selectedService.name }, 
+      services_list: [
+        {
+          id: selectedService.id,
+          description: getTranslatedText(selectedService.name, currentLang),
+          price: selectedService.price || 0
+        }
+      ],
       full_name: data.full_name,
       email: data.email,
       phone: data.phone,
@@ -340,7 +362,11 @@ export default function Booking() {
       status: 'pending',
       notes: fullNotes,
       company: data.company,
-      industry: data.industry
+      industry: data.industry,
+      street: '', // Placeholder for lead consistency
+      zip: '',
+      city: '',
+      country: 'Deutschland'
     };
 
     try {
@@ -521,8 +547,26 @@ export default function Booking() {
                     <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
                     <span className="sr-only">Lade verfügbare Zeiten...</span>
                   </div>
+                ) : (selectedDate && (!businessHours.find(h => h.weekday === selectedDate.getDay())?.is_open)) ? (
+                  <div className="text-center py-12 space-y-6">
+                    <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mx-auto text-slate-500">
+                      <X size={32} />
+                    </div>
+                    <div>
+                      <p className="text-slate-200 font-medium text-lg">Wochenende / Geschlossen</p>
+                      <p className="text-slate-500 text-sm mt-2">An diesem Tag bieten wir leider keine Termine an.</p>
+                    </div>
+                    <Button variant="outline" onClick={() => setStep('date')} className="border-white/10 text-slate-300">
+                      Anderes Datum wählen
+                    </Button>
+                  </div>
                 ) : availableTimes.length === 0 ? (
-                  <p className="text-slate-400 font-light">{t('booking.no_slots')}</p>
+                  <div className="text-center py-12 space-y-6">
+                    <p className="text-slate-400 font-light">{t('booking.no_slots')}</p>
+                    <Button variant="outline" onClick={() => setStep('date')} className="border-white/10 text-slate-300">
+                      Anderes Datum wählen
+                    </Button>
+                  </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
                     {availableTimes.map(slot => {

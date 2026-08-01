@@ -265,20 +265,25 @@ export const generateInvoicePDF = async (inv: Invoice, businessSettings: Busines
   y += 8;
 
   // 4. SUMMENBEREICH (Right aligned)
-  const totalsX = pageWidth - 80;
+  const totalsX = pageWidth - 85;
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(COLOR_MUTED[0], COLOR_MUTED[1], COLOR_MUTED[2]);
   doc.text('Zwischensumme', totalsX, y);
   doc.setTextColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
   doc.text(formatCurrency(inv.subtotal), colTotal, y, { align: 'right' });
-  y += 6;
+  y += 7;
 
   doc.setTextColor(COLOR_MUTED[0], COLOR_MUTED[1], COLOR_MUTED[2]);
   doc.text(`MwSt. (${inv.vat_rate || 19}%)`, totalsX, y);
   doc.setTextColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
   doc.text(formatCurrency(inv.vat_amount), colTotal, y, { align: 'right' });
-  y += 10;
+  y += 12;
+
+  // Highlight Box for Total
+  doc.setDrawColor(COLOR_ACCENT[0], COLOR_ACCENT[1], COLOR_ACCENT[2]);
+  doc.setLineWidth(0.5);
+  doc.line(totalsX - 5, y - 8, colTotal + 2, y - 8);
 
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
@@ -290,7 +295,7 @@ export const generateInvoicePDF = async (inv: Invoice, businessSettings: Busines
   doc.setTextColor(COLOR_ACCENT[0], COLOR_ACCENT[1], COLOR_ACCENT[2]);
   doc.text(formatCurrency(inv.total_amount), colTotal, y + 0.5, { align: 'right' });
 
-  y += 20;
+  y += 25;
 
   // 5. ZAHLUNGSINFORMATIONEN
   if (y > pageHeight - 70) {

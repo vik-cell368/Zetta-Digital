@@ -358,7 +358,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 grid-rows-2 gap-6 auto-rows-[400px]">
               <BentoCard 
                 className="md:col-span-4 lg:col-span-4 row-span-2 !p-0 bg-dark-900 group border-none shadow-2xl overflow-hidden"
-                to={s1 ? `/services/${s1.id}` : "/services"}
+                to={s1 ? `/booking?serviceId=${s1.id}` : "/booking"}
               >
                 <div className="relative h-full w-full flex flex-col">
                   <div className="p-12 pb-0 relative z-10">
@@ -391,7 +391,7 @@ export default function Home() {
                 title={s2 ? getTranslatedText(s2.name, currentLang) : config.expertise.card2Title}
                 subtitle={s2 ? getTranslatedText(s2.description, currentLang) : config.expertise.card2Desc}
                 icon={s2 ? getDynamicIcon(s2.id) : Box}
-                to={s2 ? `/services/${s2.id}` : "/services"}
+                to={s2 ? `/booking?serviceId=${s2.id}` : "/booking"}
               />
 
               <BentoCard 
@@ -399,7 +399,7 @@ export default function Home() {
                 title={s3 ? getTranslatedText(s3.name, currentLang) : config.expertise.card3Title}
                 subtitle={s3 ? getTranslatedText(s3.description, currentLang) : config.expertise.card3Desc}
                 icon={s3 ? getDynamicIcon(s3.id) : Zap}
-                to={s3 ? `/services/${s3.id}` : "/services"}
+                to={s3 ? `/booking?serviceId=${s3.id}` : "/booking"}
               />
             </div>
           </div>
