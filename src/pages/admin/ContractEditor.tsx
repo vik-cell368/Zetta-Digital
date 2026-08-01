@@ -273,6 +273,10 @@ export default function ContractEditor() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => generatePDF(contract as Contract)} className="border-white/10 text-slate-200 hover:bg-white/5">
+            <Download className="w-4 h-4 mr-2 text-cyan-500" />
+            PDF Exportieren
+          </Button>
           <Button onClick={() => handleSave()} isLoading={isSaving} className="bg-cyan-500 text-dark-950 font-bold px-8">
             <Save className="w-4 h-4 mr-2" />
             Speichern
