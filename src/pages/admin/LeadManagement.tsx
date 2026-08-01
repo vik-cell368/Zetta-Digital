@@ -80,7 +80,7 @@ export default function LeadManagement() {
     let allLeads: any[] = [];
     
     try {
-      const q = query(collection(db, 'appointments'), orderBy('created_at', 'desc'));
+      const q = query(collection(db, 'appointments'));
       const querySnapshot = await getDocs(q);
       const dbLeads = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       if (dbLeads) allLeads = [...dbLeads];

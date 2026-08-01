@@ -589,6 +589,23 @@ export default function Booking() {
       leads.push({ ...payload, id: docRef.id, created_at: new Date().toISOString() });
       localStorage.setItem('viktor_labs_appointments', JSON.stringify(leads));
 
+      // Send confirmation email via our API
+      try {
+        await fetch('/api/booking/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: data.email,
+            name: data.full_name,
+            date: format(selectedDate, 'd. MMMM yyyy', { locale: de }),
+            time: format(parse(selectedTime, 'HH:mm:ss', new Date()), 'HH:mm'),
+            services: servicesList.map(s => s.description).join(', ')
+          })
+        });
+      } catch (emailErr) {
+        console.warn("Could not send confirmation email", emailErr);
+      }
+
       setStep('success');
     } catch (err) {
       console.warn("Firebase booking failed, saved to local lead management", err);
@@ -1232,7 +1249,7 @@ export default function Booking() {
                 </div>
                 <h2 className="text-5xl md:text-6xl font-display text-slate-50 mb-6">Erfolgreich gebucht!</h2>
                 <p className="text-slate-400 max-w-lg mx-auto mb-16 text-xl font-light leading-relaxed">
-                  Ihre Anfrage wurde übermittelt. Wir haben Ihnen eine Bestätigungsmail mit allen Details gesendet. Unser Team wird sich in Kürze bei Ihnen melden.
+                  Ihre Anfrage wurde übermittelt. Wir haben Ihnen eine Bestätigungsmail mit allen Details und dem <strong>Zoom-Link</strong> für das Gespräch gesendet.
                 </p>
                 <Button onClick={() => navigate('/')} className="bg-cyan-500 text-dark-950 hover:bg-cyan-400 px-12 h-16 rounded-full font-semibold uppercase tracking-widest text-xs transition-transform active:scale-95">
                   Zurück zur Startseite

@@ -4,10 +4,13 @@ import helmet from "helmet";
 import compression from "compression";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
+import { Resend } from 'resend';
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
   // Compression middleware (Gzip / Brotli)
   app.use(compression({
@@ -75,6 +78,54 @@ Text to translate:
     } catch (error) {
       console.error("Translation error:", error);
       res.status(500).json({ error: "Failed to translate text" });
+    }
+  });
+
+  // API route for booking confirmation email with Zoom link
+  app.post("/api/booking/confirm", async (req, res) => {
+    try {
+      const { email, name, date, time, services } = req.body;
+
+      if (!resend) {
+        console.warn("RESEND_API_KEY is missing, skipping email");
+        return res.json({ success: true, message: "Email skipped (no API key)" });
+      }
+
+      const zoomLink = process.env.VITE_ZOOM_MEETING_LINK || "https://zoom.us/j/your-meeting-id";
+      
+      const { data, error } = await resend.emails.send({
+        from: 'Zetta Digital <onboarding@resend.dev>',
+        to: [email],
+        subject: 'Bestätigung: Dein Beratungsgespräch bei Zetta Digital',
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #334155;">
+            <h1 style="color: #06b6d4;">Vielen Dank für deine Buchung!</h1>
+            <p>Hallo ${name},</p>
+            <p>wir freuen uns auf unser gemeinsames Gespräch am <strong>${date} um ${time} Uhr</strong>.</p>
+            
+            <div style="background-color: #f8fafc; border-radius: 12px; padding: 24px; margin: 24px 0; border: 1px solid #e2e8f0;">
+              <h3 style="margin-top: 0;">Deine Buchungsdetails:</h3>
+              <p style="margin-bottom: 0;"><strong>Termin:</strong> ${date} um ${time} Uhr</p>
+              <p style="margin-top: 8px;"><strong>Zoom Link:</strong> <a href="${zoomLink}" style="color: #06b6d4; font-weight: bold;">Hier dem Meeting beitreten</a></p>
+            </div>
+
+            <p>Solltest du den Termin nicht wahrnehmen können, gib uns bitte rechtzeitig Bescheid.</p>
+            
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0;" />
+            <p style="font-size: 12px; color: #64748b;">Zetta Digital - Deine Agentur für digitale Exzellenz</p>
+          </div>
+        `,
+      });
+
+      if (error) {
+        console.error("Email error:", error);
+        return res.status(400).json({ error });
+      }
+
+      res.json({ success: true, data });
+    } catch (error) {
+      console.error("Email error:", error);
+      res.status(500).json({ error: "Failed to send email" });
     }
   });
 
