@@ -151,7 +151,13 @@ export const generateInvoicePDF = async (inv: Invoice, businessSettings: Busines
 
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
-    doc.text(val, pageWidth - margin, metaY, { align: 'right' });
+    
+    let displayVal = val;
+    if (displayVal.length > 35) {
+      displayVal = displayVal.substring(0, 32) + '...';
+    }
+    
+    doc.text(displayVal, pageWidth - margin, metaY, { align: 'right' });
     metaY += 5.5;
   });
 
@@ -498,7 +504,13 @@ export const generateContractPDF = async (ct: Contract, businessSettings: Busine
 
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
-    doc.text(val, pageWidth - margin, metaY, { align: 'right' });
+    
+    let displayVal = val;
+    if (displayVal.length > 35) {
+      displayVal = displayVal.substring(0, 32) + '...';
+    }
+    
+    doc.text(displayVal, pageWidth - margin, metaY, { align: 'right' });
     metaY += 5.5;
   });
 

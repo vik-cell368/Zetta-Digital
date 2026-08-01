@@ -278,7 +278,7 @@ export default function InvoiceEditor() {
       }
     }
 
-    item.total_price = (item.quantity || 0) * (item.price_per_unit || 0);
+    item.total_price = Number(item.quantity || 0) * Number(item.price_per_unit || 0);
     newItems[index] = item;
     setInvoice(prev => ({ ...prev, items: newItems }));
   };
@@ -541,7 +541,7 @@ export default function InvoiceEditor() {
                       <Input 
                         type="number" 
                         value={item.quantity} 
-                        onChange={e => updateItem(index, 'quantity', parseFloat(e.target.value))} 
+                        onChange={e => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)} 
                       />
                     </div>
                     <div className="md:col-span-2 space-y-2">
@@ -558,7 +558,7 @@ export default function InvoiceEditor() {
                         type="number" 
                         step="0.01" 
                         value={item.price_per_unit} 
-                        onChange={e => updateItem(index, 'price_per_unit', parseFloat(e.target.value))} 
+                        onChange={e => updateItem(index, 'price_per_unit', parseFloat(e.target.value) || 0)} 
                       />
                     </div>
                     <div className="md:col-span-1 flex items-end justify-center pb-2">
@@ -585,7 +585,7 @@ export default function InvoiceEditor() {
                       <input 
                         type="number" 
                         value={invoice.vat_rate} 
-                        onChange={e => updateField('vat_rate', parseFloat(e.target.value))}
+                        onChange={e => updateField('vat_rate', parseFloat(e.target.value) || 0)}
                         className="w-8 bg-transparent border-none text-[10px] text-cyan-500 focus:outline-none p-0 text-right"
                       />
                       <span className="text-[10px] text-cyan-500/50 ml-0.5">%</span>

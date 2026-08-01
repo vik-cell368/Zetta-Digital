@@ -130,9 +130,14 @@ export default function ContractEditor() {
             }
 
             if (lead) {
+              const servicesText = lead.services_list?.map((s: any) => s.description).join(' & ');
               const projectTitle = lead.services_list?.length > 0 
-                ? lead.services_list.map((s: any) => s.description).join(' & ')
-                : (lead.service_id ? `Softwareentwicklung: ${lead.service_id}` : '');
+                ? "Digital Architecture & Software Development" 
+                : (lead.service_id ? `Softwareentwicklung: ${lead.service_id}` : 'Digitalprojekt');
+
+              const projectDescription = lead.services_list?.length > 0
+                ? `Viktor Labs entwickelt für den Auftraggeber eine individuelle Softwarelösung umfassend: ${servicesText}. Das Projekt umfasst Planung, Entwicklung, Tests und Bereitstellung der vereinbarten Funktionen.`
+                : DEFAULT_DESCRIPTION;
 
               const projectScope = lead.services_list?.length > 0
                 ? lead.services_list.map((s: any) => `* ${s.description}`).join('\n')
@@ -149,6 +154,7 @@ export default function ContractEditor() {
                 customer_city: lead.city || '',
                 customer_country: lead.country || 'Deutschland',
                 project_name: projectTitle,
+                description: projectDescription,
                 scope: projectScope
               }));
             }
