@@ -252,9 +252,12 @@ export default function Services() {
                 transition={{ delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Link to={`/services/${service.id}`} className="group block h-full">
+                <Link 
+                  to={`/services/${service.id}`} 
+                  className="group block h-full focus:outline-none focus:ring-2 focus:ring-cyan-500/50 rounded-[3rem]"
+                  aria-label={`Mehr Details zu ${service.title}`}
+                >
                   <div className="bg-white border border-slate-200 rounded-[3rem] p-12 md:p-16 h-full hover:border-cyan-500/30 transition-all duration-700 flex flex-col relative overflow-hidden shadow-sm hover:shadow-xl">
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                     
                     <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 mb-10 group-hover:bg-cyan-500 group-hover:text-white transition-all duration-700 shadow-sm relative z-10">
                       <Icon size={28} />

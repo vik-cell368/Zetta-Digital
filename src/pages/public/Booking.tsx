@@ -606,16 +606,18 @@ export default function Booking() {
                     <form id="booking-form" onSubmit={handleSubmit(onSubmitDetails)} className="space-y-8">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                         <div>
-                          <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Branche</label>
+                          <label htmlFor="industry" className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Branche</label>
                           <Input 
+                            id="industry"
                             {...register('industry')}
                             placeholder="z.B. Gastronomie"
                             className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Unternehmen</label>
+                          <label htmlFor="company" className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Unternehmen</label>
                           <Input 
+                            id="company"
                             {...register('company')}
                             placeholder="Ihr Firmenname"
                             className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
@@ -625,16 +627,18 @@ export default function Booking() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                         <div>
-                          <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Unternehmensgröße</label>
+                          <label htmlFor="size" className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Unternehmensgröße</label>
                           <Input 
+                            id="size"
                             {...register('size')}
                             placeholder="z.B. 1-10 Mitarbeiter"
                             className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Gewünschter Start</label>
+                          <label htmlFor="startDate" className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Gewünschter Start</label>
                           <Input 
+                            id="startDate"
                             type="text"
                             {...register('startDate')}
                             placeholder="tt.mm.jjjj"
@@ -644,19 +648,22 @@ export default function Booking() {
                       </div>
 
                       <div>
-                        <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Vollständiger Name</label>
+                        <label htmlFor="full_name" className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Vollständiger Name</label>
                         <Input 
+                          id="full_name"
                           {...register('full_name', { required: 'Name ist erforderlich' })}
                           placeholder="Ihr Name"
                           error={errors.full_name?.message}
                           className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
+                          aria-invalid={errors.full_name ? "true" : "false"}
                         />
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                         <div>
-                          <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">E-Mail Adresse</label>
+                          <label htmlFor="email" className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">E-Mail Adresse</label>
                           <Input 
+                            id="email"
                             type="email"
                             {...register('email', { 
                               required: 'E-Mail ist erforderlich',
@@ -665,11 +672,13 @@ export default function Booking() {
                             placeholder="jane@example.com"
                             error={errors.email?.message}
                             className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl h-14"
+                            aria-invalid={errors.email ? "true" : "false"}
                           />
                         </div>
                         <div>
-                          <label className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Telefonnummer (optional)</label>
+                          <label htmlFor="phone" className="block text-xs uppercase tracking-widest font-mono text-slate-400 mb-3">Telefonnummer (optional)</label>
                           <Input 
+                            id="phone"
                             type="tel"
                             {...register('phone')}
                             placeholder="+49"
@@ -679,8 +688,9 @@ export default function Booking() {
                       </div>
 
                       <div>
-                        <label className="block text-xs uppercase tracking-widest font-mono text-gray-400 mb-3">Ihre Nachricht oder spezielle Wünsche...</label>
+                        <label htmlFor="notes" className="block text-xs uppercase tracking-widest font-mono text-gray-400 mb-3">Ihre Nachricht oder spezielle Wünsche...</label>
                         <Textarea 
+                          id="notes"
                           {...register('notes')}
                           placeholder="Erzählen Sie uns von Ihrem Projekt..."
                           className="bg-dark-950 border-white/10 text-white focus-visible:ring-cyan-500/50 rounded-xl min-h-[120px]"

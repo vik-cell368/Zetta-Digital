@@ -42,8 +42,17 @@ const BentoCard = ({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       onClick={() => to && navigate(to)}
+      role={to ? "button" : "article"}
+      tabIndex={to ? 0 : undefined}
+      aria-label={to ? `Mehr Informationen zu ${title}` : undefined}
+      onKeyDown={(e) => {
+        if (to && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          navigate(to);
+        }
+      }}
       className={cn(
-        "group relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-200 hover:border-cyan-500/30 transition-all duration-700 cursor-pointer p-8 flex flex-col justify-between",
+        "group relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-200 hover:border-cyan-500/30 transition-all duration-700 cursor-pointer p-8 flex flex-col justify-between focus:outline-none focus:ring-2 focus:ring-cyan-500/50",
         className
       )}
     >

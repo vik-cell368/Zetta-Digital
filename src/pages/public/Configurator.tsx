@@ -377,12 +377,13 @@ export default function Configurator() {
                             <div className="flex items-center gap-8 md:gap-12">
                               <button 
                                 onClick={() => setAdditionalPages(Math.max(0, additionalPages - 1))}
-                                className="w-14 h-14 md:w-20 md:h-20 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white/10 hover:border-cyan-500 transition-all active:scale-90"
+                                className="w-14 h-14 md:w-20 md:h-20 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white/10 hover:border-cyan-500 transition-all active:scale-90 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                                aria-label="Weniger Seiten"
                               >
                                 <Minus size={28} />
                               </button>
                               
-                              <div className="flex flex-col items-center min-w-[140px] md:min-w-[180px]">
+                              <div className="flex flex-col items-center min-w-[140px] md:min-w-[180px]" aria-live="polite">
                                 <span className="text-7xl md:text-9xl font-display font-bold text-white leading-none tracking-tighter">
                                   {additionalPages}
                                 </span>
@@ -393,7 +394,8 @@ export default function Configurator() {
 
                               <button 
                                 onClick={() => setAdditionalPages(additionalPages + 1)}
-                                className="w-14 h-14 md:w-20 md:h-20 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white/10 hover:border-cyan-500 transition-all active:scale-90"
+                                className="w-14 h-14 md:w-20 md:h-20 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white/10 hover:border-cyan-500 transition-all active:scale-90 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                                aria-label="Mehr Seiten"
                               >
                                 <Plus size={28} />
                               </button>
@@ -480,10 +482,11 @@ export default function Configurator() {
                     <form onSubmit={handleSubmit} className="space-y-8">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-4">
-                          <label className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                          <label htmlFor="industry" className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                             <Building2 className="w-3 h-3" /> Branche
                           </label>
                           <Input 
+                            id="industry"
                             placeholder="z.B. Gastronomie" 
                             required
                             className="h-14 rounded-2xl bg-dark-950 border-white/5"
@@ -492,10 +495,11 @@ export default function Configurator() {
                           />
                         </div>
                         <div className="space-y-4">
-                          <label className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                          <label htmlFor="company" className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                             <Building2 className="w-3 h-3" /> Unternehmen
                           </label>
                           <Input 
+                            id="company"
                             placeholder="Ihr Firmenname" 
                             required
                             className="h-14 rounded-2xl bg-dark-950 border-white/5"
@@ -507,10 +511,11 @@ export default function Configurator() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-4">
-                          <label className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                          <label htmlFor="size" className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                             <Globe className="w-3 h-3" /> Unternehmensgröße
                           </label>
                           <Input 
+                            id="size"
                             placeholder="z.B. 1-10 Mitarbeiter" 
                             required
                             className="h-14 rounded-2xl bg-dark-950 border-white/5"
@@ -519,10 +524,11 @@ export default function Configurator() {
                           />
                         </div>
                         <div className="space-y-4">
-                          <label className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                          <label htmlFor="startDate" className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                             <Calendar className="w-3 h-3" /> Gewünschter Start
                           </label>
                           <Input 
+                            id="startDate"
                             type="date" 
                             required
                             className="h-14 rounded-2xl bg-dark-950 border-white/5"
@@ -534,43 +540,60 @@ export default function Configurator() {
                       
                       <div className="pt-12 border-t border-white/5 space-y-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-4">
+                            <label htmlFor="name" className="text-xs font-bold uppercase tracking-widest text-slate-500">Vollständiger Name</label>
+                            <Input 
+                              id="name"
+                              placeholder="Vollständiger Name" 
+                              required
+                              className="h-14 rounded-2xl bg-dark-950 border-white/5"
+                              value={formData.name}
+                              onChange={e => setFormData({...formData, name: e.target.value})}
+                            />
+                          </div>
+                          <div className="space-y-4">
+                            <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-slate-500">E-Mail Adresse</label>
+                            <Input 
+                              id="email"
+                              type="email" 
+                              placeholder="E-Mail Adresse" 
+                              required
+                              className="h-14 rounded-2xl bg-dark-950 border-white/5"
+                              value={formData.email}
+                              onChange={e => setFormData({...formData, email: e.target.value})}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <label htmlFor="phone" className="text-xs font-bold uppercase tracking-widest text-slate-500">Telefonnummer (optional)</label>
                           <Input 
-                            placeholder="Vollständiger Name" 
-                            required
+                            id="phone"
+                            placeholder="Telefonnummer (optional)" 
                             className="h-14 rounded-2xl bg-dark-950 border-white/5"
-                            value={formData.name}
-                            onChange={e => setFormData({...formData, name: e.target.value})}
-                          />
-                          <Input 
-                            type="email" 
-                            placeholder="E-Mail Adresse" 
-                            required
-                            className="h-14 rounded-2xl bg-dark-950 border-white/5"
-                            value={formData.email}
-                            onChange={e => setFormData({...formData, email: e.target.value})}
+                            value={formData.phone}
+                            onChange={e => setFormData({...formData, phone: e.target.value})}
                           />
                         </div>
-                        <Input 
-                          placeholder="Telefonnummer (optional)" 
-                          className="h-14 rounded-2xl bg-dark-950 border-white/5"
-                          value={formData.phone}
-                          onChange={e => setFormData({...formData, phone: e.target.value})}
-                        />
-                        <Textarea 
-                          placeholder="Ihre Nachricht oder spezielle Wünsche..." 
-                          className="rounded-3xl bg-dark-950 border-white/5 p-6"
-                          rows={4}
-                          value={formData.message}
-                          onChange={e => setFormData({...formData, message: e.target.value})}
-                        />
+                        <div className="space-y-4">
+                          <label htmlFor="message" className="text-xs font-bold uppercase tracking-widest text-slate-500">Ihre Nachricht oder spezielle Wünsche...</label>
+                          <Textarea 
+                            id="message"
+                            placeholder="Ihre Nachricht oder spezielle Wünsche..." 
+                            className="rounded-3xl bg-dark-950 border-white/5 p-6"
+                            rows={4}
+                            value={formData.message}
+                            onChange={e => setFormData({...formData, message: e.target.value})}
+                          />
+                        </div>
 
                         {/* PDF Upload */}
                         <div className="space-y-4">
-                          <label className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                          <label htmlFor="pdf-upload" className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                             <Upload className="w-3 h-3" /> Vorhandene Unterlagen (PDF)
                           </label>
                           <div className="relative group">
                             <input 
+                              id="pdf-upload"
                               type="file" 
                               accept=".pdf"
                               onChange={(e) => setFormData({...formData, file: e.target.files?.[0] || null})}
