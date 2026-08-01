@@ -121,81 +121,174 @@ export default function Legal() {
               </div>
             ) : (
               <div className="space-y-16">
-                <section id="allgemeines">
-                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">Allgemeines</h2>
-                  <h3 className="text-xl font-display font-bold text-slate-200 mt-8 mb-4">1. Einleitung</h3>
-                  <p>Der Schutz Ihrer personenbezogenen Daten ist für Viktor Labs ein zentrales Anliegen. Im Rahmen unserer Tätigkeit als Agentur für digitale Lösungen und KI-Automatisierung verarbeiten wir Daten mit höchster Sorgfalt. Diese Erklärung informiert Sie umfassend über die Verarbeitung Ihrer Daten im gesamten Geschäftsbetrieb.</p>
-
-                  <h3 className="text-xl font-display font-bold text-slate-200 mt-8 mb-4">2. Verantwortlicher</h3>
-                  <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">1. Verantwortlicher</h2>
+                  <p>
+                    Verantwortlicher für die Verarbeitung personenbezogener Daten im Sinne der Datenschutz-Grundverordnung (DSGVO) ist:
+                  </p>
+                  <div className="bg-white/5 border border-white/10 p-6 rounded-2xl mt-6">
                     <p className="font-bold text-white mb-1">Viktor Labs</p>
-                    <p>Inhaber: Viktor</p>
-                    <p>Anschrift: Virtuelles Büro Hannover, Niedersachsen, Deutschland</p>
-                    <p>E-Mail: <a href="mailto:contact@viktorlabs.dev" className="text-cyan-500">contact@viktorlabs.dev</a></p>
+                    <p>Inhaber: <span className="text-amber-500">[Vor- und Nachname]</span></p>
+                    <p>Anschrift: <span className="text-amber-500">[Geschäftsanschrift]</span></p>
+                    <p>E-Mail: <span className="text-amber-500">[E-Mail-Adresse]</span></p>
+                    <p>Website: <span className="text-amber-500">[Website]</span></p>
                   </div>
-
-                  <h3 className="text-xl font-display font-bold text-slate-200 mt-8 mb-4">3. Rechtsgrundlagen</h3>
-                  <p>Die Verarbeitung erfolgt auf Basis der DSGVO (Art. 6 Abs. 1 lit. a, b, c, f). Wir erheben Daten zur Vertragserfüllung, aufgrund rechtlicher Verpflichtungen oder zur Wahrung unserer berechtigten Interessen an einem sicheren Geschäftsbetrieb.</p>
                 </section>
 
-                <section id="infrastruktur">
-                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">Website und technische Infrastruktur</h2>
-                  <h3 className="text-xl font-display font-bold text-slate-200 mt-8 mb-4">1. Hosting (Vercel)</h3>
-                  <p>Unsere Website wird bei <strong>Vercel Inc.</strong> (USA) gehostet. Vercel stellt die Infrastruktur bereit. Die Übermittlung in die USA ist durch EU-Standardvertragsklauseln abgesichert.</p>
-                  
-                  <h3 className="text-xl font-display font-bold text-slate-200 mt-8 mb-4">2. Vercel Analytics</h3>
-                  <p>Wir nutzen Vercel Analytics zur Performance-Optimierung. Dabei werden technische Nutzungsdaten und aggregierte Analyseinformationen verarbeitet, um die Stabilität der Seite zu messen.</p>
-
-                  <h3 className="text-xl font-display font-bold text-slate-200 mt-8 mb-4">3. Consent-Management</h3>
-                  <p>Wir nutzen ein Consent-Management-System zur Verwaltung Ihrer Einwilligungen. Technisch notwendige Cookies werden sofort gesetzt; Analyse-Cookies erst nach Ihrer aktiven Zustimmung.</p>
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">2. Geltungsbereich dieser Datenschutzerklärung</h2>
+                  <p>Diese Datenschutzerklärung informiert über die Verarbeitung personenbezogener Daten durch Viktor Labs im Rahmen der gesamten geschäftlichen Tätigkeit.</p>
+                  <p className="mt-4">Sie gilt insbesondere für:</p>
+                  <ul className="list-disc pl-6 space-y-2 mt-4">
+                    <li>den Besuch unserer Website</li>
+                    <li>Kontaktaufnahme über digitale Kommunikationswege</li>
+                    <li>Terminvereinbarungen über unsere Website</li>
+                    <li>Kunden- und Projektanfragen</li>
+                    <li>Entwicklung von Websites</li>
+                    <li>Entwicklung digitaler Lösungen und KI-gestützter Automatisierungen</li>
+                    <li>Vertrags- und Rechnungsverwaltung</li>
+                    <li>Kommunikation über soziale Netzwerke</li>
+                  </ul>
                 </section>
 
-                <section id="dienste">
-                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">Eingesetzte Dienste & KI-Infrastruktur</h2>
-                  <div className="bg-cyan-500/10 border-l-4 border-cyan-500 p-6 rounded-r-2xl my-8">
-                    <p className="text-cyan-400 font-bold mb-2">Hinweis zur KI-Nutzung:</p>
-                    <p className="text-slate-300">Wir verwenden soweit möglich API-basierte Dienste. Nach den jeweiligen Anbieterbedingungen werden über diese Schnittstellen übermittelte Kundendaten <strong>nicht</strong> für das Training öffentlicher Modelle verwendet.</p>
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">3. Allgemeine Hinweise zur Datenverarbeitung</h2>
+                  <p>Personenbezogene Daten sind Informationen, die sich auf eine identifizierte oder identifizierbare Person beziehen.</p>
+                  <p className="mt-4">Hierzu gehören beispielsweise:</p>
+                  <ul className="list-disc pl-6 space-y-2 mt-4">
+                    <li>Name, Adresse, E-Mail-Adresse, Telefonnummer</li>
+                    <li>IP-Adresse</li>
+                    <li>Vertrags- und Kommunikationsdaten</li>
+                  </ul>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">4. Rechtsgrundlagen der Verarbeitung</h2>
+                  <ul className="list-disc pl-6 space-y-2 mt-4">
+                    <li><strong>Art. 6 Abs. 1 lit. a DSGVO</strong> – Einwilligung</li>
+                    <li><strong>Art. 6 Abs. 1 lit. b DSGVO</strong> – Vertragserfüllung und vorvertragliche Maßnahmen</li>
+                    <li><strong>Art. 6 Abs. 1 lit. c DSGVO</strong> – Erfüllung gesetzlicher Verpflichtungen</li>
+                    <li><strong>Art. 6 Abs. 1 lit. f DSGVO</strong> – Berechtigte Interessen</li>
+                  </ul>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">5. Datensicherheit</h2>
+                  <p>Wir treffen geeignete technische und organisatorische Maßnahmen, um personenbezogene Daten vor Verlust, Missbrauch und unberechtigtem Zugriff zu schützen. Unsere Website nutzt SSL-/TLS-Verschlüsselung.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">6. Hosting der Website</h2>
+                  <p>Unsere Website wird bei der <strong>IONOS SE</strong> gehostet. Der Hosting-Anbieter verarbeitet technische Daten, die für den sicheren Betrieb der Website erforderlich sind.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">7. Server-Log-Dateien</h2>
+                  <p>Beim Besuch unserer Website können automatisch folgende Daten verarbeitet werden:</p>
+                  <ul className="list-disc pl-6 space-y-2 mt-4">
+                    <li>IP-Adresse, Datum und Uhrzeit des Zugriffs</li>
+                    <li>Browsertyp und Betriebssystem</li>
+                    <li>Referrer-URL und aufgerufene Seiten</li>
+                    <li>HTTP-Statuscode</li>
+                  </ul>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">8. Kontaktaufnahme</h2>
+                  <p>Wenn Sie uns kontaktieren, verarbeiten wir die von Ihnen übermittelten Daten (Name, E-Mail, Telefon, Nachricht, Projektinfos) zur Bearbeitung Ihrer Anfrage.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">9. Terminvereinbarung über die Website</h2>
+                  <p>Bei Terminvereinbarungen über unsere Website können Daten wie Name, E-Mail-Adresse, Telefonnummer, Terminwunsch und Projektinformationen verarbeitet werden.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">10. Kunden- und Projektdaten</h2>
+                  <p>Im Rahmen unserer Dienstleistungen verarbeiten wir Kunden- und Projektdaten zur Erstellung von Websites, digitalen Lösungen und Automatisierungen.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">11. Firebase und Google Cloud Firestore</h2>
+                  <p>Zur Speicherung und Verwaltung geschäftlicher Daten nutzen wir Google Firebase, insbesondere Google Cloud Firestore. Dabei können Kontaktanfragen, Termine, Kundendaten, Projektinfos sowie Vertrags- und Rechnungsdaten gespeichert werden.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">12. Rechnungen und Verträge</h2>
+                  <p>Vertrags- und Rechnungsdaten werden zur Durchführung unserer Geschäftsbeziehungen und zur Erfüllung gesetzlicher Pflichten verarbeitet. Die Zahlung erfolgt per Banküberweisung.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">13. Lokale Speicherung im Browser</h2>
+                  <p>Unsere Anwendung kann technische Daten vorübergehend lokal im Browser speichern (LocalStorage), um die Funktionalität und Stabilität zu gewährleisten.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">14. GitHub</h2>
+                  <p>Für Entwicklung, Versionsverwaltung und Wartung unserer Software- und Webprojekte nutzen wir GitHub.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">15. Google Gemini</h2>
+                  <p>Google Gemini wird ausschließlich für interne Prozesse wie die Bearbeitung oder Übersetzung eigener Inhalte genutzt. Es werden keine Kundendaten, Termindaten oder Rechnungsdaten an KI-Systeme übertragen.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">16. Social-Media-Präsenzen</h2>
+                  <p>Viktor Labs nutzt Social-Media-Plattformen wie Instagram und LinkedIn. Bei der Nutzung können personenbezogene Daten durch die jeweiligen Betreiber verarbeitet werden.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">17. Datenübermittlung in Drittländer</h2>
+                  <p>Eine Übermittlung personenbezogener Daten außerhalb der EU erfolgt nur unter Einhaltung der gesetzlichen Anforderungen der DSGVO.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">18. Speicherdauer</h2>
+                  <p>Personenbezogene Daten werden nur so lange gespeichert, wie dies für den jeweiligen Zweck erforderlich ist oder gesetzliche Aufbewahrungspflichten bestehen.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">19. Rechte betroffener Personen</h2>
+                  <ul className="list-disc pl-6 space-y-2 mt-4">
+                    <li>Auskunft, Berichtigung, Löschung</li>
+                    <li>Einschränkung der Verarbeitung</li>
+                    <li>Datenübertragbarkeit, Widerspruch</li>
+                  </ul>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">20. Widerruf von Einwilligungen</h2>
+                  <p>Erteilte Einwilligungen können jederzeit mit Wirkung für die Zukunft widerrufen werden.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">21. Beschwerderecht</h2>
+                  <p>Sie haben das Recht, sich bei einer Datenschutzaufsichtsbehörde zu beschweren.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">22. Keine automatisierte Entscheidungsfindung</h2>
+                  <p>Eine automatisierte Entscheidungsfindung gemäß Art. 22 DSGVO findet nicht statt.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">23. Änderungen dieser Datenschutzerklärung</h2>
+                  <p>Wir behalten uns vor, diese Datenschutzerklärung anzupassen, wenn sich technische oder rechtliche Änderungen ergeben.</p>
+                </section>
+
+                <section>
+                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">24. Kontakt Datenschutz</h2>
+                  <div className="bg-white/5 border border-white/10 p-6 rounded-2xl mt-6">
+                    <p className="font-bold text-white mb-1">Viktor Labs</p>
+                    <p><span className="text-amber-500">[Vor- und Nachname]</span></p>
+                    <p><span className="text-amber-500">[Adresse]</span></p>
+                    <p><span className="text-amber-500">[E-Mail-Adresse]</span></p>
                   </div>
-                  
-                  <h3 className="text-xl font-display font-bold text-slate-200 mt-8 mb-4">1. KI-Sprachmodelle</h3>
-                  <p>Wir setzen Modelle von <strong>OpenAI, Anthropic (Claude) und Google (Gemini)</strong> ein. Sensible Daten wie Passwörter werden aktiv von der KI-Verarbeitung ausgeschlossen.</p>
-
-                  <h3 className="text-xl font-display font-bold text-slate-200 mt-8 mb-4">2. Backend (Supabase & Make)</h3>
-                  <p>Wir nutzen <strong>Supabase</strong> zur Datenverwaltung im Kunden-Dashboard (E-Mail und Passwort-Hashes) sowie <strong>Make</strong> zur Workflow-Automatisierung.</p>
                 </section>
 
-                <section id="projekte">
-                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">Dienstleistungen und Projektabwicklung</h2>
-                  <h3 className="text-xl font-display font-bold text-slate-200 mt-8 mb-4">1. Kontaktaufnahme & WhatsApp</h3>
-                  <p>Bei einer Kontaktaufnahme über WhatsApp werden personenbezogene Daten übermittelt. Dabei erfolgt eine Verarbeitung durch WhatsApp Ireland Limited (Meta). Für vertrauliche Informationen empfehlen wir alternative Kontaktwege.</p>
-
-                  <h3 className="text-xl font-display font-bold text-slate-200 mt-8 mb-4">2. Kunden-Dashboard</h3>
-                  <p>Im geschützten Kundenbereich verarbeiten wir Login-Daten, technisch notwendige Session-Cookies sowie Ihre Projektdokumente. Der Zugriff ist auf autorisierte Nutzer beschränkt.</p>
-
-                  <h3 className="text-xl font-display font-bold text-slate-200 mt-8 mb-4">3. KI-Verarbeitung im Projektalltag</h3>
-                  <p>KI unterstützt uns bei der Strukturierung von Projektinfos. Alle wesentlichen KI-generierten Ergebnisse werden durch uns menschlich geprüft (Human-in-the-loop).</p>
-                </section>
-
-                <section id="socialmedia">
-                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">Social Media & Externe Präsenzen</h2>
-                  <p>Wir unterhalten Profile auf LinkedIn und Instagram. Für bestimmte Verarbeitungsvorgänge können gemeinsame Verantwortlichkeiten mit den Plattformbetreibern bestehen. Daten, die Sie uns per Privatnachricht senden, verarbeiten wir zur Kommunikation mit Ihnen.</p>
-                </section>
-
-                <section id="rechte">
-                  <h2 className="text-3xl font-serif text-white italic mb-6 border-b border-white/10 pb-4">Ihre Rechte und Sicherheit</h2>
-                  <p>Sie haben das Recht auf <strong>Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit</strong> sowie das Recht auf <strong>Widerspruch</strong> (Art. 21 DSGVO).</p>
-                  
-                  <h3 className="text-xl font-display font-bold text-slate-200 mt-8 mb-4">1. Keine automatisierte Entscheidungsfindung</h3>
-                  <p>Es findet keine automatisierte Entscheidungsfindung einschließlich Profiling gemäß Art. 22 DSGVO statt.</p>
-
-                  <h3 className="text-xl font-display font-bold text-slate-200 mt-8 mb-4">2. Aufbewahrungsfristen</h3>
-                  <p>Wir speichern Projektdaten für die Dauer der Zusammenarbeit. Gesetzliche Aufbewahrungspflichten (z. B. 10 Jahre gemäß AO/HGB für Rechnungen) bleiben unberührt.</p>
-
-                  <p className="mt-12 text-slate-300">Bei Fragen zum Datenschutz wenden Sie sich bitte an: <a href="mailto:contact@viktorlabs.dev" className="text-cyan-500 font-bold">contact@viktorlabs.dev</a></p>
-                </section>
-                
                 <div className="text-center text-slate-500 italic pt-20">
-                  Stand: 30. Juli 2026
+                  Stand: 01.08.2026
                 </div>
               </div>
             )}
