@@ -27,6 +27,12 @@ export default function AdminLayout() {
         return;
       }
 
+      // Allow anonymous users (demo account) if they have the session flag
+      if (user.isAnonymous && sessionStorage.getItem('_viktor_authenticated') === 'true') {
+        setIsChecking(false);
+        return;
+      }
+
       // Check if user is an admin in Firestore
       const adminDoc = await getDoc(doc(db, 'admins', user.uid));
       
@@ -71,7 +77,7 @@ export default function AdminLayout() {
     { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/admin/leads', icon: Users, label: 'Leads' },
     { path: '/admin/invoices', icon: FileText, label: 'Rechnungen' },
-    { path: '/admin/contracts', icon: FileText, label: 'Verträge' },
+    { path: '/admin/contracts', icon: FileText, label: 'Wartungsverträge & Verwaltung' },
     { path: '/admin/services', icon: Package, label: 'Leistungen' },
     { path: '/admin/cms', icon: Layers, label: 'CMS' },
     { path: '/admin/settings', icon: Settings, label: 'Einstellungen' },

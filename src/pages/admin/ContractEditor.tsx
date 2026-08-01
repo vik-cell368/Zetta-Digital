@@ -289,7 +289,7 @@ export default function ContractEditor() {
           </Button>
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-slate-50">
-              {isEditing ? 'Vertrag bearbeiten' : 'Neuer Vertrag'}
+              {isEditing ? 'Wartungsvertrag bearbeiten' : 'Neuer Wartungsvertrag'}
             </h2>
             <p className="text-slate-400 font-mono text-sm">{contract.contract_number}</p>
           </div>

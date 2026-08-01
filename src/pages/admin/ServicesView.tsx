@@ -10,6 +10,8 @@ import { formatCurrency, getTranslatedText } from '@/lib/utils';
 import { Plus, Edit2, Trash2, CheckCircle2, XCircle, Languages, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { CONFIG_DATA } from '@/data/configurator';
+import { RefreshCw } from 'lucide-react';
 
 type ServiceFormData = {
   [key: string]: any;
@@ -56,6 +58,7 @@ export default function ServicesView() {
   const { register, handleSubmit, reset, setValue, getValues } = useForm<ServiceFormData>();
 
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const fetchServices = async () => {
     setIsLoading(true);
@@ -94,26 +97,50 @@ export default function ServicesView() {
     }
   };
 
-  const seedFromDefaults = () => {
-    // Hardcoded defaults to avoid dependency on complex translation structures during seed
-    const defaultServices = [
-      { id: '1', title: 'Web Development', desc: 'Custom Next.js applications.' },
-      { id: '2', title: 'AI Automation', desc: 'Intelligent workflow automation.' },
-      { id: '3', title: 'KI Chatbots', desc: 'Smart 24/7 customer support.' }
-    ];
+  const seedFromDefaults = async () => {
+    setIsSyncing(true);
+    setStatusMessage("Synchronisiere mit Kalkulator...");
+    
+    try {
+      // 1. Collect all options from CONFIG_DATA
+      const allOptions: any[] = [];
+      CONFIG_DATA.forEach(category => {
+        category.options.forEach(option => {
+          allOptions.push({
+            name: JSON.stringify({ de: option.name, en: option.name }),
+            description: JSON.stringify({ de: option.desc || '', en: option.desc || '' }),
+            price: option.price,
+            duration_minutes: 0,
+            is_active: true,
+            is_monthly: option.monthly || false,
+            is_calculator_option: true,
+            category: category.id,
+            created_at: new Date().toISOString()
+          });
+        });
+      });
 
-    const seeded = defaultServices.map((s: any) => ({
-      id: crypto.randomUUID(),
-      name: JSON.stringify({ de: s.title, en: s.title }),
-      description: JSON.stringify({ de: s.desc, en: s.desc }),
-      price: 0,
-      duration_minutes: 60,
-      is_active: true,
-      created_at: new Date().toISOString()
-    })) as Service[];
-    setServices(seeded);
-    saveToLocal(seeded);
-    setStatusMessage("Standard-Leistungen geladen");
+      // 2. Clear existing services (optional but user asked for "alte listungen weg")
+      // In a real scenario we might want to ask confirmation, but user requested it.
+      const querySnapshot = await getDocs(collection(db, 'services'));
+      for (const d of querySnapshot.docs) {
+        await deleteDoc(doc(db, 'services', d.id));
+      }
+
+      // 3. Add new ones
+      for (const s of allOptions) {
+        await addDoc(collection(db, 'services'), s);
+      }
+
+      setStatusMessage("Erfolgreich mit Kalkulator synchronisiert!");
+      await fetchServices();
+    } catch (err) {
+      console.error("Sync failed", err);
+      setStatusMessage("Fehler bei der Synchronisierung");
+    } finally {
+      setIsSyncing(false);
+      setTimeout(() => setStatusMessage(null), 3000);
+    }
   };
 
   const saveToLocal = (newServices: Service[]) => {
@@ -317,15 +344,25 @@ export default function ServicesView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-50">Leistungen</h2>
-          <p className="text-slate-400">Verwalten Sie Ihre Angebote und Preise.</p>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-50">Leistungen & Verwaltung</h2>
+          <p className="text-slate-400">Verwalten Sie Ihre Angebote, Preise und Verwaltungseinstellungen aus dem Kalkulator.</p>
         </div>
         <div className="flex items-center gap-4">
           {statusMessage && (
             <span className="text-xs font-mono text-cyan-400 animate-pulse">{statusMessage}</span>
           )}
           {!isAdding && !isEditing && (
-            <Button onClick={() => { 
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={seedFromDefaults} 
+                disabled={isSyncing}
+                className="border-cyan-500/30 text-cyan-500 hover:bg-cyan-500/10"
+              >
+                {isSyncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                Kalkulator Sync
+              </Button>
+              <Button onClick={() => { 
               setIsAdding(true); 
               reset({ 
                 is_active: true,
@@ -344,6 +381,7 @@ export default function ServicesView() {
             }}>
               <Plus className="h-4 w-4 mr-2" /> Leistung hinzufügen
             </Button>
+          </div>
           )}
         </div>
       </div>

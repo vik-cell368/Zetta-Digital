@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy, limit, addDoc, getDoc, doc } from 'firebase/firestore';
 import { Service, BusinessSettings, BusinessHours, BlockedDate } from '@/lib/types';
@@ -40,7 +40,22 @@ import { cn, formatCurrency, getTranslatedText } from '@/lib/utils';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
-import { useLocation } from 'react-router-dom';
+import { CONFIG_DATA, Option, Category } from '@/data/configurator';
+
+const getCategoryIcon = (iconName: string) => {
+  switch (iconName) {
+    case 'Monitor': return <Monitor className="w-5 h-5" />;
+    case 'Layout': return <Layout className="w-5 h-5" />;
+    case 'Palette': return <Palette className="w-5 h-5" />;
+    case 'Zap': return <Zap className="w-5 h-5" />;
+    case 'Settings': return <Settings className="w-5 h-5" />;
+    case 'BarChart3': return <BarChart3 className="w-5 h-5" />;
+    case 'Bot': return <Bot className="w-5 h-5" />;
+    case 'Globe': return <Globe className="w-5 h-5" />;
+    case 'Server': return <Server className="w-5 h-5" />;
+    default: return <Settings className="w-5 h-5" />;
+  }
+};
 
 type Step = 'service' | 'date' | 'time' | 'details' | 'success';
 
@@ -67,140 +82,6 @@ const pageTransition = {
   duration: 0.5
 };
 
-interface Option {
-  id: string;
-  name: string;
-  price: number;
-  monthly?: boolean;
-  desc?: string;
-  category: string;
-  required?: boolean;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  options: Option[];
-  multiple?: boolean;
-}
-
-const CONFIG_DATA: Category[] = [
-  {
-    id: 'base',
-    name: '1. Website (Pflicht)',
-    icon: <Monitor className="w-5 h-5" />,
-    options: [
-      { 
-        id: 'p_starter', 
-        name: 'Standard Website', 
-        price: 550, 
-        category: 'base', 
-        desc: 'Inklusive 4 Seiten: Startseite, Über uns, Kontakt, Impressum & Datenschutz' 
-      },
-    ],
-  },
-  {
-    id: 'pages',
-    name: '2. Seitenanzahl',
-    icon: <Layout className="w-5 h-5" />,
-    options: [], 
-  },
-  {
-    id: 'design',
-    name: '3. Design & Branding',
-    icon: <Palette className="w-5 h-5" />,
-    multiple: true,
-    options: [
-      { id: 'd_branding', name: 'Individuelles Branding', price: 150, category: 'design' },
-      { id: 'd_ui', name: 'Premium UI Design', price: 250, category: 'design' },
-      { id: 'd_dark', name: 'Dark Mode', price: 80, category: 'design' },
-      { id: 'd_logo', name: 'Logo Design', price: 120, category: 'design' },
-    ],
-  },
-  {
-    id: 'animations',
-    name: '4. Animationen',
-    icon: <Zap className="w-5 h-5" />,
-    multiple: true,
-    options: [
-      { id: 'a_2d', name: '2D Animation', price: 80, category: 'animations' },
-      { id: 'a_2d_custom', name: 'Individuelle 2D Animation', price: 200, category: 'animations' },
-      { id: 'a_3d', name: '3D Animation', price: 180, category: 'animations' },
-      { id: 'a_3d_custom', name: 'Individuelle 3D Animation', price: 299, category: 'animations' },
-      { id: 'a_sound', name: 'Soundeffekte', price: 79, category: 'animations' },
-    ],
-  },
-  {
-    id: 'functions',
-    name: '5. Funktionen',
-    icon: <Settings className="w-5 h-5" />,
-    multiple: true,
-    options: [
-      { id: 'f_form', name: 'Kontaktformular', price: 0, category: 'functions', desc: 'Inklusive' },
-      { id: 'f_maps', name: 'Google Maps', price: 25, category: 'functions' },
-      { id: 'f_wa', name: 'WhatsApp Button', price: 30, category: 'functions' },
-      { id: 'f_booking', name: 'Terminbuchung', price: 129, category: 'functions' },
-      { id: 'f_news', name: 'Newsletter', price: 120, category: 'functions' },
-      { id: 'f_blog', name: 'Blog', price: 150, category: 'functions' },
-      { id: 'f_lang', name: 'Mehrsprachigkeit', price: 200, category: 'functions' },
-      { id: 'f_cookie', name: 'Cookie Banner', price: 0, category: 'functions', desc: 'Inklusive' },
-    ],
-  },
-  {
-    id: 'marketing',
-    name: '6. Marketing',
-    icon: <BarChart3 className="w-5 h-5" />,
-    multiple: true,
-    options: [
-      { id: 'm_rev', name: 'Google Bewertungen', price: 99, category: 'marketing' },
-      { id: 'm_social', name: 'Social Media Verbindung', price: 70, category: 'marketing', monthly: true, desc: '70€ / Monat' },
-      { id: 'm_insta', name: 'Instagram Feed', price: 70, category: 'marketing' },
-      { id: 'm_fb', name: 'Facebook Feed', price: 70, category: 'marketing' },
-      { id: 'm_seo_base', name: 'SEO Basis', price: 150, category: 'marketing' },
-      { id: 'm_seo_premium', name: 'Premium SEO', price: 390, category: 'marketing' },
-      { id: 'm_analytics', name: 'Google Analytics', price: 70, category: 'marketing' },
-    ],
-  },
-  {
-    id: 'ai',
-    name: '7. KI & Automation',
-    icon: <Bot className="w-5 h-5" />,
-    multiple: true,
-    options: [
-      { id: 'ai_bot', name: 'Chatbot Einrichtung', price: 299, category: 'ai' },
-      { id: 'ai_data', name: 'Chatbot Datenpflege', price: 15, category: 'ai', desc: 'je Datensatz' },
-      { id: 'ai_form', name: 'Kontaktformular-KI', price: 25, category: 'ai', monthly: true, desc: '25€ / Monat' },
-      { id: 'ai_email', name: 'Email Automation', price: 49, category: 'ai', monthly: true, desc: '49€ / Monat' },
-      { id: 'ai_sheets', name: 'Google Sheets Automation', price: 49, category: 'ai', monthly: true, desc: '49€ / Monat' },
-      { id: 'ai_sm_auto', name: 'Social Media Automation', price: 49, category: 'ai', monthly: true, desc: '49€ / Monat' },
-      { id: 'ai_crm', name: 'CRM Automation', price: 79, category: 'ai', monthly: true, desc: '79€ / Monat' },
-      { id: 'ai_wa_auto', name: 'WhatsApp Automation', price: 79, category: 'ai', monthly: true, desc: '79€ / Monat' },
-    ],
-  },
-  {
-    id: 'maintenance',
-    name: '8. Verwaltung',
-    icon: <Globe className="w-5 h-5" />,
-    options: [
-      { id: 'v_none', name: 'Keine', price: 0, category: 'maintenance' },
-      { id: 'v_standard', name: 'Standard Verwaltung', price: 59, category: 'maintenance', monthly: true, desc: '59€ / Monat' },
-      { id: 'v_komplett', name: 'Komplett Verwaltung', price: 99, category: 'maintenance', monthly: true, desc: '99€ / Monat' },
-    ],
-  },
-  {
-    id: 'hosting',
-    name: '9. Domain & Hosting',
-    icon: <Server className="w-5 h-5" />,
-    multiple: true,
-    options: [
-      { id: 'h_vercel', name: 'Vercel Subdomain', price: 0, category: 'hosting', desc: 'Kostenlos' },
-      { id: 'h_de', name: '.de Domain', price: 0, category: 'hosting', desc: 'nach Anbieter' },
-      { id: 'h_com', name: '.com Domain', price: 0, category: 'hosting', desc: 'nach Anbieter' },
-      { id: 'h_setup', name: 'Hosting Einrichtung', price: 0, category: 'hosting', desc: 'Inklusive' },
-    ],
-  },
-];
 
 interface TimeSlot {
   time: string;
@@ -344,7 +225,7 @@ export default function Booking() {
         category = {
           id: categoryId,
           name: categoryId.charAt(0).toUpperCase() + categoryId.slice(1),
-          icon: <Settings className="w-5 h-5" />,
+          iconName: 'Settings',
           options: [],
           multiple: true
         };
@@ -694,7 +575,7 @@ export default function Booking() {
                       <section key={category.id} className="space-y-6">
                         <div className="flex items-center gap-4 mb-8">
                           <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.1)]">
-                            {category.icon}
+                            {getCategoryIcon(category.iconName)}
                           </div>
                           <h2 className="text-2xl font-display font-bold text-slate-50">{category.name}</h2>
                         </div>
@@ -1249,7 +1130,7 @@ export default function Booking() {
                 </div>
                 <h2 className="text-5xl md:text-6xl font-display text-slate-50 mb-6">Erfolgreich gebucht!</h2>
                 <p className="text-slate-400 max-w-lg mx-auto mb-16 text-xl font-light leading-relaxed">
-                  Ihre Anfrage wurde übermittelt. Wir haben Ihnen eine Bestätigungsmail mit allen Details und dem <strong>Zoom-Link</strong> für das Gespräch gesendet.
+                  Ihre Anfrage wurde übermittelt. Wir haben Ihnen eine Bestätigungsmail mit allen Details gesendet. Unser Team wird sich in Kürze bei Ihnen melden.
                 </p>
                 <Button onClick={() => navigate('/')} className="bg-cyan-500 text-dark-950 hover:bg-cyan-400 px-12 h-16 rounded-full font-semibold uppercase tracking-widest text-xs transition-transform active:scale-95">
                   Zurück zur Startseite

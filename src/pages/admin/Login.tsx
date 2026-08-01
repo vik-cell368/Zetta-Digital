@@ -23,9 +23,17 @@ export default function Login() {
     const isDemo = email === 'admin@viktorlabs.ai' && password === 'viktor-admin-2026';
 
     if (isDemo) {
-      sessionStorage.setItem('_viktor_authenticated', 'true');
-      navigate('/admin/dashboard');
-      setIsLoading(false);
+      try {
+        const { signInAnonymously } = await import('firebase/auth');
+        await signInAnonymously(auth);
+        sessionStorage.setItem('_viktor_authenticated', 'true');
+        navigate('/admin/dashboard');
+      } catch (err) {
+        console.error("Demo login failed", err);
+        setError("Demo-Zugang momentan nicht verfügbar.");
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
