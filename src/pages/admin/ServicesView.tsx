@@ -54,9 +54,8 @@ export default function ServicesView() {
         setServices(data);
         localStorage.setItem('viktor_labs_services', JSON.stringify(data));
       } else {
-        // If Firebase is empty, check localStorage
         const localData = localStorage.getItem('viktor_labs_services');
-        if (localData) {
+        if (localData && JSON.parse(localData).length > 0) {
           setServices(JSON.parse(localData));
         } else {
           seedFromDefaults();
@@ -64,12 +63,16 @@ export default function ServicesView() {
       }
     } catch (err) {
       console.warn("Firebase fetch failed, falling back to localStorage", err);
-      handleFirestoreError(err, OperationType.LIST, 'services');
+      try {
+        handleFirestoreError(err, OperationType.LIST, 'services');
+      } catch (e) {
+        console.error("Firestore fetch error details", e);
+      }
+      
       const localData = localStorage.getItem('viktor_labs_services');
-      if (localData) {
+      if (localData && JSON.parse(localData).length > 0) {
         setServices(JSON.parse(localData));
       } else {
-        // Automatically seed defaults if completely empty
         seedFromDefaults();
       }
     } finally {
@@ -94,6 +97,7 @@ export default function ServicesView() {
       is_active: true,
       created_at: new Date().toISOString()
     })) as Service[];
+    setServices(seeded);
     saveToLocal(seeded);
     setStatusMessage("Standard-Leistungen geladen");
   };
@@ -134,52 +138,50 @@ export default function ServicesView() {
       is_active: data.is_active ?? true,
     };
 
+    setIsLoading(true);
     try {
-      let updatedServices = [...services];
       if (isEditing) {
         const serviceRef = doc(db, 'services', isEditing);
         await updateDoc(serviceRef, payload as any);
-        updatedServices = updatedServices.map(s => s.id === isEditing ? { ...s, ...payload } : s);
-        setIsEditing(null);
         setStatusMessage("Service updated successfully");
       } else {
         const newService = {
           ...payload,
           created_at: new Date().toISOString()
         };
-        const docRef = await addDoc(collection(db, 'services'), newService);
-        
-        updatedServices = [{ id: docRef.id, ...newService } as Service, ...updatedServices];
-        setIsAdding(false);
+        await addDoc(collection(db, 'services'), newService);
         setStatusMessage("Service added successfully");
       }
-      saveToLocal(updatedServices);
-    } catch (err: any) {
-      console.warn("Firebase operation failed:", err);
-      handleFirestoreError(err, OperationType.UPDATE, 'services');
-      const errorMessage = err?.message || "Unknown error";
       
-      // Fallback to local storage if it's truly a connection/database error
-      let updatedServices = [...services];
-      if (isEditing) {
-        updatedServices = updatedServices.map(s => s.id === isEditing ? { ...s, ...payload } : s);
-        setIsEditing(null);
-        setStatusMessage(`Updated locally (Error: ${errorMessage})`);
-      } else {
-        const newService = {
-          ...payload,
-          id: crypto.randomUUID(),
-          created_at: new Date().toISOString()
-        } as Service;
-        updatedServices = [newService, ...updatedServices];
-        setIsAdding(false);
-        setStatusMessage(`Added locally (Error: ${errorMessage})`);
+      // Clean states and refresh from source of truth
+      setIsEditing(null);
+      setIsAdding(false);
+      reset();
+      await fetchServices();
+    } catch (err: any) {
+      console.error("Firebase operation failed:", err);
+      try {
+        handleFirestoreError(err, OperationType.UPDATE, 'services');
+      } catch (e) {
+        console.error("Logged firestore error", e);
       }
-      saveToLocal(updatedServices);
+      setStatusMessage(`Error: ${err.message || 'Operation failed'}`);
+      
+      // Still update local state so user doesn't lose work immediately, 
+      // but keep the form open or show error
+      const localServices = [...services];
+      const fallbackId = isEditing || crypto.randomUUID();
+      const localPayload = { id: fallbackId, ...payload, created_at: new Date().toISOString() } as Service;
+      
+      const updatedLocal = isEditing 
+        ? localServices.map(s => s.id === isEditing ? localPayload : s)
+        : [localPayload, ...localServices];
+      
+      saveToLocal(updatedLocal);
+    } finally {
+      setIsLoading(false);
+      setTimeout(() => setStatusMessage(null), 3000);
     }
-    
-    setTimeout(() => setStatusMessage(null), 3000);
-    reset();
   };
 
   const handleEdit = (service: Service) => {
@@ -215,15 +217,32 @@ export default function ServicesView() {
   };
 
   const toggleActive = async (service: Service) => {
+    const newStatus = !service.is_active;
+    
+    // Optimistic update
+    setServices(prev => prev.map(s => s.id === service.id ? { ...s, is_active: newStatus } : s));
+    
     try {
-      await updateDoc(doc(db, 'services', service.id), { is_active: !service.is_active });
-      fetchServices();
+      await updateDoc(doc(db, 'services', service.id), { is_active: newStatus });
+      setStatusMessage(newStatus ? "Leistung aktiviert" : "Leistung deaktiviert");
+      
+      // Update local storage after successful DB update
+      const updatedSnapshot = await getDocs(query(collection(db, 'services'), orderBy('created_at', 'desc')));
+      const latestData = updatedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
+      saveToLocal(latestData);
     } catch (err) {
-      console.warn("Firebase toggle failed, updating localStorage", err);
-      handleFirestoreError(err, OperationType.UPDATE, `services/${service.id}`);
-      const updatedServices = services.map(s => s.id === service.id ? { ...s, is_active: !s.is_active } : s);
-      saveToLocal(updatedServices);
+      console.warn("Firebase toggle failed, reverting UI", err);
+      // Revert optimistic update
+      setServices(prev => prev.map(s => s.id === service.id ? { ...s, is_active: service.is_active } : s));
+      try {
+        handleFirestoreError(err, OperationType.UPDATE, `services/${service.id}`);
+      } catch (e) {
+        // Log the error but don't crash
+        console.error("Firestore error details logged", e);
+      }
+      setStatusMessage("Fehler: Konnte Status nicht in DB speichern. Bitte Prüfe deine Internetverbindung.");
     }
+    setTimeout(() => setStatusMessage(null), 3000);
   };
 
   const handleAutoTranslate = async () => {

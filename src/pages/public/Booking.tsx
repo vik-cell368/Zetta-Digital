@@ -96,84 +96,44 @@ export default function Booking() {
 
   useEffect(() => {
     async function fetchInitialData() {
+      setIsLoading(true);
       try {
-        const [
-          sSnapshot,
-          bSnapshot,
-          hSnapshot,
-          dSnapshot
-        ] = await Promise.all([
-          getDocs(query(collection(db, 'services'), where('is_active', '==', true), orderBy('price', 'desc'))),
-          getDocs(query(collection(db, 'business_settings'), limit(1))),
-          getDocs(query(collection(db, 'business_hours'), orderBy('weekday'))),
-          getDocs(collection(db, 'blocked_dates'))
-        ]);
-        
-        const bSettings = bSnapshot.docs[0]?.data() as BusinessSettings;
-        if (bSettings) {
-          const s = {
-            ...bSettings,
-            booking_phone_required: bSettings.booking_phone_required ?? true,
-            booking_phone_visible: bSettings.booking_phone_visible ?? true,
-            booking_email_required: bSettings.booking_email_required ?? true,
-            booking_email_visible: bSettings.booking_email_visible ?? true
-          };
-          setSettings(s);
-          localStorage.setItem('viktor_labs_business_settings', JSON.stringify(s));
-        } else {
-          const local = localStorage.getItem('viktor_labs_business_settings');
-          if (local) setSettings(JSON.parse(local));
+        // 1. Fetch Services (Publicly accessible)
+        let activeServices: Service[] = [];
+        try {
+          const sSnapshot = await getDocs(query(collection(db, 'services'), where('is_active', '==', true)));
+          activeServices = sSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
+        } catch (err) {
+          console.warn("Firestore services fetch failed", err);
         }
 
-        const bHours = hSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BusinessHours));
-        if (bHours.length > 0) {
-          setBusinessHours(bHours);
-          localStorage.setItem('viktor_labs_business_hours', JSON.stringify(bHours));
-        } else {
-          const local = localStorage.getItem('viktor_labs_business_hours');
-          if (local) setBusinessHours(JSON.parse(local));
-          else {
-            const defaults = Array.from({ length: 7 }, (_, i) => ({
-              weekday: i,
-              is_open: i > 0 && i < 6,
-              start_time: '09:00:00',
-              end_time: '17:00:00',
-              id: `temp-${i}`
-            }));
-            setBusinessHours(defaults as BusinessHours[]);
-          }
-        }
-
-        const bBlocked = dSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlockedDate));
-        if (bBlocked.length > 0) {
-          setBlockedDates(bBlocked);
-          localStorage.setItem('viktor_labs_blocked_dates', JSON.stringify(bBlocked));
-        } else {
-          const local = localStorage.getItem('viktor_labs_blocked_dates');
-          if (local) setBlockedDates(JSON.parse(local));
-        }
-
-        let activeServices = sSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
+        // Fallback to local storage if Firestore is empty
         if (activeServices.length === 0) {
           const local = localStorage.getItem('viktor_labs_services');
           if (local) {
             try {
-              activeServices = JSON.parse(local).filter((s: Service) => s.is_active);
+              const allLocal = JSON.parse(local);
+              activeServices = allLocal.filter((s: Service) => s.is_active);
             } catch (err) {
               console.warn("Failed parsing local services", err);
             }
           }
         }
 
-        // Always ensure "Kostenloses Erstgespräch" is present as the primary option
-        const hasErstgespraech = activeServices.some(s => {
+        // Sort in memory to avoid index requirements
+        activeServices.sort((a, b) => (b.price || 0) - (a.price || 0));
+
+        // Ensure "Kostenloses Erstgespräch" / "Beratung" is always available
+        const hasConsultation = activeServices.some(s => {
           const nameStr = getTranslatedText(s.name, 'de').toLowerCase();
-          return nameStr.includes('erstgespräch') || nameStr.includes('beratung');
+          const nameEn = getTranslatedText(s.name, 'en').toLowerCase();
+          return nameStr.includes('erstgespräch') || nameStr.includes('beratung') || 
+                 nameEn.includes('strategy') || nameEn.includes('consultation');
         });
 
-        if (!hasErstgespraech) {
-          const defaultErstgespraech: Service = {
-            id: '1',
+        if (activeServices.length === 0 || !hasConsultation) {
+          const defaultConsultation: Service = {
+            id: 'consultation-default',
             name: JSON.stringify({ en: 'Free Strategy Session', de: 'Kostenloses Erstgespräch' }),
             description: JSON.stringify({ en: 'Executive discussion to outline your technological trajectory and digital presence.', de: 'Kostenlose Erstberatung für moderne Unternehmenswebsites, Landingpages und digitale Lösungen.' }),
             price: 0,
@@ -185,27 +145,98 @@ export default function Booking() {
             faqs: '',
             created_at: new Date().toISOString()
           };
-          activeServices = [defaultErstgespraech, ...activeServices];
+          if (!hasConsultation) {
+            activeServices = [defaultConsultation, ...activeServices];
+          }
         }
-
         setServices(activeServices);
 
-        // Pre-select service from URL if provided
+        // Pre-select service from URL
         if (initialServiceId) {
           const found = activeServices.find(s => s.id === initialServiceId);
           if (found) {
             setSelectedService(found);
             setStep('date');
+          } else if (initialServiceId === 'consultation-default' || initialServiceId === '1') {
+            const fallback = activeServices.find(s => s.id === 'consultation-default' || s.id === '1');
+            if (fallback) {
+              setSelectedService(fallback);
+              setStep('date');
+            }
           }
         }
-      } catch (e) {
-        console.warn("Booking data fetch failed", e);
+
+        // 2. Fetch Settings
+        try {
+          const bSnapshot = await getDocs(query(collection(db, 'business_settings'), limit(1)));
+          if (!bSnapshot.empty) {
+            const bSettings = bSnapshot.docs[0].data() as BusinessSettings;
+            const s = {
+              ...bSettings,
+              booking_phone_required: bSettings.booking_phone_required ?? true,
+              booking_phone_visible: bSettings.booking_phone_visible ?? true,
+              booking_email_required: bSettings.booking_email_required ?? true,
+              booking_email_visible: bSettings.booking_email_visible ?? true
+            };
+            setSettings(s);
+            localStorage.setItem('viktor_labs_business_settings', JSON.stringify(s));
+          } else {
+            const local = localStorage.getItem('viktor_labs_business_settings');
+            if (local) setSettings(JSON.parse(local));
+          }
+        } catch (err) {
+          console.warn("Settings fetch failed", err);
+        }
+
+        // 3. Fetch Hours
+        try {
+          const hSnapshot = await getDocs(query(collection(db, 'business_hours'), orderBy('weekday')));
+          if (!hSnapshot.empty) {
+            const bHours = hSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BusinessHours));
+            setBusinessHours(bHours);
+            localStorage.setItem('viktor_labs_business_hours', JSON.stringify(bHours));
+          } else {
+            const local = localStorage.getItem('viktor_labs_business_hours');
+            if (local) setBusinessHours(JSON.parse(local));
+            else {
+              const defaults = Array.from({ length: 7 }, (_, i) => ({
+                weekday: i,
+                is_open: i > 0 && i < 6,
+                start_time: '09:00:00',
+                end_time: '17:00:00',
+                id: `temp-${i}`
+              }));
+              setBusinessHours(defaults as BusinessHours[]);
+            }
+          }
+        } catch (err) {
+          console.warn("Hours fetch failed", err);
+        }
+
+        // 4. Fetch Blocked Dates
+        try {
+          const dSnapshot = await getDocs(collection(db, 'blocked_dates'));
+          const bBlocked = dSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlockedDate));
+          if (bBlocked.length > 0) {
+            setBlockedDates(bBlocked);
+            localStorage.setItem('viktor_labs_blocked_dates', JSON.stringify(bBlocked));
+          } else {
+            const local = localStorage.getItem('viktor_labs_blocked_dates');
+            if (local) setBlockedDates(JSON.parse(local));
+          }
+        } catch (err) {
+          console.warn("Blocked dates fetch failed", err);
+        }
+
+      } catch (err) {
+        console.error("Global booking fetch error", err);
       } finally {
         setIsLoading(false);
       }
     }
+
     fetchInitialData();
-  }, []);
+  }, [initialServiceId]);
 
   const [isTimesLoading, setIsTimesLoading] = useState(false);
   
@@ -481,6 +512,14 @@ export default function Booking() {
                       </div>
                     </div>
                   ))}
+                  {services.length === 0 && (
+                    <div className="col-span-full py-20 text-center bg-white/5 rounded-3xl border border-white/10">
+                      <p className="text-slate-400 mb-6">Momentan sind keine Leistungen online verfügbar.</p>
+                      <Button onClick={() => window.location.reload()} variant="outline">
+                        Erneut versuchen
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>
