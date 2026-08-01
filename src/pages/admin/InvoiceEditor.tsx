@@ -162,6 +162,7 @@ export default function InvoiceEditor() {
               if (local) allInvoices = JSON.parse(local);
             }
           } catch (e) {
+            console.error("Number fetch failed", e);
             const local = localStorage.getItem('viktor_labs_invoices');
             if (local) allInvoices = JSON.parse(local);
           }
@@ -184,6 +185,14 @@ export default function InvoiceEditor() {
         }
       } catch (err) {
         console.error("Load failed", err);
+        // Fallback for new invoice if number failed
+        if (!isEditing) {
+          const year = new Date().getFullYear();
+          setInvoice(prev => ({ 
+            ...prev, 
+            invoice_number: prev.invoice_number === 'Laden...' ? `VL-${year}-0001` : prev.invoice_number 
+          }));
+        }
       } finally {
         setIsLoading(false);
       }

@@ -152,6 +152,7 @@ export default function ContractEditor() {
               if (local) allContracts = JSON.parse(local);
             }
           } catch (e) {
+            console.error("Number fetch failed", e);
             const local = localStorage.getItem('viktor_labs_contracts');
             if (local) allContracts = JSON.parse(local);
           }
@@ -174,6 +175,14 @@ export default function ContractEditor() {
         }
       } catch (err) {
         console.error("Load failed", err);
+        // Fallback for new contract if number failed
+        if (!isEditing) {
+          const year = new Date().getFullYear();
+          setContract(prev => ({ 
+            ...prev, 
+            contract_number: prev.contract_number === 'Laden...' ? `CT-${year}-0001` : prev.contract_number 
+          }));
+        }
       } finally {
         setIsLoading(false);
       }
