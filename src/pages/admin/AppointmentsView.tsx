@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
-import { collection, query, getDocs, orderBy, where, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy, where, doc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { Appointment, Service } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Check, X, Calendar, Clock, User, Mail, Phone, FileText } from 'lucide-react';
+import { Check, X, Calendar, Clock, User, Mail, Phone, FileText, Trash2 } from 'lucide-react';
 import { getTranslatedText } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 
@@ -17,9 +17,12 @@ export default function AppointmentsView() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'cancelled'>('all');
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const fetchAppointments = async () => {
     setIsLoading(true);
+    let allApps: Appointment[] = [];
+    
     try {
       let q = query(collection(db, 'appointments'), orderBy('start_time', 'desc'));
 
@@ -29,51 +32,78 @@ export default function AppointmentsView() {
 
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment));
-      
-      // Fetch services for each appointment (since Firestore doesn't have joins)
-      const appointmentsWithServices = await Promise.all(data.map(async (apt) => {
-        if (apt.service_id) {
-          try {
-            const serviceDoc = await getDoc(doc(db, 'services', apt.service_id));
-            if (serviceDoc.exists()) {
-              return { ...apt, services: { id: serviceDoc.id, ...serviceDoc.data() } as Service };
-            }
-          } catch (e) {}
-        }
-        return apt;
-      }));
-
-      let finalData = appointmentsWithServices;
-      // Filter out test bookings by default
-      finalData = finalData.filter(apt => {
-        const email = apt.email?.toLowerCase() || '';
-        return !email.includes('test@') && !email.includes('example.com') && email !== 'test';
-      });
-
-      setAppointments(finalData);
+      allApps = data;
     } catch (err) {
-      console.warn("Firebase fetch failed, falling back to localStorage", err);
+      console.warn("Firebase fetch failed", err);
       handleFirestoreError(err, OperationType.LIST, 'appointments');
+    }
+
+    // Merge with LocalStorage to prevent data loss if Firestore write failed but local worked
+    try {
       const localData = localStorage.getItem('viktor_labs_appointments');
       if (localData) {
-        let apps = JSON.parse(localData) as Appointment[];
-        apps = apps.filter(apt => {
-          const email = apt.email?.toLowerCase() || '';
-          return !email.includes('test@') && !email.includes('example.com') && email !== 'test';
-        });
-        if (filter !== 'all') {
-          apps = apps.filter(a => a.status === filter);
-        }
-        setAppointments(apps);
+        const localApps = JSON.parse(localData) as Appointment[];
+        const dbIds = new Set(allApps.map(a => a.id));
+        const uniqueLocal = localApps.filter(a => !dbIds.has(a.id));
+        allApps = [...allApps, ...uniqueLocal];
       }
-    } finally {
-      setIsLoading(false);
+    } catch (e) {
+      console.warn("LocalStorage merge failed", e);
     }
+
+    // Fetch services for each appointment
+    const appointmentsWithServices = await Promise.all(allApps.map(async (apt) => {
+      if (apt.service_id && !apt.services) {
+        try {
+          const serviceDoc = await getDoc(doc(db, 'services', apt.service_id));
+          if (serviceDoc.exists()) {
+            return { ...apt, services: { id: serviceDoc.id, ...serviceDoc.data() } as Service };
+          }
+        } catch (e) {}
+      }
+      return apt;
+    }));
+
+    let finalData = appointmentsWithServices;
+    
+    // Filter by status if not 'all' (needed for local items)
+    if (filter !== 'all') {
+      finalData = finalData.filter(a => a.status === filter);
+    }
+
+    // Filter out test bookings
+    finalData = finalData.filter(apt => {
+      const email = apt.email?.toLowerCase() || '';
+      return !email.includes('test@') && !email.includes('example.com') && email !== 'test';
+    }).sort((a, b) => new Date(b.start_time || 0).getTime() - new Date(a.start_time || 0).getTime());
+
+    setAppointments(finalData);
+    setIsLoading(false);
   };
 
-  const saveToLocal = (newApps: Appointment[]) => {
-    localStorage.setItem('viktor_labs_appointments', JSON.stringify(newApps));
-    setAppointments(newApps);
+  const deleteAppointment = async (id: string) => {
+    if (!confirm('Möchten Sie diesen Termin wirklich löschen? Dies gibt den Zeitslot wieder frei.')) return;
+    
+    setIsDeleting(id);
+    try {
+      await deleteDoc(doc(db, 'appointments', id));
+    } catch (err) {
+      console.warn("Firebase delete failed", err);
+      handleFirestoreError(err, OperationType.DELETE, `appointments/${id}`);
+    }
+
+    // Always update local state and storage
+    try {
+      const localData = localStorage.getItem('viktor_labs_appointments');
+      if (localData) {
+        const apps = JSON.parse(localData) as Appointment[];
+        const updated = apps.filter(app => app.id !== id);
+        localStorage.setItem('viktor_labs_appointments', JSON.stringify(updated));
+      }
+    } catch (e) {}
+
+    setAppointments(prev => prev.filter(app => app.id !== id));
+    setIsDeleting(null);
   };
 
   useEffect(() => {
@@ -186,33 +216,45 @@ export default function AppointmentsView() {
 
                   {/* Right Column: Actions */}
                   <div className="flex lg:flex-col justify-end gap-2 border-t lg:border-t-0 lg:border-l border-white/10 pt-4 lg:pt-0 lg:pl-6">
-                    {apt.status === 'pending' && (
-                      <>
-                        <Button 
-                          size="sm" 
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                          onClick={() => updateStatus(apt.id, 'confirmed')}
-                        >
-                          <Check className="w-4 h-4 mr-1" /> Bestätigen
-                        </Button>
+                    <div className="flex lg:flex-col gap-2">
+                      {apt.status === 'pending' && (
+                        <>
+                          <Button 
+                            size="sm" 
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => updateStatus(apt.id, 'confirmed')}
+                          >
+                            <Check className="w-4 h-4 mr-1" /> Bestätigen
+                          </Button>
+                          <Button 
+                            variant="danger" 
+                            size="sm"
+                            onClick={() => updateStatus(apt.id, 'cancelled')}
+                          >
+                            <X className="w-4 h-4 mr-1" /> Stornieren
+                          </Button>
+                        </>
+                      )}
+                      {apt.status === 'confirmed' && (
                         <Button 
                           variant="danger" 
                           size="sm"
                           onClick={() => updateStatus(apt.id, 'cancelled')}
                         >
-                          <X className="w-4 h-4 mr-1" /> Stornieren
+                          <X className="w-4 h-4 mr-1" /> Buchung stornieren
                         </Button>
-                      </>
-                    )}
-                    {apt.status === 'confirmed' && (
+                      )}
+                      
                       <Button 
-                        variant="danger" 
+                        variant="ghost" 
                         size="sm"
-                        onClick={() => updateStatus(apt.id, 'cancelled')}
+                        className="text-gray-500 hover:text-rose-500 hover:bg-rose-500/10"
+                        onClick={() => deleteAppointment(apt.id)}
+                        isLoading={isDeleting === apt.id}
                       >
-                        <X className="w-4 h-4 mr-1" /> Buchung stornieren
+                        <Trash2 className="w-4 h-4 mr-1" /> Löschen
                       </Button>
-                    )}
+                    </div>
                   </div>
 
                 </div>

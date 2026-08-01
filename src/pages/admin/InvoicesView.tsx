@@ -20,6 +20,8 @@ export default function InvoicesView() {
 
   const fetchInvoices = async () => {
     setIsLoading(true);
+    let allInvoices: Invoice[] = [];
+    
     try {
       // Fetch settings first
       const settingsDoc = await getDoc(doc(db, 'settings', 'business'));
@@ -29,23 +31,32 @@ export default function InvoicesView() {
 
       const q = query(collection(db, 'invoices'));
       const querySnapshot = await getDocs(q);
-      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Invoice));
-      
-      data.sort((a, b) => {
-        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-        return dateB - dateA;
-      });
-
-      setInvoices(data);
-      localStorage.setItem('viktor_labs_invoices', JSON.stringify(data));
+      allInvoices = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Invoice));
     } catch (err) {
       console.warn("Invoices fetch failed", err);
-      const local = localStorage.getItem('viktor_labs_invoices');
-      if (local) setInvoices(JSON.parse(local));
-    } finally {
-      setIsLoading(false);
     }
+
+    // Merge with LocalStorage
+    try {
+      const local = localStorage.getItem('viktor_labs_invoices');
+      if (local) {
+        const localInvoices = JSON.parse(local) as Invoice[];
+        const dbIds = new Set(allInvoices.map(i => i.id));
+        const uniqueLocal = localInvoices.filter(i => !dbIds.has(i.id));
+        allInvoices = [...allInvoices, ...uniqueLocal];
+      }
+    } catch (e) {}
+
+    // Sort
+    allInvoices.sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateB - dateA;
+    });
+
+    setInvoices(allInvoices);
+    localStorage.setItem('viktor_labs_invoices', JSON.stringify(allInvoices));
+    setIsLoading(false);
   };
 
   useEffect(() => {

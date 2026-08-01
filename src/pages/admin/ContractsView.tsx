@@ -44,6 +44,9 @@ export default function ContractsView() {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
+      let allContracts: Contract[] = [];
+      let allApps: any[] = [];
+      
       try {
         // Fetch Settings
         const settingsDoc = await getDoc(doc(db, 'settings', 'business'));
@@ -54,23 +57,34 @@ export default function ContractsView() {
         // Fetch Contracts
         const qContracts = query(collection(db, 'contracts'), orderBy('created_at', 'desc')); 
         const contractsSnapshot = await getDocs(qContracts);
-        const contractsData = contractsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
-        setContracts(contractsData);
-        localStorage.setItem('viktor_labs_contracts', JSON.stringify(contractsData));
-
+        allContracts = contractsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
+        
         // Fetch Appointments (Requests)
         const qApps = query(collection(db, 'appointments'), orderBy('created_at', 'desc'));
         const appsSnapshot = await getDocs(qApps);
-        const appsData = appsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setAppointments(appsData);
+        allApps = appsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       } catch (err) {
         console.error("Fetch failed", err);
-        const local = localStorage.getItem('viktor_labs_contracts');
-        if (local) setContracts(JSON.parse(local));
-      } finally {
-        setIsLoading(false);
       }
+
+      // Merge Contracts with LocalStorage
+      try {
+        const local = localStorage.getItem('viktor_labs_contracts');
+        if (local) {
+          const localContracts = JSON.parse(local) as Contract[];
+          const dbIds = new Set(allContracts.map(c => c.id));
+          const uniqueLocal = localContracts.filter(c => !dbIds.has(c.id));
+          allContracts = [...allContracts, ...uniqueLocal].sort((a, b) => 
+            new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+          );
+        }
+      } catch (e) {}
+
+      setContracts(allContracts);
+      localStorage.setItem('viktor_labs_contracts', JSON.stringify(allContracts));
+      setAppointments(allApps);
+      setIsLoading(false);
     };
     fetchData();
   }, []);

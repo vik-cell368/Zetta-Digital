@@ -333,7 +333,9 @@ export default function InvoiceEditor() {
     } as Invoice;
 
     try {
+      console.log("Attempting to save invoice to Firestore:", finalInvoice.id);
       await setDoc(doc(db, 'invoices', finalInvoice.id), finalInvoice);
+      console.log("Firestore save successful");
       
       const local = localStorage.getItem('viktor_labs_invoices');
       let invoices: Invoice[] = local ? JSON.parse(local) : [];

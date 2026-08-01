@@ -241,7 +241,9 @@ export default function ContractEditor() {
     } as Contract;
 
     try {
+      console.log("Attempting to save contract to Firestore:", finalContract.id);
       await setDoc(doc(db, 'contracts', finalContract.id), finalContract);
+      console.log("Firestore save successful");
       
       const local = localStorage.getItem('viktor_labs_contracts');
       let contracts: Contract[] = local ? JSON.parse(local) : [];
