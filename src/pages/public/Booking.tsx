@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy, limit, addDoc, getDoc, doc } from 'firebase/firestore';
@@ -16,7 +16,21 @@ import {
   Loader2,
   Upload,
   FileText,
-  X
+  X,
+  Monitor,
+  Layout,
+  Palette,
+  Zap,
+  Settings,
+  BarChart3,
+  Bot,
+  Globe,
+  Server,
+  Sparkles,
+  Info,
+  Plus,
+  Minus,
+  Check
 } from 'lucide-react';
 import { format, parse, isAfter, startOfDay, addDays, isSameDay, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -53,6 +67,141 @@ const pageTransition = {
   duration: 0.5
 };
 
+interface Option {
+  id: string;
+  name: string;
+  price: number;
+  monthly?: boolean;
+  desc?: string;
+  category: string;
+  required?: boolean;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  options: Option[];
+  multiple?: boolean;
+}
+
+const CONFIG_DATA: Category[] = [
+  {
+    id: 'base',
+    name: '1. Website (Pflicht)',
+    icon: <Monitor className="w-5 h-5" />,
+    options: [
+      { 
+        id: 'p_starter', 
+        name: 'Standard Website', 
+        price: 550, 
+        category: 'base', 
+        desc: 'Inklusive 4 Seiten: Startseite, Über uns, Kontakt, Impressum & Datenschutz' 
+      },
+    ],
+  },
+  {
+    id: 'pages',
+    name: '2. Seitenanzahl',
+    icon: <Layout className="w-5 h-5" />,
+    options: [], 
+  },
+  {
+    id: 'design',
+    name: '3. Design & Branding',
+    icon: <Palette className="w-5 h-5" />,
+    multiple: true,
+    options: [
+      { id: 'd_branding', name: 'Individuelles Branding', price: 150, category: 'design' },
+      { id: 'd_ui', name: 'Premium UI Design', price: 250, category: 'design' },
+      { id: 'd_dark', name: 'Dark Mode', price: 80, category: 'design' },
+      { id: 'd_logo', name: 'Logo Design', price: 120, category: 'design' },
+    ],
+  },
+  {
+    id: 'animations',
+    name: '4. Animationen',
+    icon: <Zap className="w-5 h-5" />,
+    multiple: true,
+    options: [
+      { id: 'a_2d', name: '2D Animation', price: 80, category: 'animations' },
+      { id: 'a_2d_custom', name: 'Individuelle 2D Animation', price: 200, category: 'animations' },
+      { id: 'a_3d', name: '3D Animation', price: 180, category: 'animations' },
+      { id: 'a_3d_custom', name: 'Individuelle 3D Animation', price: 299, category: 'animations' },
+      { id: 'a_sound', name: 'Soundeffekte', price: 79, category: 'animations' },
+    ],
+  },
+  {
+    id: 'functions',
+    name: '5. Funktionen',
+    icon: <Settings className="w-5 h-5" />,
+    multiple: true,
+    options: [
+      { id: 'f_form', name: 'Kontaktformular', price: 0, category: 'functions', desc: 'Inklusive' },
+      { id: 'f_maps', name: 'Google Maps', price: 25, category: 'functions' },
+      { id: 'f_wa', name: 'WhatsApp Button', price: 30, category: 'functions' },
+      { id: 'f_booking', name: 'Terminbuchung', price: 129, category: 'functions' },
+      { id: 'f_news', name: 'Newsletter', price: 120, category: 'functions' },
+      { id: 'f_blog', name: 'Blog', price: 150, category: 'functions' },
+      { id: 'f_lang', name: 'Mehrsprachigkeit', price: 200, category: 'functions' },
+      { id: 'f_cookie', name: 'Cookie Banner', price: 0, category: 'functions', desc: 'Inklusive' },
+    ],
+  },
+  {
+    id: 'marketing',
+    name: '6. Marketing',
+    icon: <BarChart3 className="w-5 h-5" />,
+    multiple: true,
+    options: [
+      { id: 'm_rev', name: 'Google Bewertungen', price: 99, category: 'marketing' },
+      { id: 'm_social', name: 'Social Media Verbindung', price: 70, category: 'marketing', monthly: true, desc: '70€ / Monat' },
+      { id: 'm_insta', name: 'Instagram Feed', price: 70, category: 'marketing' },
+      { id: 'm_fb', name: 'Facebook Feed', price: 70, category: 'marketing' },
+      { id: 'm_seo_base', name: 'SEO Basis', price: 150, category: 'marketing' },
+      { id: 'm_seo_premium', name: 'Premium SEO', price: 390, category: 'marketing' },
+      { id: 'm_analytics', name: 'Google Analytics', price: 70, category: 'marketing' },
+    ],
+  },
+  {
+    id: 'ai',
+    name: '7. KI & Automation',
+    icon: <Bot className="w-5 h-5" />,
+    multiple: true,
+    options: [
+      { id: 'ai_bot', name: 'Chatbot Einrichtung', price: 299, category: 'ai' },
+      { id: 'ai_data', name: 'Chatbot Datenpflege', price: 15, category: 'ai', desc: 'je Datensatz' },
+      { id: 'ai_form', name: 'Kontaktformular-KI', price: 25, category: 'ai', monthly: true, desc: '25€ / Monat' },
+      { id: 'ai_email', name: 'Email Automation', price: 49, category: 'ai', monthly: true, desc: '49€ / Monat' },
+      { id: 'ai_sheets', name: 'Google Sheets Automation', price: 49, category: 'ai', monthly: true, desc: '49€ / Monat' },
+      { id: 'ai_sm_auto', name: 'Social Media Automation', price: 49, category: 'ai', monthly: true, desc: '49€ / Monat' },
+      { id: 'ai_crm', name: 'CRM Automation', price: 79, category: 'ai', monthly: true, desc: '79€ / Monat' },
+      { id: 'ai_wa_auto', name: 'WhatsApp Automation', price: 79, category: 'ai', monthly: true, desc: '79€ / Monat' },
+    ],
+  },
+  {
+    id: 'maintenance',
+    name: '8. Verwaltung',
+    icon: <Globe className="w-5 h-5" />,
+    options: [
+      { id: 'v_none', name: 'Keine', price: 0, category: 'maintenance' },
+      { id: 'v_standard', name: 'Standard Verwaltung', price: 59, category: 'maintenance', monthly: true, desc: '59€ / Monat' },
+      { id: 'v_komplett', name: 'Komplett Verwaltung', price: 99, category: 'maintenance', monthly: true, desc: '99€ / Monat' },
+    ],
+  },
+  {
+    id: 'hosting',
+    name: '9. Domain & Hosting',
+    icon: <Server className="w-5 h-5" />,
+    multiple: true,
+    options: [
+      { id: 'h_vercel', name: 'Vercel Subdomain', price: 0, category: 'hosting', desc: 'Kostenlos' },
+      { id: 'h_de', name: '.de Domain', price: 0, category: 'hosting', desc: 'nach Anbieter' },
+      { id: 'h_com', name: '.com Domain', price: 0, category: 'hosting', desc: 'nach Anbieter' },
+      { id: 'h_setup', name: 'Hosting Einrichtung', price: 0, category: 'hosting', desc: 'Inklusive' },
+    ],
+  },
+];
+
 interface TimeSlot {
   time: string;
   isAvailable: boolean;
@@ -69,7 +218,11 @@ export default function Booking() {
   const initialServiceId = queryParams.get('serviceId');
 
   const [step, setStep] = useState<Step>('service');
-  const [services, setServices] = useState<Service[]>([]);
+  const [dbServices, setDbServices] = useState<Service[]>([]);
+  const [selections, setSelections] = useState<Record<string, string[]>>({
+    base: ['p_starter']
+  });
+  const [additionalPages, setAdditionalPages] = useState(0);
   const [settings, setSettings] = useState<BusinessSettings | null>(null);
   const [businessHours, setBusinessHours] = useState<BusinessHours[]>([]);
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
@@ -98,72 +251,14 @@ export default function Booking() {
     async function fetchInitialData() {
       setIsLoading(true);
       try {
-        // 1. Fetch Services (Publicly accessible)
-        let activeServices: Service[] = [];
+        // 1. Fetch Services for Configurator
         try {
-          const sSnapshot = await getDocs(query(collection(db, 'services'), where('is_active', '==', true)));
-          activeServices = sSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
+          const q = query(collection(db, 'services'), where('is_active', '==', true), where('is_calculator_option', '==', true));
+          const snapshot = await getDocs(q);
+          const services = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
+          setDbServices(services);
         } catch (err) {
-          console.warn("Firestore services fetch failed", err);
-        }
-
-        // Fallback to local storage if Firestore is empty
-        if (activeServices.length === 0) {
-          const local = localStorage.getItem('viktor_labs_services');
-          if (local) {
-            try {
-              const allLocal = JSON.parse(local);
-              activeServices = allLocal.filter((s: Service) => s.is_active);
-            } catch (err) {
-              console.warn("Failed parsing local services", err);
-            }
-          }
-        }
-
-        // Sort in memory to avoid index requirements
-        activeServices.sort((a, b) => (b.price || 0) - (a.price || 0));
-
-        // Ensure "Kostenloses Erstgespräch" / "Beratung" is always available
-        const hasConsultation = activeServices.some(s => {
-          const nameStr = getTranslatedText(s.name, 'de').toLowerCase();
-          const nameEn = getTranslatedText(s.name, 'en').toLowerCase();
-          return nameStr.includes('erstgespräch') || nameStr.includes('beratung') || 
-                 nameEn.includes('strategy') || nameEn.includes('consultation');
-        });
-
-        if (activeServices.length === 0 || !hasConsultation) {
-          const defaultConsultation: Service = {
-            id: 'consultation-default',
-            name: JSON.stringify({ en: 'Free Strategy Session', de: 'Kostenloses Erstgespräch' }),
-            description: JSON.stringify({ en: 'Executive discussion to outline your technological trajectory and digital presence.', de: 'Kostenlose Erstberatung für moderne Unternehmenswebsites, Landingpages und digitale Lösungen.' }),
-            price: 0,
-            duration_minutes: 45,
-            is_active: true,
-            features: '',
-            process: '',
-            tech: '',
-            faqs: '',
-            created_at: new Date().toISOString()
-          };
-          if (!hasConsultation) {
-            activeServices = [defaultConsultation, ...activeServices];
-          }
-        }
-        setServices(activeServices);
-
-        // Pre-select service from URL
-        if (initialServiceId) {
-          const found = activeServices.find(s => s.id === initialServiceId);
-          if (found) {
-            setSelectedService(found);
-            setStep('date');
-          } else if (initialServiceId === 'consultation-default' || initialServiceId === '1') {
-            const fallback = activeServices.find(s => s.id === 'consultation-default' || s.id === '1');
-            if (fallback) {
-              setSelectedService(fallback);
-              setStep('date');
-            }
-          }
+          console.error("Failed to fetch calculator services", err);
         }
 
         // 2. Fetch Settings
@@ -238,20 +333,97 @@ export default function Booking() {
     fetchInitialData();
   }, [initialServiceId]);
 
+  const mergedConfigData = useMemo(() => {
+    const data = [...CONFIG_DATA];
+    
+    dbServices.forEach(service => {
+      const categoryId = service.category || 'functions';
+      let category = data.find(c => c.id === categoryId);
+      
+      if (!category) {
+        category = {
+          id: categoryId,
+          name: categoryId.charAt(0).toUpperCase() + categoryId.slice(1),
+          icon: <Settings className="w-5 h-5" />,
+          options: [],
+          multiple: true
+        };
+        data.push(category);
+      }
+
+      const exists = category.options.some(o => o.id === service.id);
+      if (!exists) {
+        category.options.push({
+          id: service.id,
+          name: getTranslatedText(service.name, 'de'),
+          price: service.price,
+          monthly: service.is_monthly,
+          desc: getTranslatedText(service.description, 'de'),
+          category: categoryId
+        });
+      }
+    });
+
+    return data;
+  }, [dbServices]);
+
+  const toggleOption = (category: string, optionId: string, multiple?: boolean) => {
+    setSelections(prev => {
+      const current = prev[category] || [];
+      if (multiple) {
+        if (current.includes(optionId)) {
+          return { ...prev, [category]: current.filter(id => id !== optionId) };
+        } else {
+          return { ...prev, [category]: [...current, optionId] };
+        }
+      } else {
+        return { ...prev, [category]: [optionId] };
+      }
+    });
+  };
+
+  const selectedOptionsList = useMemo(() => {
+    const list: Option[] = [];
+    Object.entries(selections).forEach(([catId, optIds]) => {
+      const cat = mergedConfigData.find(c => c.id === catId);
+      if (cat) {
+        optIds.forEach(id => {
+          const opt = cat.options.find(o => o.id === id);
+          if (opt) list.push(opt);
+        });
+      }
+    });
+    return list;
+  }, [selections, mergedConfigData]);
+
+  const totals = useMemo(() => {
+    const baseTotal = selectedOptionsList.reduce(
+      (acc, curr) => {
+        if (curr.monthly) acc.monthly += curr.price;
+        else acc.oneTime += curr.price;
+        return acc;
+      },
+      { oneTime: 0, monthly: 0 }
+    );
+    baseTotal.oneTime += additionalPages * 49;
+    return baseTotal;
+  }, [selectedOptionsList, additionalPages]);
+
   const [isTimesLoading, setIsTimesLoading] = useState(false);
   
   const handleDateSelect = async (date: Date | undefined) => {
     setSelectedDate(date);
     setSelectedTime(null);
-    if (!date || !selectedService) return;
+    if (!date) return;
     
-    // Immediate transition to time step to show loading/progress
+    // Default duration for strategy session if none selected
+    const duration = 45; 
+    
     setStep('time');
-    setAvailableTimes([]); // Reset times while loading
+    setAvailableTimes([]); 
     setIsTimesLoading(true);
     
     try {
-      // 1. Fetch appointments from Supabase (expanding date range slightly for timezones)
       const rangeStart = startOfDay(addDays(date, -1)).toISOString();
       const rangeEnd = startOfDay(addDays(date, 2)).toISOString();
 
@@ -267,10 +439,9 @@ export default function Booking() {
         const querySnapshot = await getDocs(q);
         fetchedAppointments = querySnapshot.docs.map(doc => doc.data() as any);
       } catch (err) {
-        console.warn("Firebase appointments fetch failed", err);
+        console.warn("Firestore appointments fetch failed", err);
       }
 
-      // 2. Fetch appointments from localStorage to merge
       const localAppsRaw = localStorage.getItem('viktor_labs_appointments');
       let localApps: Array<{ start_time?: string; end_time?: string; status?: string }> = [];
       if (localAppsRaw) {
@@ -281,7 +452,6 @@ export default function Booking() {
         }
       }
 
-      // Combine both sources
       const allAppointments = [
         ...fetchedAppointments,
         ...localApps.filter(a => a.start_time && a.end_time && (a.status === 'confirmed' || a.status === 'pending' || !a.status))
@@ -305,16 +475,13 @@ export default function Booking() {
         while (current < end) {
           const timeString = format(current, 'HH:mm:ss');
           const slotStart = current;
-          const serviceDuration = selectedService.duration_minutes;
-          const slotEnd = new Date(slotStart.getTime() + serviceDuration * 60000);
+          const slotEnd = new Date(slotStart.getTime() + duration * 60000);
 
-          // Check if slot stays within shift
           if (slotEnd > end) break;
 
           let isAvailable = true;
           let isBooked = false;
 
-          // Don't allow past times or times within 3 hours if today
           const threeHoursFromNow = new Date(new Date().getTime() + 3 * 60 * 60000);
           if (isSameDay(date, new Date()) && !isAfter(slotStart, threeHoursFromNow)) {
             isAvailable = false;
@@ -329,7 +496,6 @@ export default function Booking() {
               const apptStartMs = new Date(appt.start_time).getTime();
               const apptEndMs = new Date(appt.end_time).getTime();
 
-              // Overlap check: slotStart < apptEnd AND slotEnd > apptStart
               if (slotStartMs < apptEndMs && slotEndMs > apptStartMs) {
                 isAvailable = false;
                 isBooked = true;
@@ -357,7 +523,7 @@ export default function Booking() {
   };
 
   const onSubmitDetails = async (data: BookingFormData) => {
-    if (!selectedService || !selectedDate || !selectedTime) return;
+    if (!selectedDate || !selectedTime) return;
 
     setIsSubmitting(true);
     const startDateTime = parse(
@@ -365,9 +531,28 @@ export default function Booking() {
       'yyyy-MM-dd HH:mm:ss',
       new Date()
     );
-    const endDateTime = new Date(startDateTime.getTime() + selectedService.duration_minutes * 60000);
+    // Fixed duration for strategy session (45m)
+    const endDateTime = new Date(startDateTime.getTime() + 45 * 60000);
 
-    const fullNotes = `Branche: ${data.industry}\n` +
+    const servicesList = selectedOptionsList.map(o => ({
+      id: o.id,
+      description: o.name + (o.monthly ? ' (monatl.)' : ''),
+      price: o.price
+    }));
+
+    if (additionalPages > 0) {
+      servicesList.push({
+        id: 'pages_extra',
+        description: `${additionalPages} zusätzliche Seiten`,
+        price: additionalPages * 49
+      });
+    }
+
+    const fullNotes = `Konfiguration:\n` + 
+                      `${selectedOptionsList.map(o => `- ${o.name} (${o.price}€)`).join('\n')}\n` +
+                      `${additionalPages > 0 ? `- ${additionalPages} zusätzliche Seiten (${additionalPages * 49}€)\n` : ''}` +
+                      `-------------------\n` +
+                      `Branche: ${data.industry}\n` +
                       `Unternehmen: ${data.company}\n` +
                       `Größe: ${data.size}\n` +
                       `Wunschstart: ${data.startDate}\n` +
@@ -376,15 +561,8 @@ export default function Booking() {
                       `Datei: ${uploadedFile ? uploadedFile.name : 'Keine'}`;
 
     const payload = {
-      service_id: selectedService.id,
-      services: { name: selectedService.name }, 
-      services_list: [
-        {
-          id: selectedService.id,
-          description: getTranslatedText(selectedService.name, currentLang),
-          price: selectedService.price || 0
-        }
-      ],
+      type: 'booking',
+      services_list: servicesList,
       full_name: data.full_name,
       email: data.email,
       phone: data.phone,
@@ -394,26 +572,33 @@ export default function Booking() {
       notes: fullNotes,
       company: data.company,
       industry: data.industry,
-      street: '', // Placeholder for lead consistency
+      street: '', 
       zip: '',
       city: '',
       country: 'Deutschland'
     };
 
     try {
-      // Also save as lead in localStorage for consistency
-      const localLeads = localStorage.getItem('viktor_labs_appointments');
-      const leads = localLeads ? JSON.parse(localLeads) : [];
-      leads.push({ ...payload, id: crypto.randomUUID(), created_at: new Date().toISOString() });
-      localStorage.setItem('viktor_labs_appointments', JSON.stringify(leads));
-
-      await addDoc(collection(db, 'appointments'), {
+      const docRef = await addDoc(collection(db, 'appointments'), {
         ...payload,
         created_at: new Date().toISOString()
       });
+
+      const localLeads = localStorage.getItem('viktor_labs_appointments');
+      const leads = localLeads ? JSON.parse(localLeads) : [];
+      leads.push({ ...payload, id: docRef.id, created_at: new Date().toISOString() });
+      localStorage.setItem('viktor_labs_appointments', JSON.stringify(leads));
+
       setStep('success');
     } catch (err) {
       console.warn("Firebase booking failed, saved to local lead management", err);
+      // Local fallback ID
+      const localId = crypto.randomUUID();
+      const localLeads = localStorage.getItem('viktor_labs_appointments');
+      const leads = localLeads ? JSON.parse(localLeads) : [];
+      leads.push({ ...payload, id: localId, created_at: new Date().toISOString() });
+      localStorage.setItem('viktor_labs_appointments', JSON.stringify(leads));
+      
       handleFirestoreError(err, OperationType.CREATE, 'appointments');
       setStep('success');
     } finally {
@@ -473,54 +658,166 @@ export default function Booking() {
           </div>
 
         <AnimatePresence mode="wait">
-          {/* STEP: SERVICE */}
+          {/* STEP: SERVICE (CONFIGURATOR STYLE) */}
           {step === 'service' && (
             <motion.div 
               key="service"
               initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}
-              className="space-y-4 md:space-y-6"
+              className="flex flex-col lg:flex-row gap-12 items-start"
             >
               {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  {[1, 2, 3, 4].map(i => <div key={i} className="animate-pulse bg-white/5 h-40 rounded-2xl"></div>)}
+                <div className="flex-1 flex flex-col items-center justify-center py-40 gap-4">
+                  <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
+                  <p className="text-slate-400 font-mono text-xs uppercase tracking-widest">Lade Konfiguration...</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  {services.map(service => (
-                    <div 
-                      key={service.id}
-                      onClick={() => { setSelectedService(service); setStep('date'); }}
-                      className={cn(
-                        "group p-6 md:p-8 rounded-2xl cursor-pointer transition-all duration-500 border backdrop-blur-md relative overflow-hidden",
-                        selectedService?.id === service.id 
-                          ? "bg-dark-900 border-cyan-500/50 shadow-[0_0_30px_rgba(6,182,212,0.1)]" 
-                          : "bg-dark-900/40 border-white/5 hover:border-cyan-500/30 hover:bg-dark-900/80"
-                      )}
-                    >
-                      <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-3 md:mb-4">
-                          <h3 className="font-display text-xl md:text-2xl text-slate-50 group-hover:text-cyan-400 transition-colors">{getTranslatedText(service.name, currentLang)}</h3>
-                          <span className="font-sans font-medium text-cyan-400 text-sm md:text-base">
-                            {service.price && service.price > 0 ? formatCurrency(service.price) : 'Kostenlos'}
-                          </span>
+                <>
+                  <div className="flex-1 space-y-16 w-full">
+                    {mergedConfigData.map((category) => (
+                      <section key={category.id} className="space-y-6">
+                        <div className="flex items-center gap-4 mb-8">
+                          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.1)]">
+                            {category.icon}
+                          </div>
+                          <h2 className="text-2xl font-display font-bold text-slate-50">{category.name}</h2>
                         </div>
-                        <p className="text-xs md:text-sm text-slate-400 mb-6 md:mb-8 font-light leading-relaxed line-clamp-2">{getTranslatedText(service.description, currentLang)}</p>
-                        <div className="flex items-center text-[10px] md:text-xs font-mono uppercase tracking-widest text-slate-500">
-                          <Clock className="w-3 h-3 md:w-4 md:h-4 mr-2" />
-                          {service.duration_minutes} min
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {category.id === 'pages' ? (
+                            <div className="col-span-full bg-dark-900 border border-white/5 rounded-[2.5rem] p-8 md:p-12 flex flex-col items-center justify-center space-y-8">
+                              <div className="text-center">
+                                <h4 className="text-2xl font-display font-bold text-white mb-3">Wie viele zusätzliche Seiten?</h4>
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-8">
+                                  <Check className="w-3.5 h-3.5 text-cyan-500" />
+                                  <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">4 Seiten sind bereits inklusive</span>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-8 md:gap-12">
+                                <button 
+                                  onClick={() => setAdditionalPages(Math.max(0, additionalPages - 1))}
+                                  className="w-14 h-14 md:w-20 md:h-20 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white/10 hover:border-cyan-500 transition-all active:scale-90 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                                >
+                                  <Minus size={28} />
+                                </button>
+                                
+                                <div className="flex flex-col items-center min-w-[140px] md:min-w-[180px]">
+                                  <span className="text-7xl md:text-9xl font-display font-bold text-white leading-none tracking-tighter">
+                                    {additionalPages}
+                                  </span>
+                                  <span className="text-[11px] uppercase tracking-[0.4em] text-cyan-500 font-black mt-6">
+                                    {additionalPages === 1 ? 'Weitere Seite' : 'Weitere Seiten'}
+                                  </span>
+                                </div>
+
+                                <button 
+                                  onClick={() => setAdditionalPages(additionalPages + 1)}
+                                  className="w-14 h-14 md:w-20 md:h-20 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white/10 hover:border-cyan-500 transition-all active:scale-90 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                                >
+                                  <Plus size={28} />
+                                </button>
+                              </div>
+                              
+                              <div className="text-cyan-500 font-black text-lg bg-cyan-500/10 px-8 py-3 rounded-full border border-cyan-500/20 mt-4">
+                                + {(additionalPages * 49).toLocaleString('de-DE')} €
+                                <span className="text-slate-500 text-xs font-normal ml-4 uppercase tracking-widest">(49 € pro Seite)</span>
+                              </div>
+                            </div>
+                          ) : (
+                            category.options.map((option) => {
+                              const isSelected = (selections[category.id] || []).includes(option.id);
+                              return (
+                                <button
+                                  key={option.id}
+                                  onClick={() => toggleOption(category.id, option.id, category.multiple)}
+                                  className={`text-left p-6 rounded-[2rem] border transition-all relative group h-full flex flex-col ${
+                                    isSelected 
+                                      ? 'bg-cyan-500/10 border-cyan-500 shadow-[0_0_30px_rgba(6,182,212,0.1)]' 
+                                      : 'bg-dark-900 border-white/5 hover:border-white/10'
+                                  }`}
+                                >
+                                  <div className="flex justify-between items-start mb-2">
+                                    <span className={`text-lg font-bold ${isSelected ? 'text-cyan-500' : 'text-slate-50'}`}>
+                                      {option.name}
+                                    </span>
+                                    {isSelected && (
+                                      <div className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
+                                        <Check className="w-4 h-4 text-dark-950" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <p className="text-slate-500 text-xs mb-6 flex-1">
+                                    {option.desc || (category.multiple ? 'Optional' : '')}
+                                  </p>
+                                  
+                                  <div className="flex justify-end items-center mt-auto">
+                                    <span className="text-xl font-display font-bold text-slate-50">
+                                      {option.price === 0 ? 'inkl.' : `${option.price}€`}
+                                      {option.monthly && <span className="text-xs text-slate-500 ml-1">/ Mo.</span>}
+                                    </span>
+                                  </div>
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+
+                  {/* Config Sidebar */}
+                  <div className="lg:w-[420px] w-full lg:sticky lg:top-32">
+                    <div className="bg-dark-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-2xl">
+                      <h3 className="text-xl font-display font-bold text-slate-50 mb-8 flex items-center gap-3">
+                        <BarChart3 className="w-6 h-6 text-cyan-500" />
+                        Ihre Wahl
+                      </h3>
+                      
+                      <div className="space-y-6 mb-10 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                        {selectedOptionsList.length === 0 && additionalPages === 0 ? (
+                          <p className="text-slate-500 text-center py-10 italic">Noch keine Optionen gewählt.</p>
+                        ) : (
+                          <>
+                            {selectedOptionsList.map(opt => (
+                              <div key={opt.id} className="flex justify-between items-start gap-4">
+                                <div className="text-sm text-slate-400 font-medium">{opt.name}</div>
+                                <div className="text-slate-50 font-mono text-sm whitespace-nowrap">{opt.price} €</div>
+                              </div>
+                            ))}
+                            {additionalPages > 0 && (
+                              <div className="flex justify-between items-start gap-4">
+                                <div className="text-sm text-slate-400 font-medium">{additionalPages} zusätzliche Seiten</div>
+                                <div className="text-slate-50 font-mono text-sm whitespace-nowrap">{additionalPages * 49} €</div>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      <div className="space-y-6 pt-8 border-t border-white/10">
+                        <div className="flex justify-between items-end">
+                          <div>
+                            <span className="text-[10px] uppercase text-slate-500 tracking-widest font-bold block mb-1">Einmalig</span>
+                            <div className="text-4xl font-display font-bold text-cyan-500">{totals.oneTime} €</div>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[10px] uppercase text-slate-500 tracking-widest font-bold block mb-1">Monatlich</span>
+                            <div className="text-2xl font-display font-bold text-slate-50">{totals.monthly} €</div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                  {services.length === 0 && (
-                    <div className="col-span-full py-20 text-center bg-white/5 rounded-3xl border border-white/10">
-                      <p className="text-slate-400 mb-6">Momentan sind keine Leistungen online verfügbar.</p>
-                      <Button onClick={() => window.location.reload()} variant="outline">
-                        Erneut versuchen
+
+                      <Button 
+                        onClick={() => setStep('date')}
+                        disabled={selectedOptionsList.length === 0}
+                        className="w-full h-20 mt-10 bg-white text-dark-950 font-bold rounded-3xl text-xl shadow-[0_0_30px_rgba(255,255,255,0.1)] group hover:bg-cyan-500 transition-all disabled:opacity-50"
+                      >
+                        Termin wählen
+                        <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
                       </Button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                </>
               )}
             </motion.div>
           )}
@@ -847,20 +1144,56 @@ export default function Booking() {
                     
                     <div className="space-y-8">
                       <div>
-                        <div className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-2">Terminart</div>
-                        <div className="font-sans font-light text-white">{selectedService && getTranslatedText(selectedService.name, currentLang)}</div>
+                        <div className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-2">Gewählte Kategorien</div>
+                        <div className="space-y-3">
+                          {Object.entries(selections).map(([categoryId, items]) => {
+                            const category = mergedConfigData.find(c => c.id === categoryId);
+                            if (!category || items.length === 0) return null;
+                            return (
+                              <div key={categoryId} className="space-y-1">
+                                <div className="text-[10px] text-slate-500 uppercase tracking-widest font-mono">{getTranslatedText(category.name, currentLang)}</div>
+                                {items.map(itemId => {
+                                  const item = category.options.find(i => i.id === itemId);
+                                  return (
+                                    <div key={itemId} className="text-xs text-white font-light pl-2 border-l border-cyan-500/30 flex items-center gap-2">
+                                      <div className="w-1 h-1 rounded-full bg-cyan-500/50" />
+                                      {item ? getTranslatedText(item.name, currentLang) : itemId}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })}
+                          {Object.keys(selections).length === 0 && (
+                            <div className="text-xs text-slate-500 italic">Keine Kategorien ausgewählt</div>
+                          )}
+                        </div>
                       </div>
+
                       <div>
-                        <div className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-2">Datum & Uhrzeit</div>
-                        <div className="font-sans font-light text-white">
+                        <div className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-2">Zusatzoptionen</div>
+                        <div className="space-y-2">
+                          {selectedOptionsList.length > 0 ? (
+                            selectedOptionsList.map(o => (
+                              <div key={o.id} className="text-[10px] text-cyan-400 font-bold flex items-center gap-2">
+                                <Check className="w-3 h-3" />
+                                {getTranslatedText(o.name, currentLang)}
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-xs text-slate-500 italic">Keine Extras gewählt</div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-white/5">
+                        <div className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-2">Termin</div>
+                        <div className="font-sans font-light text-sm text-white">
                           {selectedDate && format(selectedDate, 'd. MMMM yyyy', { locale: de })}<br/>
                           {selectedTime && format(parse(selectedTime, 'HH:mm:ss', new Date()), 'HH:mm')} Uhr
                         </div>
                       </div>
-                      <div>
-                        <div className="text-xs uppercase tracking-widest font-mono text-gray-500 mb-2">Dauer</div>
-                        <div className="font-sans font-light text-white">{selectedService?.duration_minutes} min</div>
-                      </div>
+
                       <div className="pt-8 border-t border-white/10">
                         <div className="flex justify-between items-end">
                           <span className="text-xs uppercase tracking-widest font-mono text-gray-500">Investition</span>
@@ -877,7 +1210,7 @@ export default function Booking() {
                     className="w-full mt-8 bg-cyan-500 hover:bg-cyan-400 text-dark-950 font-bold uppercase tracking-widest text-xs h-16 rounded-full transition-transform active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.1)] hover:shadow-[0_0_50px_rgba(6,182,212,0.2)]"
                     isLoading={isSubmitting}
                   >
-                    Termin für kostenloses Beratungsgespräch vereinbaren
+                    Beratungsgespräch anfragen
                   </Button>
                 </div>
               </div>
@@ -899,7 +1232,7 @@ export default function Booking() {
                 </div>
                 <h2 className="text-5xl md:text-6xl font-display text-slate-50 mb-6">Erfolgreich gebucht!</h2>
                 <p className="text-slate-400 max-w-lg mx-auto mb-16 text-xl font-light leading-relaxed">
-                  Ihr Termin wurde bestätigt. Wir haben Ihnen eine E-Mail mit allen Details und dem Link für das Gespräch gesendet.
+                  Ihre Anfrage wurde übermittelt. Wir haben Ihnen eine Bestätigungsmail mit allen Details gesendet. Unser Team wird sich in Kürze bei Ihnen melden.
                 </p>
                 <Button onClick={() => navigate('/')} className="bg-cyan-500 text-dark-950 hover:bg-cyan-400 px-12 h-16 rounded-full font-semibold uppercase tracking-widest text-xs transition-transform active:scale-95">
                   Zurück zur Startseite

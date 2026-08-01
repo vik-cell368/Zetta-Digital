@@ -16,7 +16,21 @@ type ServiceFormData = {
   price: number;
   duration_minutes: number;
   is_active: boolean;
+  is_monthly: boolean;
+  is_calculator_option: boolean;
+  category: string;
 };
+
+const SERVICE_CATEGORIES = [
+  { id: 'base', name: 'Grundpaket' },
+  { id: 'design', name: 'Design & Branding' },
+  { id: 'animations', name: 'Animationen' },
+  { id: 'functions', name: 'Funktionen' },
+  { id: 'marketing', name: 'Marketing' },
+  { id: 'ai', name: 'KI & Automation' },
+  { id: 'maintenance', name: 'Verwaltung' },
+  { id: 'hosting', name: 'Hosting' }
+];
 
 const SUPPORTED_LANGS = [
   { code: 'en', label: 'English' },
@@ -136,6 +150,9 @@ export default function ServicesView() {
       price: data.price,
       duration_minutes: data.duration_minutes,
       is_active: data.is_active ?? true,
+      is_monthly: data.is_monthly ?? false,
+      is_calculator_option: data.is_calculator_option ?? false,
+      category: data.category || '',
     };
 
     setIsLoading(true);
@@ -200,6 +217,9 @@ export default function ServicesView() {
     setValue('price', service.price);
     setValue('duration_minutes', service.duration_minutes);
     setValue('is_active', service.is_active);
+    setValue('is_monthly', service.is_monthly || false);
+    setValue('is_calculator_option', service.is_calculator_option || false);
+    setValue('category', service.category || '');
   };
 
   const handleDelete = async (id: string) => {
@@ -421,9 +441,31 @@ export default function ServicesView() {
                   <label className="block text-sm font-medium text-slate-100 mb-1">Dauer (Minuten)</label>
                   <Input type="number" {...register('duration_minutes', { required: true, valueAsNumber: true })} placeholder="z.B. 60" />
                 </div>
-                <div className="flex items-center space-x-2 mt-6">
-                  <input type="checkbox" id="is_active" {...register('is_active')} className="rounded border-white/20 text-white focus:ring-cyan-500/50" />
-                  <label htmlFor="is_active" className="text-sm font-medium text-slate-100">Aktiv (Sichtbar für Kunden)</label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-100 mb-1">Kategorie (für Kalkulator)</label>
+                  <select 
+                    {...register('category')} 
+                    className="w-full h-10 bg-dark-950 border border-white/10 rounded-md px-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                  >
+                    <option value="">Keine Kategorie</option>
+                    {SERVICE_CATEGORIES.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-4 mt-2">
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="is_active" {...register('is_active')} className="rounded border-white/20 text-white focus:ring-cyan-500/50" />
+                    <label htmlFor="is_active" className="text-sm font-medium text-slate-100">Aktiv (Sichtbar für Kunden)</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="is_monthly" {...register('is_monthly')} className="rounded border-white/20 text-white focus:ring-cyan-500/50" />
+                    <label htmlFor="is_monthly" className="text-sm font-medium text-slate-100">Monatlicher Preis</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="is_calculator_option" {...register('is_calculator_option')} className="rounded border-white/20 text-white focus:ring-cyan-500/50" />
+                    <label htmlFor="is_calculator_option" className="text-sm font-medium text-slate-100">In Kalkulator anzeigen</label>
+                  </div>
                 </div>
               </div>
               <div className="flex justify-end space-x-2 pt-4">
@@ -461,7 +503,13 @@ export default function ServicesView() {
                   <div className="flex items-center text-sm font-medium text-gray-100 space-x-4">
                     <span>{service.duration_minutes} Min</span>
                     <span>•</span>
-                    <span>{formatCurrency(service.price)}</span>
+                    <span>{formatCurrency(service.price)}{service.is_monthly ? ' / Mo.' : ''}</span>
+                    {service.is_calculator_option && (
+                      <>
+                        <span>•</span>
+                        <span className="text-cyan-400 text-xs uppercase tracking-widest font-bold">Kalkulator ({service.category})</span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">

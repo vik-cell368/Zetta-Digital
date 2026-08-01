@@ -33,7 +33,9 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import SEO from '@/components/SEO';
 import { db } from '@/lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { getTranslatedText } from '@/lib/utils';
+import { Service as DBService } from '@/lib/types';
 
 // --- Types ---
 interface Option {
@@ -175,6 +177,8 @@ const CONFIG_DATA: Category[] = [
 export default function Configurator() {
   const navigate = useNavigate();
   const pdfRef = useRef<HTMLDivElement>(null);
+  const [dbServices, setDbServices] = useState<DBService[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selections, setSelections] = useState<Record<string, string[]>>({
     base: ['p_starter']
   });
@@ -192,6 +196,60 @@ export default function Configurator() {
     company: '',
     file: null as File | null
   });
+
+  useEffect(() => {
+    async function fetchServices() {
+      setIsLoading(true);
+      try {
+        const q = query(collection(db, 'services'), where('is_active', '==', true), where('is_calculator_option', '==', true));
+        const snapshot = await getDocs(q);
+        const services = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DBService));
+        setDbServices(services);
+      } catch (err) {
+        console.error("Failed to fetch calculator services", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchServices();
+  }, []);
+
+  const mergedConfigData = useMemo(() => {
+    const data = [...CONFIG_DATA];
+    
+    // Merge DB services into categories
+    dbServices.forEach(service => {
+      const categoryId = service.category || 'functions';
+      let category = data.find(c => c.id === categoryId);
+      
+      if (!category) {
+        // Create category if it doesn't exist (though it should based on our admin UI)
+        category = {
+          id: categoryId,
+          name: categoryId.charAt(0).toUpperCase() + categoryId.slice(1),
+          icon: <Settings className="w-5 h-5" />,
+          options: [],
+          multiple: true
+        };
+        data.push(category);
+      }
+
+      // Check if option already exists (to avoid duplicates if seeded and in DB)
+      const exists = category.options.some(o => o.id === service.id);
+      if (!exists) {
+        category.options.push({
+          id: service.id,
+          name: getTranslatedText(service.name, 'de'), // Default to German for now or detect
+          price: service.price,
+          monthly: service.is_monthly,
+          desc: getTranslatedText(service.description, 'de'),
+          category: categoryId
+        });
+      }
+    });
+
+    return data;
+  }, [dbServices]);
 
   const generatePDF = async () => {
     if (!pdfRef.current) return;
@@ -239,7 +297,7 @@ export default function Configurator() {
   const selectedOptions = useMemo(() => {
     const list: Option[] = [];
     Object.entries(selections).forEach(([catId, optIds]) => {
-      const cat = CONFIG_DATA.find(c => c.id === catId);
+      const cat = mergedConfigData.find(c => c.id === catId);
       if (cat) {
         optIds.forEach(id => {
           const opt = cat.options.find(o => o.id === id);
@@ -248,7 +306,7 @@ export default function Configurator() {
       }
     });
     return list;
-  }, [selections]);
+  }, [selections, mergedConfigData]);
 
   const totals = useMemo(() => {
     const baseTotal = selectedOptions.reduce(
@@ -377,16 +435,22 @@ export default function Configurator() {
           
           {/* Main Content Area */}
           <div className="flex-1 space-y-16 w-full">
-            <AnimatePresence mode="wait">
-              {step === 'config' && (
-                <motion.div
-                  key="config"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="space-y-16"
-                >
-                  {CONFIG_DATA.map((category) => (
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-40 gap-4">
+                <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
+                <p className="text-slate-400 font-mono text-xs uppercase tracking-widest">Lade Konfiguration...</p>
+              </div>
+            ) : (
+              <AnimatePresence mode="wait">
+                {step === 'config' && (
+                  <motion.div
+                    key="config"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="space-y-16"
+                  >
+                  {mergedConfigData.map((category) => (
                     <section key={category.id} className="space-y-6">
                       <div className="flex items-center gap-4 mb-8">
                         <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.1)]">
@@ -641,11 +705,14 @@ export default function Configurator() {
                         </div>
                       </div>
 
-                      <Button type="submit" className="w-full h-20 bg-cyan-500 text-dark-950 font-bold text-xl rounded-3xl shadow-[0_0_50px_rgba(6,182,212,0.2)] group hover:bg-gold-400 transition-all">
-                        Termin für kostenloses Beratungsgespräch vereinbaren
-                        <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                      </Button>
-                    </form>
+                      <Button 
+                      type="submit" 
+                      className="w-full h-20 bg-cyan-500 text-dark-950 font-bold text-xl rounded-3xl shadow-[0_0_50px_rgba(6,182,212,0.2)] group hover:bg-gold-400 transition-all"
+                    >
+                      Kostenloses Erstgespräch vereinbaren
+                      <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </form>
                   </div>
                 </motion.div>
               )}
@@ -766,7 +833,8 @@ export default function Configurator() {
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
+          )}
+        </div>
 
           {/* Sidebar / Summary - STICKY */}
           {step === 'config' && (

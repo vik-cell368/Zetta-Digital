@@ -5,6 +5,9 @@ export type Service = {
   duration_minutes: number;
   price: number;
   is_active: boolean;
+  is_monthly?: boolean;
+  is_calculator_option?: boolean;
+  category?: string;
   features: string; // JSON string of features per language
   process: string;  // JSON string of process steps per language
   tech: string;     // JSON string of technologies

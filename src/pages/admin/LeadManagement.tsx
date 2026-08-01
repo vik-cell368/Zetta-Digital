@@ -107,9 +107,9 @@ export default function LeadManagement() {
     // Filter out obvious test noise if wanted, but keep real items
     const humanLeads = allLeads.filter(lead => {
       const email = lead.email?.toLowerCase() || '';
-      const isTest = email.includes('test@') || 
-                    email === 'test' || 
-                    email.includes('example.com') ||
+      // Only filter out very obvious placeholders, keep test@... if it looks like a real test
+      const isTest = email === 'test' || 
+                    email === 'example@example.com' ||
                     (!email.includes('@') && email.length < 3);
       return !isTest;
     }).sort((a, b) => 
