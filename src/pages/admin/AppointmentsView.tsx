@@ -18,6 +18,7 @@ export default function AppointmentsView() {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'cancelled'>('all');
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const fetchAppointments = async () => {
     setIsLoading(true);
@@ -82,13 +83,20 @@ export default function AppointmentsView() {
   };
 
   const deleteAppointment = async (id: string) => {
-    if (!confirm('Möchten Sie diesen Termin wirklich löschen? Dies gibt den Zeitslot wieder frei.')) return;
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      setTimeout(() => setConfirmDeleteId(null), 3000);
+      return;
+    }
     
+    console.log("Deleting appointment:", id);
+    setConfirmDeleteId(null);
     setIsDeleting(id);
     try {
       await deleteDoc(doc(db, 'appointments', id));
+      console.log("Firebase delete successful");
     } catch (err) {
-      console.warn("Firebase delete failed", err);
+      console.error("Firebase delete failed", err);
       handleFirestoreError(err, OperationType.DELETE, `appointments/${id}`);
     }
 
@@ -248,11 +256,14 @@ export default function AppointmentsView() {
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        className="text-gray-500 hover:text-rose-500 hover:bg-rose-500/10"
+                        className={confirmDeleteId === apt.id 
+                          ? "text-white bg-rose-600 hover:bg-rose-700 animate-pulse" 
+                          : "text-gray-500 hover:text-rose-500 hover:bg-rose-500/10"}
                         onClick={() => deleteAppointment(apt.id)}
                         isLoading={isDeleting === apt.id}
                       >
-                        <Trash2 className="w-4 h-4 mr-1" /> Löschen
+                        <Trash2 className="w-4 h-4 mr-1" /> 
+                        {confirmDeleteId === apt.id ? 'Sicher? Nochmal klicken' : 'Löschen'}
                       </Button>
                     </div>
                   </div>

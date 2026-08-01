@@ -75,11 +75,20 @@ export default function InvoicesView() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Möchten Sie diese Rechnung wirklich löschen?')) return;
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
+  const handleDelete = async (id: string) => {
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      setTimeout(() => setConfirmDeleteId(null), 3000);
+      return;
+    }
+
+    console.log("Deleting invoice:", id);
+    setConfirmDeleteId(null);
     try {
       await deleteDoc(doc(db, 'invoices', id));
+      console.log("Firebase delete successful");
       
       const updated = invoices.filter(inv => inv.id !== id);
       setInvoices(updated);
@@ -227,11 +236,11 @@ export default function InvoicesView() {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="h-8 w-8 p-0 text-slate-400 hover:text-red-500"
+                            className={`h-8 w-8 p-0 transition-all ${confirmDeleteId === invoice.id ? 'text-white bg-rose-500 animate-pulse w-auto px-2' : 'text-slate-400 hover:text-red-500'}`}
                             onClick={() => handleDelete(invoice.id)}
                             title="Löschen"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            {confirmDeleteId === invoice.id ? <span className="text-[10px] font-bold">Sicher?</span> : <Trash2 className="w-4 h-4" />}
                           </Button>
                         </div>
                       </td>

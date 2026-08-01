@@ -7,10 +7,11 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number) {
+  const safeAmount = isNaN(amount) || amount === null || amount === undefined ? 0 : amount;
   return new Intl.NumberFormat('de-DE', {
     style: 'currency',
     currency: 'EUR',
-  }).format(amount);
+  }).format(safeAmount);
 }
 
 const locales: Record<string, any> = {

@@ -130,17 +130,25 @@ export default function ContractEditor() {
             }
 
             if (lead) {
-              const servicesText = lead.services_list?.map((s: any) => s.description).join(' & ');
-              const projectTitle = lead.services_list?.length > 0 
-                ? "Digital Architecture & Software Development" 
-                : (lead.service_id ? `Softwareentwicklung: ${lead.service_id}` : 'Digitalprojekt');
+              const services = lead.services_list || [];
+              const servicesText = services.map((s: any) => s.description).join(', ');
+              
+              // Determine a better project title
+              let projectTitle = "Digitalprojekt";
+              if (services.length === 1) {
+                projectTitle = services[0].description;
+              } else if (services.length > 1) {
+                projectTitle = "Digital Architecture & Software Development";
+              } else if (lead.service_id) {
+                projectTitle = `Softwareentwicklung: ${lead.service_id}`;
+              }
 
-              const projectDescription = lead.services_list?.length > 0
-                ? `Viktor Labs entwickelt für den Auftraggeber eine individuelle Softwarelösung umfassend: ${servicesText}. Das Projekt umfasst Planung, Entwicklung, Tests und Bereitstellung der vereinbarten Funktionen.`
+              const projectDescription = services.length > 0
+                ? `Viktor Labs übernimmt für den Auftraggeber die Konzeption und Umsetzung einer individuellen Digitallösung. Das Projekt umfasst die Planung, Entwicklung sowie die Bereitstellung der vereinbarten Funktionen.`
                 : DEFAULT_DESCRIPTION;
 
-              const projectScope = lead.services_list?.length > 0
-                ? lead.services_list.map((s: any) => `* ${s.description}`).join('\n')
+              const projectScope = services.length > 0
+                ? services.map((s: any) => `• ${s.description}`).join('\n')
                 : DEFAULT_SCOPE;
 
               setContract(prev => ({

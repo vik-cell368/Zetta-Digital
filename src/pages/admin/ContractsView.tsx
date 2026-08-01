@@ -137,16 +137,25 @@ export default function ContractsView() {
     }
   };
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
   const deleteContract = async (id: string) => {
-    if (!confirm('Vertrag wirklich löschen?')) return;
-    
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      setTimeout(() => setConfirmDeleteId(null), 3000);
+      return;
+    }
+
+    console.log("Deleting contract:", id);
+    setConfirmDeleteId(null);
     try {
       await deleteDoc(doc(db, 'contracts', id));
+      console.log("Firebase delete successful");
       const updated = contracts.filter(c => c.id !== id);
       setContracts(updated);
       localStorage.setItem('viktor_labs_contracts', JSON.stringify(updated));
     } catch (e) {
-      console.error(e);
+      console.error("Delete failed", e);
       // Fallback update
       const updated = contracts.filter(c => c.id !== id);
       setContracts(updated);
@@ -299,10 +308,10 @@ export default function ContractsView() {
                               variant="ghost" 
                               size="sm" 
                               onClick={() => deleteContract(contract.id)}
-                              className="text-slate-400 hover:text-red-500"
+                              className={`h-8 w-8 p-0 transition-all ${confirmDeleteId === contract.id ? 'text-white bg-rose-500 animate-pulse w-auto px-2' : 'text-slate-400 hover:text-red-500'}`}
                               title="Löschen"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              {confirmDeleteId === contract.id ? <span className="text-[10px] font-bold">Sicher?</span> : <Trash2 className="w-4 h-4" />}
                             </Button>
                           </div>
                         </td>

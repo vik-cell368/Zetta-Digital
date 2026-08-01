@@ -224,11 +224,22 @@ export default function InvoiceEditor() {
 
   // Calculations
   const totals = useMemo(() => {
-    const subtotal = (invoice.items || []).reduce((sum, item) => sum + item.total_price, 0);
-    const vat_rate = invoice.vat_rate || 0;
-    const vat_amount = (subtotal * vat_rate) / 100;
+    const subtotal = (invoice.items || []).reduce((sum, item) => {
+      const price = Number(item.total_price);
+      return sum + (isNaN(price) ? 0 : price);
+    }, 0);
+    
+    const vat_rate = Number(invoice.vat_rate);
+    const safeVatRate = isNaN(vat_rate) ? 0 : vat_rate;
+    
+    const vat_amount = (subtotal * safeVatRate) / 100;
     const total_amount = subtotal + vat_amount;
-    return { subtotal, vat_amount, total_amount };
+    
+    return { 
+      subtotal: isNaN(subtotal) ? 0 : subtotal, 
+      vat_amount: isNaN(vat_amount) ? 0 : vat_amount, 
+      total_amount: isNaN(total_amount) ? 0 : total_amount 
+    };
   }, [invoice.items, invoice.vat_rate]);
 
   const updateField = (field: keyof Invoice, value: any) => {
@@ -237,9 +248,17 @@ export default function InvoiceEditor() {
       
       // Auto-calculate due date if date or days change
       if (field === 'invoice_date' || field === 'due_date_days') {
-        const date = field === 'invoice_date' ? parseISO(value as string) : parseISO(prev.invoice_date!);
-        const days = field === 'due_date_days' ? (value as number) : prev.due_date_days!;
-        updated.due_date = format(addDays(date, days), 'yyyy-MM-dd');
+        try {
+          const dateStr = field === 'invoice_date' ? (value as string) : (prev.invoice_date || format(new Date(), 'yyyy-MM-dd'));
+          const date = parseISO(dateStr);
+          const days = field === 'due_date_days' ? (parseInt(value as string) || 0) : (prev.due_date_days || 0);
+          
+          if (!isNaN(date.getTime())) {
+            updated.due_date = format(addDays(date, days), 'yyyy-MM-dd');
+          }
+        } catch (e) {
+          console.error("Date calc error", e);
+        }
       }
       
       return updated;

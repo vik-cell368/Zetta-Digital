@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
 import { collection, query, getDocs, orderBy, doc, updateDoc, deleteDoc, addDoc } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
 
 const FileText = ({ size, className }: any) => <FileTextIcon size={size} className={className} />;
 const Globe = ({ size, className }: any) => <GlobeIcon size={size} className={className} />;
@@ -193,17 +194,26 @@ export default function LeadManagement() {
     showToast("Notizen gespeichert");
   };
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
   // Delete Lead
   const handleDeleteLead = async (leadId: string) => {
-    if (!confirm("Möchten Sie diesen Lead wirklich löschen?")) return;
+    if (confirmDeleteId !== leadId) {
+      setConfirmDeleteId(leadId);
+      setTimeout(() => setConfirmDeleteId(null), 3000);
+      return;
+    }
 
+    console.log("Deleting lead:", leadId);
+    setConfirmDeleteId(null);
     setShowMoreMenu(false);
 
     try {
       const leadRef = doc(db, 'appointments', leadId);
       await deleteDoc(leadRef);
+      console.log("Firebase delete successful");
     } catch (err) {
-      console.warn("Firebase delete failed", err);
+      console.error("Firebase delete failed", err);
       handleFirestoreError(err, OperationType.DELETE, `appointments/${leadId}`);
     }
 
@@ -213,6 +223,7 @@ export default function LeadManagement() {
         const apps = JSON.parse(localApps);
         const updated = apps.filter((a: any) => a.id !== leadId);
         localStorage.setItem('viktor_labs_appointments', JSON.stringify(updated));
+        console.log("LocalStorage delete successful");
       }
     } catch (err) {
       console.warn("LocalStorage delete error", err);
@@ -826,10 +837,15 @@ export default function LeadManagement() {
                   <div className="pt-6 border-t border-white/5 grid grid-cols-2 gap-3">
                     <button 
                       onClick={() => handleDeleteLead(selectedLead.id)}
-                      className="h-12 md:h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-[10px] uppercase tracking-widest font-bold text-rose-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 col-span-2 mb-2"
+                      className={cn(
+                        "h-12 md:h-14 rounded-2xl border text-[10px] uppercase tracking-widest font-bold transition-all flex items-center justify-center gap-2 active:scale-95 col-span-2 mb-2",
+                        confirmDeleteId === selectedLead.id 
+                          ? "bg-rose-500 text-white border-rose-600 animate-pulse" 
+                          : "bg-rose-500/10 border-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white"
+                      )}
                     >
                       <Trash2 size={14} />
-                      Lead & Termin Löschen
+                      {confirmDeleteId === selectedLead.id ? 'Sicher? Nochmal klicken' : 'Lead & Termin Löschen'}
                     </button>
 
                     <a 
